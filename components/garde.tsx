@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
-import { Chargement, classeBouton } from "@/components/ui";
+import { classeBouton } from "@/components/ui";
 import { deconnecter, enregistrementEnAttente, useSession } from "@/lib/stockage";
 
 function Message({ titre, children }: { titre: string; children: ReactNode }) {
@@ -36,7 +36,8 @@ export function Garde({ children }: { children: ReactNode }) {
   switch (session.statut) {
     case "chargement":
     case "mot-de-passe-provisoire":
-      return <Chargement />;
+      // Les pages affichent elles-mêmes leur état de chargement tant que les données manquent.
+      return <>{children}</>;
     case "aucun-espace":
       return (
         <Message titre="Aucun espace entreprise">
