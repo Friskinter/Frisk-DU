@@ -135,8 +135,8 @@ export default function PageReglages() {
 
       <Carte titre="Données">
         <p className="mb-4 text-sm text-ardoise">
-          Pour l&apos;instant, les données sont enregistrées dans ce navigateur. Pensez à télécharger une sauvegarde
-          régulièrement, ou pour les transférer sur un autre ordinateur.
+          Vos données sont enregistrées automatiquement en ligne et accessibles depuis n&apos;importe quel ordinateur.
+          Vous pouvez aussi en télécharger une copie de sauvegarde à tout moment.
         </p>
         <div className="flex flex-wrap gap-2">
           <button type="button" className={classeBouton} onClick={sauvegarder}>
@@ -154,7 +154,7 @@ export default function PageReglages() {
           <button
             type="button"
             className={classeBoutonSecondaire}
-            onClick={() => confirm("Remplacer vos données par l'exemple de démonstration ?") && remplacer(donneesDemo(dateDuJour()))}
+            onClick={() => confirm("Remplacer toutes les données de l'entreprise par l'exemple de démonstration ?") && remplacer(donneesDemo(dateDuJour()))}
           >
             Recharger la démonstration
           </button>
