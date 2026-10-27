@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+/* Palette tirée du logo : noir profond, pierre/marbre, accent bronze */
+@theme {
+  --color-encre: #0c0b0a;
+  --color-nuit: #161412;
+  --color-ardoise: #24211e;
+  --color-pierre: #d9cfc1;
+  --color-marbre: #ece6dc;
+  --color-ivoire: #f7f4ef;
+  --color-bronze: #b08d57;
+  --color-bronze-clair: #c9a978;
+  --color-gris: #8a837a;
+
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-cinzel);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-ivoire);
+  color: var(--color-encre);
+}

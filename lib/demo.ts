@@ -1,0 +1,216 @@
+// Jeu de données de démonstration : une PME fictive de logistique.
+
+import { cle, decalerJours, nouvelId } from "./calculs";
+import type { Article, Donnees, LigneDuerp, Mouvement, Salarie } from "./types";
+
+// Générateur pseudo-aléatoire déterministe pour des démos reproductibles.
+function aleatoire(graine: number) {
+  let s = graine;
+  return () => {
+    s = (s * 1664525 + 1013904223) % 4294967296;
+    return s / 4294967296;
+  };
+}
+
+export function donneesVides(): Donnees {
+  return {
+    version: 1,
+    entreprise: "Mon entreprise",
+    services: [],
+    unites: [],
+    duerp: [],
+    salaries: [],
+    articles: [],
+    mouvements: [],
+  };
+}
+
+export function donneesDemo(aujourdhui: string): Donnees {
+  const services = ["Entrepôt", "Atelier", "Livraison", "Administratif"];
+  const unites = ["Quai de réception", "Zone de stockage", "Atelier maintenance", "Tournées", "Bureaux"];
+
+  const ligne = (l: Omit<LigneDuerp, "id">): LigneDuerp => ({ id: nouvelId(), ...l });
+
+  const duerp: LigneDuerp[] = [
+    ligne({
+      unite: "Quai de réception", activite: "Déchargement des camions", danger: "Manutention manuelle",
+      risque: "Lombalgies, TMS du dos et des épaules", effectif: 6, gravite: 3, frequence: 4,
+      mesures: "Transpalettes manuels, formation gestes et postures en 2024", maitrise: "partielle",
+      penibilite: "manutention", seuilPenibilite: "oui", action: "Acheter 2 transpalettes électriques",
+      responsable: "Responsable entrepôt", echeance: decalerJours(aujourdhui, 45), statut: "en-cours",
+    }),
+    ligne({
+      unite: "Quai de réception", activite: "Circulation près des quais", danger: "Chute de hauteur",
+      risque: "Chute du quai (1,20 m), fractures", effectif: 6, gravite: 4, frequence: 3,
+      mesures: "Marquage au sol", maitrise: "insuffisante", penibilite: "", seuilPenibilite: "non",
+      action: "Installer des barrières de quai et cales de roues", responsable: "Direction",
+      echeance: decalerJours(aujourdhui, -10), statut: "a-faire",
+    }),
+    ligne({
+      unite: "Zone de stockage", activite: "Préparation de commandes en chambre froide", danger: "Ambiances thermiques",
+      risque: "Hypothermie, engelures, TMS aggravés par le froid", effectif: 4, gravite: 3, frequence: 4,
+      mesures: "Vestes grand froid, pauses en zone tempérée", maitrise: "bonne",
+      penibilite: "temperatures", seuilPenibilite: "oui", action: "Rotation des postes toutes les 2 h",
+      responsable: "Chef d'équipe", echeance: decalerJours(aujourdhui, 60), statut: "a-faire",
+    }),
+    ligne({
+      unite: "Zone de stockage", activite: "Conduite de chariots élévateurs", danger: "Circulation interne (chariots, piétons)",
+      risque: "Collision piéton-chariot, écrasement", effectif: 8, gravite: 4, frequence: 4,
+      mesures: "CACES à jour, allées piétonnes marquées", maitrise: "bonne", penibilite: "vibrations",
+      seuilPenibilite: "a-evaluer", action: "Installer des feux bleus de signalisation sur les chariots",
+      responsable: "Responsable entrepôt", echeance: decalerJours(aujourdhui, 20), statut: "en-cours",
+    }),
+    ligne({
+      unite: "Zone de stockage", activite: "Prélèvement en hauteur", danger: "Chute d'objets",
+      risque: "Traumatisme crânien", effectif: 8, gravite: 3, frequence: 2,
+      mesures: "Casques fournis, filets anti-chute sur racks", maitrise: "tres-bonne", penibilite: "",
+      seuilPenibilite: "non", action: "Poser des filets anti-chute sur les racks", responsable: "Responsable entrepôt",
+      echeance: decalerJours(aujourdhui, -60), statut: "fait",
+    }),
+    ligne({
+      unite: "Atelier maintenance", activite: "Meulage et soudure", danger: "Bruit",
+      risque: "Surdité professionnelle", effectif: 3, gravite: 3, frequence: 3,
+      mesures: "Bouchons d'oreille à disposition", maitrise: "partielle", penibilite: "bruit",
+      seuilPenibilite: "a-evaluer", action: "Faire réaliser une mesure de bruit (sonométrie)",
+      responsable: "Responsable maintenance", echeance: decalerJours(aujourdhui, 30), statut: "a-faire",
+    }),
+    ligne({
+      unite: "Atelier maintenance", activite: "Utilisation de solvants de dégraissage", danger: "Produits chimiques",
+      risque: "Irritations, intoxication, dermatoses", effectif: 3, gravite: 3, frequence: 3,
+      mesures: "Gants nitrile, fiches de données de sécurité affichées", maitrise: "bonne",
+      penibilite: "chimique", seuilPenibilite: "non", action: "Remplacer par un dégraissant aqueux",
+      responsable: "Responsable maintenance", echeance: decalerJours(aujourdhui, 90), statut: "a-faire",
+    }),
+    ligne({
+      unite: "Tournées", activite: "Livraisons en véhicule utilitaire", danger: "Déplacements routiers",
+      risque: "Accident de la route", effectif: 5, gravite: 4, frequence: 4,
+      mesures: "Véhicules entretenus, planning sans téléphone au volant", maitrise: "partielle",
+      penibilite: "", seuilPenibilite: "non", action: "Formation éco-conduite et sécurité routière",
+      responsable: "Direction", echeance: decalerJours(aujourdhui, -30), statut: "en-cours",
+    }),
+    ligne({
+      unite: "Tournées", activite: "Livraisons de nuit aux magasins", danger: "Travail isolé",
+      risque: "Fatigue, troubles du sommeil, absence de secours", effectif: 2, gravite: 3, frequence: 3,
+      mesures: "Téléphone professionnel", maitrise: "partielle", penibilite: "nuit", seuilPenibilite: "oui",
+      action: "Équiper les livreurs d'un dispositif d'alarme travailleur isolé", responsable: "Direction",
+      echeance: decalerJours(aujourdhui, 15), statut: "a-faire",
+    }),
+    ligne({
+      unite: "Bureaux", activite: "Travail sur écran", danger: "Travail sur écran",
+      risque: "Fatigue visuelle, TMS des poignets et de la nuque", effectif: 4, gravite: 2, frequence: 4,
+      mesures: "Écrans réglables, sièges ergonomiques", maitrise: "bonne", penibilite: "",
+      seuilPenibilite: "non", action: "Remplacer les sièges par des modèles ergonomiques", responsable: "RH",
+      echeance: decalerJours(aujourdhui, -90), statut: "fait",
+    }),
+    ligne({
+      unite: "Bureaux", activite: "Relation clients et fournisseurs", danger: "Risques psychosociaux",
+      risque: "Stress, épuisement professionnel", effectif: 4, gravite: 3, frequence: 2,
+      mesures: "Entretiens annuels", maitrise: "partielle", penibilite: "", seuilPenibilite: "non",
+      action: "Questionnaire anonyme sur la charge de travail", responsable: "RH",
+      echeance: decalerJours(aujourdhui, 120), statut: "a-faire",
+    }),
+  ];
+
+  const noms = [
+    ["Martin L.", "Entrepôt", "Cariste"], ["Bernard S.", "Entrepôt", "Préparateur"],
+    ["Petit A.", "Entrepôt", "Préparateur"], ["Durand C.", "Entrepôt", "Réceptionnaire"],
+    ["Leroy M.", "Entrepôt", "Cariste"], ["Moreau J.", "Entrepôt", "Chef d'équipe"],
+    ["Simon T.", "Atelier", "Technicien"], ["Laurent P.", "Atelier", "Soudeur"],
+    ["Michel R.", "Atelier", "Technicien"], ["Garcia N.", "Livraison", "Chauffeur-livreur"],
+    ["David E.", "Livraison", "Chauffeur-livreur"], ["Bertrand F.", "Livraison", "Chauffeur-livreur"],
+    ["Roux V.", "Administratif", "Assistante"], ["Fournier K.", "Administratif", "Comptable"],
+  ];
+  const rnd = aleatoire(42);
+  const choisir = <T,>(liste: T[]) => liste[Math.floor(rnd() * liste.length)];
+
+  const salaries: Salarie[] = noms.map(([nom, service, poste]) => ({
+    id: nouvelId(),
+    nom,
+    service,
+    poste,
+    tailles: {
+      Mains: choisir(["8", "9", "10"]),
+      Pieds: choisir(["39", "40", "41", "42", "43", "44"]),
+      Corps: choisir(["S", "M", "L", "XL"]),
+      "Haute visibilité": choisir(["M", "L", "XL"]),
+    },
+  }));
+
+  const article = (a: Omit<Article, "id">): Article => ({ id: nouvelId(), ...a });
+  const articles: Article[] = [
+    article({ nom: "Gants de manutention", categorie: "Mains", tailles: ["8", "9", "10"], prix: 3.5, delai: 7, lot: 12, tampons: { "8": 12, "9": 24, "10": 12 } }),
+    article({ nom: "Gants nitrile (boîte de 100)", categorie: "Mains", tailles: ["M", "L"], prix: 9, delai: 5, lot: 1, tampons: { M: 3, L: 3 } }),
+    article({ nom: "Chaussures de sécurité S3", categorie: "Pieds", tailles: ["39", "40", "41", "42", "43", "44"], prix: 62, delai: 14, lot: 1, tampons: { "39": 1, "40": 1, "41": 2, "42": 2, "43": 2, "44": 1 } }),
+    article({ nom: "Bottes de sécurité grand froid", categorie: "Pieds", tailles: ["40", "42", "44"], prix: 78, delai: 21, lot: 1, tampons: { "40": 1, "42": 1, "44": 1 } }),
+    article({ nom: "Casque de chantier", categorie: "Tête", tailles: ["Unique"], prix: 14, delai: 7, lot: 5, tampons: { Unique: 5 } }),
+    article({ nom: "Lunettes de protection", categorie: "Yeux", tailles: ["Unique"], prix: 6, delai: 7, lot: 10, tampons: { Unique: 10 } }),
+    article({ nom: "Bouchons d'oreille (paire)", categorie: "Auditif", tailles: ["Unique"], prix: 0.4, delai: 5, lot: 200, tampons: { Unique: 200 } }),
+    article({ nom: "Veste grand froid", categorie: "Corps", tailles: ["S", "M", "L", "XL"], prix: 95, delai: 21, lot: 1, tampons: { S: 1, M: 1, L: 1, XL: 1 } }),
+    article({ nom: "Gilet haute visibilité", categorie: "Haute visibilité", tailles: ["M", "L", "XL"], prix: 5, delai: 7, lot: 10, tampons: { M: 5, L: 5, XL: 5 } }),
+  ];
+
+  // Qui consomme quoi, et à quel rythme (sorties par mois pour un salarié concerné).
+  const besoins: { article: number; services: string[]; parMois: number; quantite: number }[] = [
+    { article: 0, services: ["Entrepôt", "Livraison"], parMois: 2, quantite: 1 },
+    { article: 1, services: ["Atelier"], parMois: 1, quantite: 1 },
+    { article: 2, services: ["Entrepôt", "Atelier", "Livraison"], parMois: 0.12, quantite: 1 },
+    { article: 3, services: ["Entrepôt"], parMois: 0.08, quantite: 1 },
+    { article: 4, services: ["Entrepôt"], parMois: 0.05, quantite: 1 },
+    { article: 5, services: ["Atelier"], parMois: 0.4, quantite: 1 },
+    { article: 6, services: ["Atelier", "Entrepôt"], parMois: 3, quantite: 10 },
+    { article: 7, services: ["Entrepôt"], parMois: 0.06, quantite: 1 },
+    { article: 8, services: ["Entrepôt", "Livraison"], parMois: 0.2, quantite: 1 },
+  ];
+
+  const mouvements: Mouvement[] = [];
+  const debut = decalerJours(aujourdhui, -365);
+  const consommes = new Map<string, number>();
+
+  for (const b of besoins) {
+    const a = articles[b.article];
+    for (const s of salaries.filter((x) => b.services.includes(x.service))) {
+      const nb = Math.round(b.parMois * 12 * (0.6 + rnd() * 0.8));
+      for (let i = 0; i < nb; i++) {
+        const taille =
+          a.tailles.length === 1
+            ? a.tailles[0]
+            : a.tailles.includes(s.tailles[a.categorie] ?? "")
+              ? s.tailles[a.categorie]
+              : choisir(a.tailles);
+        mouvements.push({
+          id: nouvelId(), date: decalerJours(aujourdhui, -Math.floor(rnd() * 360)), type: "sortie",
+          articleId: a.id, taille, quantite: b.quantite, salarieId: s.id, service: s.service,
+          motif: choisir(["Dotation", "Remplacement usure", "Remplacement usure", "Perte"]),
+        });
+        const k = cle(a.id, taille);
+        consommes.set(k, (consommes.get(k) ?? 0) + b.quantite);
+      }
+    }
+  }
+
+  // Réceptions : le stock initial couvre la consommation de l'année, avec quelques manques volontaires.
+  for (const a of articles) {
+    for (const t of a.tailles) {
+      const k = cle(a.id, t);
+      const conso = consommes.get(k) ?? 0;
+      const marge = Math.round((a.tampons[t] ?? 0) * (0.3 + rnd() * 1.6));
+      mouvements.push({
+        id: nouvelId(), date: debut, type: "entree", articleId: a.id, taille: t,
+        quantite: conso + marge, salarieId: "", service: "", motif: "Stock initial",
+      });
+    }
+  }
+
+  mouvements.sort((x, y) => (x.date < y.date ? 1 : -1));
+
+  return {
+    version: 1,
+    entreprise: "Logistique Démo SAS",
+    services,
+    unites,
+    duerp,
+    salaries,
+    articles,
+    mouvements,
+  };
+}

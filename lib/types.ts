@@ -1,0 +1,69 @@
+// Modèle de données de Frisk DU (DUERP, pénibilité, EPI).
+
+export type NiveauMaitrise = "insuffisante" | "partielle" | "bonne" | "tres-bonne";
+
+export type StatutAction = "a-faire" | "en-cours" | "fait";
+
+export type SeuilPenibilite = "non" | "a-evaluer" | "oui";
+
+export type LigneDuerp = {
+  id: string;
+  unite: string;
+  activite: string;
+  danger: string;
+  risque: string;
+  effectif: number;
+  gravite: number;
+  frequence: number;
+  mesures: string;
+  maitrise: NiveauMaitrise;
+  penibilite: string; // code du facteur, "" si aucun
+  seuilPenibilite: SeuilPenibilite;
+  action: string;
+  responsable: string;
+  echeance: string; // AAAA-MM-JJ
+  statut: StatutAction;
+};
+
+export type Salarie = {
+  id: string;
+  nom: string;
+  service: string;
+  poste: string;
+  // Taille habituelle par catégorie d'EPI (ex. { Mains: "9", Pieds: "42" })
+  tailles: Record<string, string>;
+};
+
+export type Article = {
+  id: string;
+  nom: string;
+  categorie: string;
+  tailles: string[];
+  prix: number; // € HT unitaire
+  delai: number; // délai de livraison en jours
+  lot: number; // conditionnement minimal de commande
+  tampons: Record<string, number>; // stock tampon par taille
+};
+
+export type Mouvement = {
+  id: string;
+  date: string; // AAAA-MM-JJ
+  type: "entree" | "sortie";
+  articleId: string;
+  taille: string;
+  quantite: number;
+  salarieId: string; // "" pour une entrée
+  service: string;
+  motif: string;
+};
+
+export type Donnees = {
+  version: 1;
+  entreprise: string;
+  services: string[];
+  unites: string[];
+  duerp: LigneDuerp[];
+  salaries: Salarie[];
+  articles: Article[];
+  mouvements: Mouvement[];
+};
