@@ -16,10 +16,6 @@
   --font-serif: var(--font-cinzel);
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 body {
   background: var(--color-ivoire);
   color: var(--color-encre);
