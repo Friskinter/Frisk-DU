@@ -8,7 +8,7 @@ import { telechargerFicheEpi } from "@/lib/pdf/telecharger";
 import { modifier } from "@/lib/stockage";
 import type { Donnees } from "@/lib/types";
 
-export function FichesSalaries({ donnees }: { donnees: Donnees }) {
+export function FichesSalaries({ donnees, peutSigner }: { donnees: Donnees; peutSigner: boolean }) {
   const [salarieId, setSalarieId] = useState(donnees.salaries[0]?.id ?? "");
   const [recherche, setRecherche] = useState("");
   const [signer, setSigner] = useState(false);
@@ -113,7 +113,7 @@ export function FichesSalaries({ donnees }: { donnees: Donnees }) {
                 <button type="button" className={`${classeBoutonSecondaire} disabled:opacity-60`} onClick={telecharger} disabled={pdf === "generation" || !remises.length}>
                   {pdf === "generation" ? "Création du PDF…" : pdf === "erreur" ? "⚠ Réessayer le PDF" : "⬇ Fiche EPI (PDF)"}
                 </button>
-                {nonSignees.length > 0 && (
+                {nonSignees.length > 0 && peutSigner && (
                   <button type="button" className={classeBouton} onClick={() => setSigner(true)}>
                     ✍ Faire signer ({nonSignees.length})
                   </button>

@@ -71,15 +71,21 @@ export function Garde({ children }: { children: ReactNode }) {
     case "pret":
       return (
         <>
-          {session.enregistrement === "conflit" && (
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-sm border border-[#d03b3b] bg-[#d03b3b]/10 p-3 text-sm">
-              <span>
-                <strong>⚠ Modifications non enregistrées.</strong> Un collègue a modifié les données en même temps que
-                vous. Rechargez la page pour récupérer la dernière version.
-              </span>
-              <button type="button" onClick={() => window.location.reload()} className={classeBouton}>
-                Recharger
-              </button>
+          {session.role === "lecteur" && (
+            <div className="mb-4 rounded-sm border border-pierre/70 bg-marbre/60 p-3 text-sm text-ardoise print:hidden">
+              👁 Accès en <strong>lecture seule</strong> : vous pouvez consulter et télécharger les documents, sans les modifier.
+            </div>
+          )}
+          {session.role === "contributeur" && (
+            <div className="mb-4 rounded-sm border border-pierre/70 bg-marbre/60 p-3 text-sm text-ardoise print:hidden">
+              Vous êtes <strong>contributeur</strong> : vous saisissez les remises et réceptions d&apos;EPI et faites signer
+              les salariés. Le reste est en consultation.
+            </div>
+          )}
+          {session.enregistrement === "refuse" && (
+            <div className="mb-4 rounded-sm border border-[#d03b3b] bg-[#d03b3b]/10 p-3 text-sm print:hidden">
+              <strong>⚠ Modification refusée.</strong> Votre rôle ne permet pas cette modification ; elle n&apos;a pas été
+              enregistrée. Demandez à un responsable de votre entreprise si besoin.
             </div>
           )}
           {children}

@@ -66,7 +66,7 @@ export async function creerClient(nom: string, email: string, demo: boolean): Pr
   }
 
   const contenu = demo ? { ...donneesDemo(dateDuJour()), entreprise: nom } : { ...donneesVides(), entreprise: nom };
-  await admin.from("membres").insert({ user_id: utilisateur.id, entreprise_id: entreprise.id, email });
+  await admin.from("membres").insert({ user_id: utilisateur.id, entreprise_id: entreprise.id, email, role: "responsable" });
   await admin.from("espaces").insert({ entreprise_id: entreprise.id, contenu });
 
   return {
@@ -78,16 +78,25 @@ export async function creerClient(nom: string, email: string, demo: boolean): Pr
   };
 }
 
-export async function ajouterUtilisateur(entrepriseId: string, email: string): Promise<Resultat> {
+const roles = ["responsable", "contributeur", "lecteur"] as const;
+
+export async function ajouterUtilisateur(
+  entrepriseId: string,
+  email: string,
+  role: (typeof roles)[number],
+): Promise<Resultat> {
   if (!(await verifierAdmin())) return { ok: false, message: "Accès réservé aux administrateurs Frisk." };
   const admin = supabaseAdmin();
   if (!admin) return { ok: false, message: SANS_CLE };
 
+  if (!roles.includes(role)) return { ok: false, message: "Rôle inconnu." };
   email = email.trim().toLowerCase();
   const utilisateur = await obtenirUtilisateur(admin, email);
   if (!utilisateur) return { ok: false, message: "Le compte n'a pas pu être créé. Vérifiez l'adresse e-mail." };
 
-  const { error } = await admin.from("membres").upsert({ user_id: utilisateur.id, entreprise_id: entrepriseId, email });
+  const { error } = await admin
+    .from("membres")
+    .upsert({ user_id: utilisateur.id, entreprise_id: entrepriseId, email, role });
   if (error) return { ok: false, message: "L'utilisateur n'a pas pu être rattaché à l'entreprise." };
   return {
     ok: true,

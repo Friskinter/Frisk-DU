@@ -21,3 +21,24 @@ jobs:
         run: npm test
       - name: Build (vérifie aussi les types)
         run: npm run build
+
+  base-de-donnees:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: test
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tests SQL (droits, journal, versions)
+        run: supabase/tests/lancer.sh

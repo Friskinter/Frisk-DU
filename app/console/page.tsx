@@ -13,6 +13,7 @@ import {
 } from "@/components/ui";
 import { formaterDate } from "@/lib/calculs";
 import { deconnecter, ouvrirEntreprise } from "@/lib/stockage";
+import { libellesRoles } from "@/lib/operations";
 import { supabaseNavigateur } from "@/lib/supabase/client";
 import { ajouterUtilisateur, creerClient, reinitialiserMotDePasse, type Resultat } from "./actions";
 import { rechargerVers } from "@/lib/navigation";
@@ -22,11 +23,13 @@ type Client = {
   nom: string;
   actif: boolean;
   created_at: string;
-  membres: { user_id: string; email: string }[];
+  membres: { user_id: string; email: string; role: RoleMembre }[];
   espaces: { updated_at: string } | null;
 };
 
 type Identifiants = { email: string; motDePasse: string };
+type RoleMembre = keyof typeof libellesRoles;
+const rolesMembre = Object.keys(libellesRoles) as RoleMembre[];
 
 export default function Console() {
   const [etat, setEtat] = useState<"chargement" | "refuse" | "pret">("chargement");
@@ -46,7 +49,7 @@ export default function Console() {
     if (!admin) return setEtat("refuse");
     const { data } = await supabase
       .from("entreprises")
-      .select("id, nom, actif, created_at, membres(user_id, email), espaces(updated_at)")
+      .select("id, nom, actif, created_at, membres(user_id, email, role), espaces(updated_at)")
       .order("nom");
     setClients((data ?? []) as unknown as Client[]);
     setEtat("pret");
@@ -72,6 +75,20 @@ export default function Console() {
     const verbe = client.actif ? "Suspendre" : "Réactiver";
     if (!confirm(`${verbe} l'accès de « ${client.nom} » ?`)) return;
     await supabaseNavigateur().from("entreprises").update({ actif: !client.actif }).eq("id", client.id);
+    await recharger();
+  };
+
+  const changerRole = async (client: Client, membre: Client["membres"][number], role: RoleMembre) => {
+    const { error } = await supabaseNavigateur()
+      .from("membres")
+      .update({ role })
+      .eq("user_id", membre.user_id)
+      .eq("entreprise_id", client.id);
+    setRetour({
+      resultat: error
+        ? { ok: false, message: "Le rôle n'a pas pu être modifié." }
+        : { ok: true, message: `${membre.email} est maintenant ${libellesRoles[role].libelle.toLowerCase()}.` },
+    });
     await recharger();
   };
 
@@ -195,7 +212,20 @@ export default function Console() {
                     {c.membres.map((m) => (
                       <li key={m.user_id} className="flex flex-wrap items-center justify-between gap-2 py-2">
                         <span>{m.email}</span>
-                        <span className="flex gap-4 text-xs">
+                        <span className="flex flex-wrap items-center gap-4 text-xs">
+                          <select
+                            value={m.role}
+                            onChange={(e) => changerRole(c, m, e.target.value as RoleMembre)}
+                            className={`${classeChamp} w-auto py-1 text-xs`}
+                            title={libellesRoles[m.role].description}
+                            aria-label={`Rôle de ${m.email}`}
+                          >
+                            {rolesMembre.map((r) => (
+                              <option key={r} value={r}>
+                                {libellesRoles[r].libelle}
+                              </option>
+                            ))}
+                          </select>
                           <button
                             type="button"
                             className="text-bronze underline"
@@ -213,7 +243,9 @@ export default function Console() {
                       </li>
                     ))}
                   </ul>
-                  <AjoutUtilisateur onAjouter={(email) => afficher(ajouterUtilisateur(c.id, email), email.trim().toLowerCase())} />
+                  <AjoutUtilisateur
+                    onAjouter={(email, role) => afficher(ajouterUtilisateur(c.id, email, role), email.trim().toLowerCase())}
+                  />
                 </div>
               </li>
             ))}
@@ -264,15 +296,16 @@ function NouveauClient({ onCreer }: { onCreer: (nom: string, email: string, demo
   );
 }
 
-function AjoutUtilisateur({ onAjouter }: { onAjouter: (email: string) => Promise<void> }) {
+function AjoutUtilisateur({ onAjouter }: { onAjouter: (email: string, role: RoleMembre) => Promise<void> }) {
   const [email, setEmail] = useState("");
+  const [role, setRole] = useState<RoleMembre>("responsable");
   const [envoi, setEnvoi] = useState(false);
   return (
     <form
       onSubmit={async (e) => {
         e.preventDefault();
         setEnvoi(true);
-        await onAjouter(email);
+        await onAjouter(email, role);
         setEnvoi(false);
         setEmail("");
       }}
@@ -286,6 +319,13 @@ function AjoutUtilisateur({ onAjouter }: { onAjouter: (email: string) => Promise
         onChange={(e) => setEmail(e.target.value)}
         className={`${classeChamp} max-w-xs`}
       />
+      <select value={role} onChange={(e) => setRole(e.target.value as RoleMembre)} className={`${classeChamp} w-auto`} aria-label="Rôle">
+        {rolesMembre.map((r) => (
+          <option key={r} value={r}>
+            {libellesRoles[r].libelle}
+          </option>
+        ))}
+      </select>
       <button type="submit" disabled={envoi} className={`${classeBoutonSecondaire} disabled:opacity-60`}>
         {envoi ? "Ajout…" : "Ajouter"}
       </button>

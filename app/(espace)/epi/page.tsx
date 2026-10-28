@@ -24,7 +24,7 @@ import {
   telechargerCsv,
 } from "@/lib/calculs";
 import { categoriesEpi } from "@/lib/referentiel";
-import { modifier, useDonnees } from "@/lib/stockage";
+import { modifier, peutModifier, useDonnees, useSession } from "@/lib/stockage";
 import type { Article, Donnees, Mouvement } from "@/lib/types";
 
 type Onglet = "stocks" | "saisie" | "fiches" | "historique" | "catalogue";
@@ -51,7 +51,11 @@ function ajouterMouvement(m: Omit<Mouvement, "id">, signature?: string) {
 
 export default function PageEpi() {
   const donnees = useDonnees();
+  const { role } = useSession();
   const [onglet, setOnglet] = useState<Onglet>("stocks");
+  // Responsable : tout ; contributeur : remises, réceptions et signatures ; lecteur : consultation.
+  const catalogue = peutModifier(role, "tout");
+  const saisie = peutModifier(role, "epi");
   if (!donnees) return <Chargement />;
 
   return (
@@ -76,18 +80,26 @@ export default function PageEpi() {
           </button>
         ))}
       </div>
-      {onglet === "stocks" && <Stocks donnees={donnees} />}
-      {onglet === "saisie" && <Saisie donnees={donnees} />}
-      {onglet === "fiches" && <FichesSalaries donnees={donnees} />}
-      {onglet === "historique" && <Historique donnees={donnees} />}
-      {onglet === "catalogue" && <Catalogue donnees={donnees} />}
+      {onglet === "stocks" && <Stocks donnees={donnees} catalogue={catalogue} saisie={saisie} />}
+      {onglet === "saisie" && (
+        <fieldset disabled={!saisie} className="min-w-0">
+          <Saisie donnees={donnees} />
+        </fieldset>
+      )}
+      {onglet === "fiches" && <FichesSalaries donnees={donnees} peutSigner={saisie} />}
+      {onglet === "historique" && <Historique donnees={donnees} saisie={saisie} />}
+      {onglet === "catalogue" && (
+        <fieldset disabled={!catalogue} className="min-w-0">
+          <Catalogue donnees={donnees} />
+        </fieldset>
+      )}
     </div>
   );
 }
 
 // ---------- Stocks & commandes ----------
 
-function Stocks({ donnees }: { donnees: Donnees }) {
+function Stocks({ donnees, catalogue, saisie }: { donnees: Donnees; catalogue: boolean; saisie: boolean }) {
   const [categorie, setCategorie] = useState("");
   const [seulementACommander, setSeulementACommander] = useState(false);
   const aujourdhui = dateDuJour();
@@ -207,6 +219,7 @@ function Stocks({ donnees }: { donnees: Donnees }) {
                       type="number"
                       min={0}
                       value={s.tampon}
+                      disabled={!catalogue}
                       onChange={(ev) => changerTampon(s.article, s.taille, Number(ev.target.value))}
                       className={`${classeChamp} w-20 text-right tabular-nums`}
                     />
@@ -220,7 +233,7 @@ function Stocks({ donnees }: { donnees: Donnees }) {
                     </Pastille>
                   </td>
                   <td className="px-3 py-2 text-right">
-                    {s.aCommander > 0 && (
+                    {s.aCommander > 0 && saisie && (
                       <button
                         type="button"
                         className="whitespace-nowrap text-xs text-bronze underline"
@@ -415,7 +428,7 @@ function HistoriqueSalarie({ donnees, salarieId }: { donnees: Donnees; salarieId
 
 // ---------- Historique ----------
 
-function Historique({ donnees }: { donnees: Donnees }) {
+function Historique({ donnees, saisie }: { donnees: Donnees; saisie: boolean }) {
   const [filtre, setFiltre] = useState("");
   const terme = filtre.toLowerCase();
   const nomArticle = (id: string) => donnees.articles.find((a) => a.id === id)?.nom ?? "Article supprimé";
@@ -462,7 +475,7 @@ function Historique({ donnees }: { donnees: Donnees }) {
                 <td className="px-3 py-1.5">{m.service}</td>
                 <td className="px-3 py-1.5 text-ardoise">{m.motif}</td>
                 <td className="px-3 py-1.5 text-right">
-                  <button type="button" onClick={() => supprimer(m)} title="Supprimer" className="text-gris hover:text-[#b42318]">
+                  <button type="button" disabled={!saisie} onClick={() => supprimer(m)} title="Supprimer" className="text-gris hover:text-[#b42318] disabled:hidden">
                     ✕
                   </button>
                 </td>

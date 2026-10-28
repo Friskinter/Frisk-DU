@@ -13,14 +13,15 @@ const liens = [
   { href: "/penibilite", label: "Pénibilité", icone: "⚠" },
   { href: "/epi", label: "EPI & stocks", icone: "⛑" },
   { href: "/bilans", label: "Bilans", icone: "▤" },
+  { href: "/journal", label: "Journal", icone: "◷" },
   { href: "/reglages", label: "Salariés & réglages", icone: "⚙" },
 ];
 
 const etatsEnregistrement: Record<Enregistrement, { texte: string; classe: string }> = {
   enregistre: { texte: "✓ Enregistré", classe: "text-gris" },
   "en-cours": { texte: "Enregistrement…", classe: "text-bronze-clair" },
-  erreur: { texte: "⚠ Non enregistré (connexion ?)", classe: "text-[#ec835a]" },
-  conflit: { texte: "⚠ Conflit, rechargez la page", classe: "text-[#ec835a]" },
+  erreur: { texte: "⚠ Hors connexion, nouvel essai…", classe: "text-[#ec835a]" },
+  refuse: { texte: "⚠ Modification refusée", classe: "text-[#ec835a]" },
 };
 
 export function Navigation() {

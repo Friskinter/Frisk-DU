@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { BibliothequeRisques } from "@/components/bibliotheque-risques";
 import { BoutonDocumentUnique } from "@/components/bouton-document-unique";
@@ -33,7 +34,7 @@ import {
   seuilsPenibilite,
   statutsAction,
 } from "@/lib/referentiel";
-import { modifier, useDonnees } from "@/lib/stockage";
+import { modifier, peutModifier, useDonnees, useSession } from "@/lib/stockage";
 import type { LigneDuerp } from "@/lib/types";
 
 const cellule = "border-b border-r border-pierre/60 p-1 align-top";
@@ -90,6 +91,8 @@ function mettreAJour(id: string, champs: Partial<LigneDuerp>) {
 
 export default function PageDuerp() {
   const donnees = useDonnees();
+  const { role } = useSession();
+  const modifiable = peutModifier(role, "tout");
   const [recherche, setRecherche] = useState("");
   const [unite, setUnite] = useState("");
   const [niveau, setNiveau] = useState("");
@@ -165,10 +168,10 @@ export default function PageDuerp() {
             <button type="button" className={classeBoutonSecondaire} onClick={() => setVersions(true)}>
               🗄 Versions
             </button>
-            <button type="button" className={classeBoutonSecondaire} onClick={() => setBibliotheque(true)}>
+            <button type="button" className={`${classeBoutonSecondaire} disabled:opacity-50`} disabled={!modifiable} onClick={() => setBibliotheque(true)}>
               📚 Bibliothèque de risques
             </button>
-            <button type="button" className={classeBouton} onClick={() => ajouter()}>
+            <button type="button" className={`${classeBouton} disabled:opacity-50`} disabled={!modifiable} onClick={() => ajouter()}>
               + Ajouter un risque
             </button>
           </>
@@ -202,7 +205,7 @@ export default function PageDuerp() {
         </div>
       )}
 
-      {donnees.duerp.length === 0 && (
+      {donnees.duerp.length === 0 && modifiable && (
         <div className="mb-6 rounded-sm border border-bronze/60 bg-white p-6 text-center">
           <p className="font-serif text-xl">Votre document unique est vide</p>
           <p className="mx-auto mt-2 max-w-xl text-sm text-ardoise">
@@ -263,170 +266,176 @@ export default function PageDuerp() {
         ))}
       </datalist>
 
-      <div className="max-h-[70vh] overflow-auto rounded-sm border border-pierre/70 bg-white print:max-h-none print:overflow-visible">
-        <table className="w-max table-fixed border-separate border-spacing-0 text-sm">
-          <thead className="sticky top-0 z-10 bg-marbre">
-            <tr>
-              {colonnes.map((c) => (
-                <th
-                  key={c.titre}
-                  title={c.aide}
-                  style={{ width: c.largeur }}
-                  className="border-b border-r border-pierre/60 px-2 py-2 text-left text-xs font-semibold uppercase tracking-wide text-ardoise"
-                >
-                  {c.titre}
-                  <span className="ml-1 cursor-help text-gris print:hidden">ⓘ</span>
-                </th>
-              ))}
-              <th style={{ width: 80 }} className="border-b border-pierre/60 px-2 py-2 print:hidden" />
-            </tr>
-          </thead>
-          <tbody>
-            {lignes.map((l) => {
-              const enRetard = actionEnRetard(l, aujourdhui);
-              const facteur = facteursPenibilite.find((f) => f.code === l.penibilite);
-              return (
-                <tr key={l.id} className="hover:bg-ivoire">
-                  <td className={cellule}>
-                    <input list="liste-unites" value={l.unite} onChange={(e) => mettreAJour(l.id, { unite: e.target.value })} className={champCellule} />
-                  </td>
-                  <td className={cellule}>
-                    <textarea rows={2} value={l.activite} onChange={(e) => mettreAJour(l.id, { activite: e.target.value })} className={`${champCellule} resize-y`} />
-                  </td>
-                  <td className={cellule}>
-                    <input list="liste-dangers" value={l.danger} onChange={(e) => mettreAJour(l.id, { danger: e.target.value })} className={champCellule} />
-                  </td>
-                  <td className={cellule}>
-                    <textarea rows={2} value={l.risque} onChange={(e) => mettreAJour(l.id, { risque: e.target.value })} className={`${champCellule} resize-y`} />
-                  </td>
-                  <td className={cellule}>
-                    <input type="number" min={0} value={l.effectif} onChange={(e) => mettreAJour(l.id, { effectif: Math.max(0, Number(e.target.value)) })} className={`${champCellule} tabular-nums`} />
-                  </td>
-                  <td className={cellule}>
-                    <select
-                      value={l.gravite}
-                      title={grilleGravite[l.gravite - 1]?.definition}
-                      onChange={(e) => mettreAJour(l.id, { gravite: Number(e.target.value) })}
-                      className={champCellule}
-                    >
-                      {grilleGravite.map((g) => (
-                        <option key={g.valeur} value={g.valeur}>
-                          {g.valeur} – {g.libelle}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className={cellule}>
-                    <select
-                      value={l.frequence}
-                      title={grilleFrequence[l.frequence - 1]?.definition}
-                      onChange={(e) => mettreAJour(l.id, { frequence: Number(e.target.value) })}
-                      className={champCellule}
-                    >
-                      {grilleFrequence.map((f) => (
-                        <option key={f.valeur} value={f.valeur}>
-                          {f.valeur} – {f.libelle}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className={`${cellule} px-2 py-2`}>
-                    <PastilleCriticite score={criticiteBrute(l)} />
-                  </td>
-                  <td className={cellule}>
-                    <textarea rows={2} value={l.mesures} onChange={(e) => mettreAJour(l.id, { mesures: e.target.value })} className={`${champCellule} resize-y`} />
-                  </td>
-                  <td className={cellule}>
-                    <select
-                      value={l.maitrise}
-                      title={grilleMaitrise.find((m) => m.valeur === l.maitrise)?.definition}
-                      onChange={(e) => mettreAJour(l.id, { maitrise: e.target.value as LigneDuerp["maitrise"] })}
-                      className={champCellule}
-                    >
-                      {grilleMaitrise.map((m) => (
-                        <option key={m.valeur} value={m.valeur}>
-                          {m.libelle} (×{m.coefficient})
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className={`${cellule} px-2 py-2`}>
-                    <PastilleCriticite score={risqueResiduel(l)} />
-                  </td>
-                  <td className={cellule}>
-                    <select
-                      value={l.penibilite}
-                      title={facteur?.seuil}
-                      onChange={(e) =>
-                        mettreAJour(l.id, {
-                          penibilite: e.target.value,
-                          seuilPenibilite: e.target.value ? l.seuilPenibilite : "non",
-                        })
-                      }
-                      className={champCellule}
-                    >
-                      <option value="">Aucun facteur</option>
-                      {facteursPenibilite.map((f) => (
-                        <option key={f.code} value={f.code}>
-                          {f.libelle}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className={cellule}>
-                    <select
-                      value={l.seuilPenibilite}
-                      disabled={!l.penibilite}
-                      onChange={(e) => mettreAJour(l.id, { seuilPenibilite: e.target.value as LigneDuerp["seuilPenibilite"] })}
-                      className={`${champCellule} disabled:text-gris`}
-                    >
-                      {seuilsPenibilite.map((s) => (
-                        <option key={s.valeur} value={s.valeur}>
-                          {s.libelle}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className={cellule}>
-                    <textarea rows={2} value={l.action} onChange={(e) => mettreAJour(l.id, { action: e.target.value })} className={`${champCellule} resize-y`} />
-                  </td>
-                  <td className={cellule}>
-                    <input value={l.responsable} onChange={(e) => mettreAJour(l.id, { responsable: e.target.value })} className={champCellule} />
-                  </td>
-                  <td className={cellule}>
-                    <input type="date" value={l.echeance} onChange={(e) => mettreAJour(l.id, { echeance: e.target.value })} className={`${champCellule} ${enRetard ? "font-semibold text-[#b42318]" : ""}`} />
-                    {enRetard && <p className="px-1.5 text-xs text-[#b42318]">⚠ En retard</p>}
-                  </td>
-                  <td className={cellule}>
-                    <select value={l.statut} onChange={(e) => mettreAJour(l.id, { statut: e.target.value as LigneDuerp["statut"] })} className={champCellule}>
-                      {statutsAction.map((s) => (
-                        <option key={s.valeur} value={s.valeur}>
-                          {s.libelle}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="border-b border-pierre/60 p-1 align-top whitespace-nowrap print:hidden">
-                    <button type="button" title="Dupliquer la ligne" onClick={() => ajouter(l)} className="rounded-sm px-2 py-1 text-ardoise hover:bg-marbre">
-                      ⧉
-                    </button>
-                    <button type="button" title="Supprimer la ligne" onClick={() => supprimer(l)} className="rounded-sm px-2 py-1 text-ardoise hover:bg-marbre hover:text-[#b42318]">
-                      ✕
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        <button
-          type="button"
-          onClick={() => ajouter()}
-          className="sticky left-0 block w-full px-4 py-3 text-left text-sm text-bronze hover:bg-marbre/60 print:hidden"
-        >
-          + Ajouter une ligne{unite ? ` dans « ${unite} »` : ""}
-        </button>
-      </div>
+      {/* Un fieldset désactivé grise d'un coup tous les champs pour les rôles sans droit de modification. */}
+      <fieldset disabled={!modifiable} className="min-w-0">
+        <div className="max-h-[70vh] overflow-auto rounded-sm border border-pierre/70 bg-white print:max-h-none print:overflow-visible">
+          <table className="w-max table-fixed border-separate border-spacing-0 text-sm">
+            <thead className="sticky top-0 z-10 bg-marbre">
+              <tr>
+                {colonnes.map((c) => (
+                  <th
+                    key={c.titre}
+                    title={c.aide}
+                    style={{ width: c.largeur }}
+                    className="border-b border-r border-pierre/60 px-2 py-2 text-left text-xs font-semibold uppercase tracking-wide text-ardoise"
+                  >
+                    {c.titre}
+                    <span className="ml-1 cursor-help text-gris print:hidden">ⓘ</span>
+                  </th>
+                ))}
+                <th style={{ width: 112 }} className="border-b border-pierre/60 px-2 py-2 print:hidden" />
+              </tr>
+            </thead>
+            <tbody>
+              {lignes.map((l) => {
+                const enRetard = actionEnRetard(l, aujourdhui);
+                const facteur = facteursPenibilite.find((f) => f.code === l.penibilite);
+                return (
+                  <tr key={l.id} className="hover:bg-ivoire">
+                    <td className={cellule}>
+                      <input list="liste-unites" value={l.unite} onChange={(e) => mettreAJour(l.id, { unite: e.target.value })} className={champCellule} />
+                    </td>
+                    <td className={cellule}>
+                      <textarea rows={2} value={l.activite} onChange={(e) => mettreAJour(l.id, { activite: e.target.value })} className={`${champCellule} resize-y`} />
+                    </td>
+                    <td className={cellule}>
+                      <input list="liste-dangers" value={l.danger} onChange={(e) => mettreAJour(l.id, { danger: e.target.value })} className={champCellule} />
+                    </td>
+                    <td className={cellule}>
+                      <textarea rows={2} value={l.risque} onChange={(e) => mettreAJour(l.id, { risque: e.target.value })} className={`${champCellule} resize-y`} />
+                    </td>
+                    <td className={cellule}>
+                      <input type="number" min={0} value={l.effectif} onChange={(e) => mettreAJour(l.id, { effectif: Math.max(0, Number(e.target.value)) })} className={`${champCellule} tabular-nums`} />
+                    </td>
+                    <td className={cellule}>
+                      <select
+                        value={l.gravite}
+                        title={grilleGravite[l.gravite - 1]?.definition}
+                        onChange={(e) => mettreAJour(l.id, { gravite: Number(e.target.value) })}
+                        className={champCellule}
+                      >
+                        {grilleGravite.map((g) => (
+                          <option key={g.valeur} value={g.valeur}>
+                            {g.valeur} – {g.libelle}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className={cellule}>
+                      <select
+                        value={l.frequence}
+                        title={grilleFrequence[l.frequence - 1]?.definition}
+                        onChange={(e) => mettreAJour(l.id, { frequence: Number(e.target.value) })}
+                        className={champCellule}
+                      >
+                        {grilleFrequence.map((f) => (
+                          <option key={f.valeur} value={f.valeur}>
+                            {f.valeur} – {f.libelle}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className={`${cellule} px-2 py-2`}>
+                      <PastilleCriticite score={criticiteBrute(l)} />
+                    </td>
+                    <td className={cellule}>
+                      <textarea rows={2} value={l.mesures} onChange={(e) => mettreAJour(l.id, { mesures: e.target.value })} className={`${champCellule} resize-y`} />
+                    </td>
+                    <td className={cellule}>
+                      <select
+                        value={l.maitrise}
+                        title={grilleMaitrise.find((m) => m.valeur === l.maitrise)?.definition}
+                        onChange={(e) => mettreAJour(l.id, { maitrise: e.target.value as LigneDuerp["maitrise"] })}
+                        className={champCellule}
+                      >
+                        {grilleMaitrise.map((m) => (
+                          <option key={m.valeur} value={m.valeur}>
+                            {m.libelle} (×{m.coefficient})
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className={`${cellule} px-2 py-2`}>
+                      <PastilleCriticite score={risqueResiduel(l)} />
+                    </td>
+                    <td className={cellule}>
+                      <select
+                        value={l.penibilite}
+                        title={facteur?.seuil}
+                        onChange={(e) =>
+                          mettreAJour(l.id, {
+                            penibilite: e.target.value,
+                            seuilPenibilite: e.target.value ? l.seuilPenibilite : "non",
+                          })
+                        }
+                        className={champCellule}
+                      >
+                        <option value="">Aucun facteur</option>
+                        {facteursPenibilite.map((f) => (
+                          <option key={f.code} value={f.code}>
+                            {f.libelle}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className={cellule}>
+                      <select
+                        value={l.seuilPenibilite}
+                        disabled={!l.penibilite}
+                        onChange={(e) => mettreAJour(l.id, { seuilPenibilite: e.target.value as LigneDuerp["seuilPenibilite"] })}
+                        className={`${champCellule} disabled:text-gris`}
+                      >
+                        {seuilsPenibilite.map((s) => (
+                          <option key={s.valeur} value={s.valeur}>
+                            {s.libelle}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className={cellule}>
+                      <textarea rows={2} value={l.action} onChange={(e) => mettreAJour(l.id, { action: e.target.value })} className={`${champCellule} resize-y`} />
+                    </td>
+                    <td className={cellule}>
+                      <input value={l.responsable} onChange={(e) => mettreAJour(l.id, { responsable: e.target.value })} className={champCellule} />
+                    </td>
+                    <td className={cellule}>
+                      <input type="date" value={l.echeance} onChange={(e) => mettreAJour(l.id, { echeance: e.target.value })} className={`${champCellule} ${enRetard ? "font-semibold text-[#b42318]" : ""}`} />
+                      {enRetard && <p className="px-1.5 text-xs text-[#b42318]">⚠ En retard</p>}
+                    </td>
+                    <td className={cellule}>
+                      <select value={l.statut} onChange={(e) => mettreAJour(l.id, { statut: e.target.value as LigneDuerp["statut"] })} className={champCellule}>
+                        {statutsAction.map((s) => (
+                          <option key={s.valeur} value={s.valeur}>
+                            {s.libelle}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="border-b border-pierre/60 p-1 align-top whitespace-nowrap print:hidden">
+                      <Link href={`/journal?element=${l.id}`} title="Historique des modifications de la ligne" className="rounded-sm px-2 py-1 text-ardoise hover:bg-marbre">
+                        ◷
+                      </Link>
+                      <button type="button" title="Dupliquer la ligne" onClick={() => ajouter(l)} className="rounded-sm px-2 py-1 text-ardoise hover:bg-marbre">
+                        ⧉
+                      </button>
+                      <button type="button" title="Supprimer la ligne" onClick={() => supprimer(l)} className="rounded-sm px-2 py-1 text-ardoise hover:bg-marbre hover:text-[#b42318]">
+                        ✕
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <button
+            type="button"
+            onClick={() => ajouter()}
+            className="sticky left-0 block w-full px-4 py-3 text-left text-sm text-bronze hover:bg-marbre/60 print:hidden"
+          >
+            + Ajouter une ligne{unite ? ` dans « ${unite} »` : ""}
+          </button>
+        </div>
+      </fieldset>
       <p className="mt-2 text-xs text-gris print:hidden">
         Astuce : survolez un en-tête ⓘ pour son explication, et le bouton ⧉ duplique une ligne pour saisir plus vite un risque proche.
       </p>
