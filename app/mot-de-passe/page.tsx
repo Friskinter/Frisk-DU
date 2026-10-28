@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { CodeDoubleAuth } from "@/components/code-double-auth";
 import { EcranAuth } from "@/components/ecran-auth";
 import { classeBouton, classeChamp } from "@/components/ui";
 import { supabaseNavigateur } from "@/lib/supabase/client";
+import { codeRequis } from "@/lib/double-auth";
 import { rechargerVers } from "@/lib/navigation";
 
 export default function ChoisirMotDePasse() {
@@ -11,12 +13,19 @@ export default function ChoisirMotDePasse() {
   const [confirmation, setConfirmation] = useState("");
   const [erreur, setErreur] = useState("");
   const [envoi, setEnvoi] = useState(false);
+  const [etapeCode, setEtapeCode] = useState(false);
 
   const valider = async (e: React.FormEvent) => {
     e.preventDefault();
     if (motDePasse.length < 10) return setErreur("Le mot de passe doit contenir au moins 10 caractères.");
     if (motDePasse !== confirmation) return setErreur("Les deux mots de passe ne sont pas identiques.");
     setEnvoi(true);
+    // Avec la double authentification, changer de mot de passe demande d'abord le code.
+    if (await codeRequis()) {
+      setEnvoi(false);
+      setEtapeCode(true);
+      return;
+    }
     const { error } = await supabaseNavigateur().auth.updateUser({
       password: motDePasse,
       data: { mot_de_passe_provisoire: false },
@@ -32,6 +41,14 @@ export default function ChoisirMotDePasse() {
     }
     rechargerVers("/");
   };
+
+  if (etapeCode) {
+    return (
+      <EcranAuth titre="Double authentification" sousTitre="Confirmez votre identité avant de changer de mot de passe.">
+        <CodeDoubleAuth onValide={() => setEtapeCode(false)} />
+      </EcranAuth>
+    );
+  }
 
   return (
     <EcranAuth titre="Choisissez votre mot de passe" sousTitre="Il vous servira à chaque connexion. 10 caractères minimum.">

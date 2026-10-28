@@ -16,7 +16,10 @@ import { champsManquants } from "@/lib/legal";
 import { deconnecter, ouvrirEntreprise } from "@/lib/stockage";
 import { libellesRoles } from "@/lib/operations";
 import { supabaseNavigateur } from "@/lib/supabase/client";
-import { ajouterUtilisateur, creerClient, reinitialiserMotDePasse, type Resultat } from "./actions";
+import { ajouterUtilisateur, creerClient, reinitialiserDoubleAuth, reinitialiserMotDePasse, type Resultat } from "./actions";
+import { CodeDoubleAuth } from "@/components/code-double-auth";
+import { DoubleAuthentification } from "@/components/double-authentification";
+import { codeRequis } from "@/lib/double-auth";
 import { rechargerVers } from "@/lib/navigation";
 
 type Client = {
@@ -36,7 +39,8 @@ type RoleMembre = keyof typeof libellesRoles;
 const rolesMembre = Object.keys(libellesRoles) as RoleMembre[];
 
 export default function Console() {
-  const [etat, setEtat] = useState<"chargement" | "refuse" | "pret">("chargement");
+  const [etat, setEtat] = useState<"chargement" | "refuse" | "code" | "pret">("chargement");
+  const [doubleAuth, setDoubleAuth] = useState(true);
   const [clients, setClients] = useState<Client[]>([]);
   const [groupes, setGroupes] = useState<Groupe[]>([]);
   const [emailAdmin, setEmailAdmin] = useState("");
@@ -47,6 +51,7 @@ export default function Console() {
     const supabase = supabaseNavigateur();
     const { data: utilisateur } = await supabase.auth.getUser();
     if (!utilisateur.user) return rechargerVers("/connexion");
+    if (await codeRequis()) return setEtat("code");
     const { data: admin } = await supabase
       .from("admins_frisk")
       .select("user_id")
@@ -164,6 +169,14 @@ export default function Console() {
   };
 
   if (etat === "chargement") return <Chargement />;
+  if (etat === "code") {
+    return (
+      <div className="mx-auto mt-24 max-w-sm rounded-sm border border-pierre/70 bg-white p-6">
+        <h1 className="mb-4 font-serif text-2xl">Double authentification</h1>
+        <CodeDoubleAuth onValide={() => rechargerVers("/console")} />
+      </div>
+    );
+  }
   if (etat === "refuse") {
     return (
       <div className="mx-auto mt-24 max-w-md text-center">
@@ -226,6 +239,14 @@ export default function Console() {
             Créez les accès de vos clients, gérez leurs utilisateurs et ouvrez leur espace pour les accompagner.
           </p>
         </div>
+
+        {!doubleAuth && (
+          <div className="rounded-sm border border-[#d03b3b] bg-[#d03b3b]/10 p-4 text-sm text-ardoise">
+            <p className="font-medium text-encre">Protégez votre compte administrateur</p>
+            <p className="mt-1">Il donne accès aux données de tous vos clients : activez la double authentification ci-dessous.</p>
+          </div>
+        )}
+        <DoubleAuthentification recommandee onChange={setDoubleAuth} />
 
         {champsManquants().length > 0 && (
           <div className="rounded-sm border border-[#fab219] bg-[#fab219]/10 p-4 text-sm text-ardoise">
@@ -357,6 +378,17 @@ export default function Console() {
                             }
                           >
                             Nouveau mot de passe
+                          </button>
+                          <button
+                            type="button"
+                            className="text-bronze underline"
+                            title="Si l'utilisateur a perdu son téléphone"
+                            onClick={() =>
+                              confirm(`Retirer la double authentification de ${m.email} ? Il pourra se connecter avec son seul mot de passe, puis la réactiver.`) &&
+                              afficher(reinitialiserDoubleAuth(m.user_id))
+                            }
+                          >
+                            Réinitialiser la double authentification
                           </button>
                           <button type="button" className="text-gris underline hover:text-[#b42318]" onClick={() => retirer(c, m)}>
                             Retirer

@@ -7,7 +7,7 @@ reset role;
 
 \ir ../migrations/009_groupes.sql
 
-do $$ begin assert public.frisk_version() = 9, 'version de la base'; end $$;
+do $$ begin assert public.frisk_version() >= 9, 'version de la base'; end $$;
 
 -- Un groupe de deux établissements (entreprises 1 et 3) ; l'entreprise 2 reste à part.
 delete from public.groupes;

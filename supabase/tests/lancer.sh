@@ -17,3 +17,4 @@ psql -At -f tests/04_formations.test.sql | grep -v '^$' | tail -1
 psql -At -f tests/05_verifications.test.sql | grep -v '^$' | tail -1
 psql -At -f tests/06_produits.test.sql | grep -v '^$' | tail -1
 psql -At -f tests/07_groupes.test.sql | grep -v '^$' | tail -1
+psql -At -f tests/08_double_authentification.test.sql | grep -v '^$' | tail -1

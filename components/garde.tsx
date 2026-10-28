@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { CodeDoubleAuth } from "@/components/code-double-auth";
 import { classeBouton } from "@/components/ui";
+import { rechargerVers } from "@/lib/navigation";
 import { documentsLegaux } from "@/lib/legal";
 import { accepterConditions, deconnecter, enregistrementEnAttente, useSession } from "@/lib/stockage";
 
@@ -39,6 +41,12 @@ export function Garde({ children }: { children: ReactNode }) {
     case "mot-de-passe-provisoire":
       // Les pages affichent elles-mêmes leur état de chargement tant que les données manquent.
       return <>{children}</>;
+    case "double-authentification":
+      return (
+        <Message titre="Double authentification">
+          <CodeDoubleAuth onValide={() => rechargerVers("/")} />
+        </Message>
+      );
     case "conditions-a-accepter":
       return <AcceptationConditions />;
     case "aucun-espace":

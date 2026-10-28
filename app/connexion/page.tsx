@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { CodeDoubleAuth } from "@/components/code-double-auth";
 import { EcranAuth } from "@/components/ecran-auth";
 import { classeBouton, classeChamp } from "@/components/ui";
 import { supabaseNavigateur } from "@/lib/supabase/client";
+import { codeRequis } from "@/lib/double-auth";
 import { rechargerVers } from "@/lib/navigation";
 
 export default function Connexion() {
@@ -12,6 +14,7 @@ export default function Connexion() {
   const [oubli, setOubli] = useState(false);
   const [message, setMessage] = useState<{ type: "erreur" | "info"; texte: string } | null>(null);
   const [envoi, setEnvoi] = useState(false);
+  const [etapeCode, setEtapeCode] = useState(false);
 
   const seConnecter = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +30,12 @@ export default function Connexion() {
             ? "E-mail ou mot de passe incorrect."
             : "Connexion impossible pour le moment. Réessayez dans quelques instants.",
       });
+      return;
+    }
+    // Double authentification activée : le code est demandé avant d'ouvrir l'espace.
+    if (await codeRequis()) {
+      setEnvoi(false);
+      setEtapeCode(true);
       return;
     }
     rechargerVers("/");
@@ -45,6 +54,14 @@ export default function Connexion() {
       texte: "Si un compte existe pour cette adresse, un e-mail vous a été envoyé pour choisir un nouveau mot de passe.",
     });
   };
+
+  if (etapeCode) {
+    return (
+      <EcranAuth titre="Double authentification" sousTitre="Une étape de plus pour protéger les données de votre entreprise.">
+        <CodeDoubleAuth onValide={() => rechargerVers("/")} />
+      </EcranAuth>
+    );
+  }
 
   return (
     <EcranAuth

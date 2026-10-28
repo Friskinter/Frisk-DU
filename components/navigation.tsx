@@ -117,6 +117,9 @@ export function Navigation() {
         <div className="min-w-0 lg:mt-3">
           <p className="hidden text-[10px] uppercase tracking-wider text-gris lg:block">Connecté en tant que</p>
           <p className="hidden truncate text-pierre lg:block" title={session.email}>{session.email}</p>
+          {session.statut === "pret" && (
+            <Link href="/compte" className="mr-2 text-[10px] text-bronze-clair underline">Mon compte</Link>
+          )}
           {(session.admin || session.statut === "pret") && (
           <span
             className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${
