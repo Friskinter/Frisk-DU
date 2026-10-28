@@ -38,6 +38,16 @@ Application de prévention des risques professionnels proposée par Frisk aux en
    ```
 3. Ouvrir http://localhost:3000 et se connecter avec le compte administrateur.
 
+## Vérifications
+
+```bash
+npm run lint   # règles de code
+npm test       # tests automatiques (calculs, alertes, référentiels, PDF)
+npm run build  # compilation et vérification des types
+```
+
+Elles sont lancées automatiquement par GitHub à chaque demande de fusion (`.github/workflows/verifications.yml`).
+
 ## Mise en ligne (Vercel)
 
 Importer le dépôt sur Vercel et ajouter la variable d'environnement `SUPABASE_SECRET_KEY`.
