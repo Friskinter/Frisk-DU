@@ -8,7 +8,7 @@ reset role;
 -- Le test du plan d'actions relance la migration 004 : on réapplique la 005.
 \ir ../migrations/005_accidents.sql
 
-do $$ begin assert public.frisk_version() = 5, 'version de la base'; end $$;
+do $$ begin assert public.frisk_version() >= 5, 'version de la base'; end $$;
 
 -- Le responsable enregistre un accident puis son analyse ; tout est journalisé.
 set role authenticated;

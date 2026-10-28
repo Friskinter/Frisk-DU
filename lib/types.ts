@@ -86,6 +86,26 @@ export type Evenement = {
   reevalueLe: string; // date de la revue de la cotation du risque après l'événement
 };
 
+// Formation ou habilitation obtenue par un salarié (une ligne par session suivie).
+export type Formation = {
+  id: string;
+  salarieId: string;
+  type: string; // code du référentiel (lib/formations.ts), "autre" pour une formation libre
+  intitule: string; // précision : catégories CACES, niveau d'habilitation, intitulé d'une formation libre…
+  obtenueLe: string; // AAAA-MM-JJ
+  expireLe: string; // AAAA-MM-JJ, "" si sans limite de validité
+  organisme: string;
+  attestation?: { chemin: string; nom: string }; // fichier dans le stockage Supabase (bucket « attestations »)
+  actionId?: string; // action du plan de prévention à l'origine de la formation
+};
+
+// Formation exigée pour un poste (ex. CACES R489 pour les caristes).
+export type Exigence = {
+  id: string;
+  poste: string;
+  type: string;
+};
+
 export type Salarie = {
   id: string;
   nom: string;
@@ -145,6 +165,8 @@ export type Donnees = {
   duerp: LigneDuerp[];
   actions: Action[];
   evenements: Evenement[];
+  formations: Formation[];
+  exigences: Exigence[];
   salaries: Salarie[];
   articles: Article[];
   mouvements: Mouvement[];

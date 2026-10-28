@@ -1,5 +1,5 @@
 // Contenu lu en base : complète les listes apparues depuis son enregistrement
-// (contenus antérieurs au plan d'actions ou au registre des accidents).
+// (contenus antérieurs au plan d'actions, au registre des accidents ou aux formations).
 
 import { avecActions } from "./actions";
 import { nouvelId } from "./calculs";
@@ -7,7 +7,13 @@ import type { Donnees, LigneDuerp } from "./types";
 
 export function normaliser(donnees: Donnees): Donnees {
   const d = avecActions(donnees);
-  return d.evenements ? d : { ...d, evenements: [] };
+  if (d.evenements && d.formations && d.exigences) return d;
+  return {
+    ...d,
+    evenements: d.evenements ?? [],
+    formations: d.formations ?? [],
+    exigences: d.exigences ?? [],
+  };
 }
 
 export function nouvelleLigne(unite: string, champs: Partial<LigneDuerp> = {}): LigneDuerp {

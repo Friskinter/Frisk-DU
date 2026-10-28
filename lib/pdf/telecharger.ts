@@ -71,3 +71,12 @@ export async function telechargerRegistreBenins(donnees: Donnees) {
     `Registre des accidents benins - ${donnees.entreprise} - ${aujourdhui}.pdf`,
   );
 }
+
+export async function telechargerEtatFormations(donnees: Donnees) {
+  const { EtatFormations } = await import("./etat-formations");
+  const aujourdhui = dateDuJour();
+  await enregistrerPdf(
+    createElement(EtatFormations, { donnees, aujourdhui, logo: logo() }),
+    `Formations et habilitations - ${donnees.entreprise} - ${aujourdhui}.pdf`,
+  );
+}

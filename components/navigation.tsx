@@ -12,6 +12,7 @@ const liens = [
   { href: "/duerp", label: "DUERP", icone: "☰" },
   { href: "/actions", label: "Plan d'actions", icone: "✓" },
   { href: "/accidents", label: "Accidents", icone: "⚑" },
+  { href: "/formations", label: "Formations", icone: "◆" },
   { href: "/penibilite", label: "Pénibilité", icone: "⚠" },
   { href: "/epi", label: "EPI & stocks", icone: "⛑" },
   { href: "/bilans", label: "Bilans", icone: "▤" },

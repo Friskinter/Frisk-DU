@@ -10,7 +10,9 @@ import {
   classeChamp,
 } from "@/components/ui";
 import { dateDuJour, nouvelId, telecharger } from "@/lib/calculs";
+import { supprimerAttestation } from "@/lib/attestations";
 import { donneesDemo, donneesVides } from "@/lib/demo";
+import { normaliser } from "@/lib/donnees";
 import { modifier, peutModifier, remplacer, useDonnees, useSession } from "@/lib/stockage";
 import type { Donnees, FicheEntreprise, Salarie } from "@/lib/types";
 
@@ -43,8 +45,15 @@ export default function PageReglages() {
     }));
 
   const supprimerSalarie = (s: Salarie) => {
-    if (confirm(`Supprimer ${s.nom || "ce salarié"} ? Son historique d'EPI sera conservé.`)) {
-      modifier((d) => ({ ...d, salaries: d.salaries.filter((x) => x.id !== s.id) }));
+    const formations = donnees.formations.filter((f) => f.salarieId === s.id);
+    const avertissement = formations.length ? ` Ses ${formations.length} formation(s) et leurs attestations seront supprimées.` : "";
+    if (confirm(`Supprimer ${s.nom || "ce salarié"} ? Son historique d'EPI sera conservé.${avertissement}`)) {
+      modifier((d) => ({
+        ...d,
+        salaries: d.salaries.filter((x) => x.id !== s.id),
+        formations: d.formations.filter((f) => f.salarieId !== s.id),
+      }));
+      formations.forEach((f) => f.attestation && void supprimerAttestation(f.attestation.chemin));
     }
   };
 
@@ -59,7 +68,8 @@ export default function PageReglages() {
     try {
       const contenu = JSON.parse(await fichier.text()) as Donnees;
       if (contenu.version !== 1 || !Array.isArray(contenu.duerp)) throw new Error();
-      remplacer(contenu);
+      // Une sauvegarde ancienne n'a pas toutes les listes : on les complète.
+      remplacer(normaliser(contenu));
       alert("Sauvegarde restaurée.");
     } catch {
       alert("Ce fichier n'est pas une sauvegarde Frisk valide.");

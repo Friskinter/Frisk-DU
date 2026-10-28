@@ -23,3 +23,8 @@ export function donnees(champs: Partial<Donnees> = {}): Donnees {
   return { ...donneesVides(), ...champs };
 }
 export { nouvelEvenement as evenement } from "@/lib/evenements";
+export { nouvelleExigence as exigence, nouvelleFormation as formation } from "@/lib/formations";
+
+export function salarie(champs: Partial<import("@/lib/types").Salarie> = {}): import("@/lib/types").Salarie {
+  return { id: nouvelId(), nom: "Salarié", service: "", poste: "", tailles: {}, ...champs };
+}

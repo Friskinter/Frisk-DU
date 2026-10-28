@@ -15,7 +15,7 @@ import { actionEnRetard, actionsDuRisque, effectifDeclare, estPapripact, nouvell
 import { dateDuJour, formatEuros, formaterDate, risqueResiduel, telechargerCsv } from "@/lib/calculs";
 import { efficacites, principesPrevention, statutsAction } from "@/lib/referentiel";
 import { modifier, peutModifier, useDonnees, useSession } from "@/lib/stockage";
-import type { Action, Evenement, LigneDuerp } from "@/lib/types";
+import type { Action, Evenement, Formation, LigneDuerp } from "@/lib/types";
 
 const cellule = "border-b border-pierre/60 p-1 align-top";
 const champ =
@@ -227,6 +227,7 @@ function PlanActions() {
                     actions={actions}
                     aujourdhui={aujourdhui}
                     evenements={donnees.evenements}
+                    formations={donnees.formations}
                     onAjouter={() => ajouter(l)}
                     onSupprimer={supprimer}
                     onStatut={changerStatut}
@@ -246,6 +247,7 @@ function GroupeRisque({
   actions,
   aujourdhui,
   evenements,
+  formations,
   onAjouter,
   onSupprimer,
   onStatut,
@@ -254,6 +256,7 @@ function GroupeRisque({
   actions: Action[];
   aujourdhui: string;
   evenements: Evenement[];
+  formations: Formation[];
   onAjouter: () => void;
   onSupprimer: (a: Action) => void;
   onStatut: (a: Action, statut: Action["statut"]) => void;
@@ -285,6 +288,7 @@ function GroupeRisque({
         const retard = actionEnRetard(a, aujourdhui);
         const fait = a.statut === "fait";
         const origine = a.evenementId ? evenements.find((e) => e.id === a.evenementId) : undefined;
+        const formes = formations.filter((f) => f.actionId === a.id).length;
         return (
           <tr key={a.id}>
             <td className={cellule}>
@@ -307,6 +311,11 @@ function GroupeRisque({
                 onChange={(e) => mettreAJour(a.id, { indicateur: e.target.value })}
                 className={`${champ} text-xs`}
               />
+              {a.principe === "formation" && (
+                <Link href="/formations" className="block px-1.5 text-xs text-ardoise underline">
+                  ◆ {formes ? `${formes} salarié(s) formé(s)` : "Enregistrer les salariés formés"}
+                </Link>
+              )}
               {origine && (
                 <Link href={`/accidents?evenement=${origine.id}`} className="block px-1.5 text-xs text-[#b42318] underline">
                   ⚑ Suite {origine.type === "presque-accident" || origine.type === "situation-dangereuse" ? "à l'événement" : "à l'accident"} du {formaterDate(origine.date)}
