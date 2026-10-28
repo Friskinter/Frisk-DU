@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { calculerAlertes } from "@/lib/alertes";
+import { documentsLegaux } from "@/lib/legal";
 import { libellesRoles } from "@/lib/operations";
 import { dateDuJour } from "@/lib/calculs";
 import { deconnecter, etablissementsDuGroupe, ouvrirEntreprise, useSession, type Enregistrement } from "@/lib/stockage";
@@ -116,6 +117,7 @@ export function Navigation() {
         <div className="min-w-0 lg:mt-3">
           <p className="hidden text-[10px] uppercase tracking-wider text-gris lg:block">Connecté en tant que</p>
           <p className="hidden truncate text-pierre lg:block" title={session.email}>{session.email}</p>
+          {(session.admin || session.statut === "pret") && (
           <span
             className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${
               session.admin ? "bg-bronze text-encre" : "bg-white/10 text-pierre"
@@ -123,10 +125,16 @@ export function Navigation() {
           >
             {session.admin ? "Administrateur Frisk" : session.role !== "admin" ? libellesRoles[session.role].libelle : ""}
           </span>
+          )}
         </div>
         <button type="button" onClick={deconnecter} className="text-pierre underline hover:text-marbre lg:mt-2">
           Se déconnecter
         </button>
+        <p className="hidden flex-wrap gap-x-2 text-[10px] text-gris lg:mt-3 lg:flex">
+          {documentsLegaux.slice(0, 3).map((d) => (
+            <Link key={d.href} href={d.href} className="hover:text-pierre hover:underline">{d.court}</Link>
+          ))}
+        </p>
       </div>
     </aside>
   );

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { classeBouton } from "@/components/ui";
-import { deconnecter, enregistrementEnAttente, useSession } from "@/lib/stockage";
+import { documentsLegaux } from "@/lib/legal";
+import { accepterConditions, deconnecter, enregistrementEnAttente, useSession } from "@/lib/stockage";
 
 function Message({ titre, children }: { titre: string; children: ReactNode }) {
   return (
@@ -38,6 +39,8 @@ export function Garde({ children }: { children: ReactNode }) {
     case "mot-de-passe-provisoire":
       // Les pages affichent elles-mêmes leur état de chargement tant que les données manquent.
       return <>{children}</>;
+    case "conditions-a-accepter":
+      return <AcceptationConditions />;
     case "aucun-espace":
       return (
         <Message titre="Aucun espace entreprise">
@@ -106,4 +109,46 @@ export function Garde({ children }: { children: ReactNode }) {
         </>
       );
   }
+}
+
+function AcceptationConditions() {
+  const [accepte, setAccepte] = useState(false);
+  const [envoi, setEnvoi] = useState(false);
+  const [erreur, setErreur] = useState(false);
+  return (
+    <Message titre="Conditions d'utilisation">
+      <p>Avant d&apos;utiliser Frisk DU, prenez connaissance des documents suivants (ils s&apos;ouvrent dans un nouvel onglet) :</p>
+      <ul className="space-y-1 text-left">
+        {documentsLegaux.map((d) => (
+          <li key={d.href}>
+            <a href={d.href} target="_blank" rel="noreferrer" className="text-bronze underline">{d.titre}</a>
+          </li>
+        ))}
+      </ul>
+      <label className="flex items-start gap-2 text-left">
+        <input type="checkbox" className="mt-1 accent-bronze" checked={accepte} onChange={(e) => setAccepte(e.target.checked)} />
+        <span>
+          J&apos;ai lu et j&apos;accepte les conditions générales d&apos;utilisation et l&apos;accord de traitement des données, pour mon compte
+          et pour le compte de mon entreprise.
+        </span>
+      </label>
+      {erreur && <p className="text-[#b42318]">L&apos;acceptation n&apos;a pas pu être enregistrée. Réessayez.</p>}
+      <div className="flex flex-wrap justify-center gap-3">
+        <button
+          type="button"
+          disabled={!accepte || envoi}
+          onClick={async () => {
+            setEnvoi(true);
+            const ok = await accepterConditions();
+            setEnvoi(false);
+            setErreur(!ok);
+          }}
+          className={`${classeBouton} disabled:opacity-50`}
+        >
+          {envoi ? "Enregistrement…" : "Accepter et continuer"}
+        </button>
+        <button type="button" onClick={deconnecter} className="text-ardoise underline">Se déconnecter</button>
+      </div>
+    </Message>
+  );
 }

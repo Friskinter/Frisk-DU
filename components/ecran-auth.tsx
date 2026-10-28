@@ -1,4 +1,6 @@
 import Image from "next/image";
+import Link from "next/link";
+import { documentsLegaux } from "@/lib/legal";
 import type { ReactNode } from "react";
 
 export function EcranAuth({ titre, sousTitre, children }: { titre: string; sousTitre?: string; children: ReactNode }) {
@@ -17,6 +19,11 @@ export function EcranAuth({ titre, sousTitre, children }: { titre: string; sousT
           {sousTitre && <p className="mt-1 text-sm text-ardoise">{sousTitre}</p>}
           <div className="mt-6">{children}</div>
         </div>
+        <p className="mt-6 flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs text-gris">
+          {documentsLegaux.map((d) => (
+            <Link key={d.href} href={d.href} className="hover:text-pierre hover:underline">{d.titre}</Link>
+          ))}
+        </p>
       </div>
     </div>
   );

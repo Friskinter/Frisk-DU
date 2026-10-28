@@ -7,6 +7,7 @@
 
 import { useSyncExternalStore } from "react";
 import { normaliser } from "./donnees";
+import { VERSION_CONDITIONS } from "./legal";
 import { donneesVides } from "./demo";
 import { rechargerVers } from "./navigation";
 import { appliquerOperations, calculerOperations, operationAutorisee, type Operation, type Role } from "./operations";
@@ -26,6 +27,7 @@ export type Statut =
   | "aucun-espace" // compte sans entreprise rattachée
   | "suspendu" // abonnement de l'entreprise suspendu
   | "mot-de-passe-provisoire"
+  | "conditions-a-accepter" // CGU et accord de traitement à accepter (première connexion ou nouvelle version)
   | "base-a-mettre-a-jour" // migration Supabase manquante
   | "erreur";
 
@@ -121,6 +123,11 @@ async function charger() {
   }
 
   const estAdmin = !!admin;
+  // Les utilisateurs des clients acceptent les conditions en vigueur ; l'équipe Frisk en est l'auteur.
+  if (!estAdmin && user.user_metadata?.conditions_acceptees !== VERSION_CONDITIONS) {
+    publier({ statut: "conditions-a-accepter", email });
+    return;
+  }
   let choix = "";
   try {
     choix = localStorage.getItem(CLE_ENTREPRISE) ?? "";
@@ -302,6 +309,15 @@ export function ouvrirEntreprise(id: string) {
     // Sans stockage, l'administrateur reviendra sur sa première entreprise.
   }
   rechargerVers("/");
+}
+
+export async function accepterConditions() {
+  const { error } = await supabaseNavigateur().auth.updateUser({
+    data: { conditions_acceptees: VERSION_CONDITIONS, conditions_acceptees_le: new Date().toISOString() },
+  });
+  if (error) return false;
+  rechargerVers("/");
+  return true;
 }
 
 export async function deconnecter() {

@@ -12,6 +12,7 @@ import {
   classeChamp,
 } from "@/components/ui";
 import { formaterDate } from "@/lib/calculs";
+import { champsManquants } from "@/lib/legal";
 import { deconnecter, ouvrirEntreprise } from "@/lib/stockage";
 import { libellesRoles } from "@/lib/operations";
 import { supabaseNavigateur } from "@/lib/supabase/client";
@@ -225,6 +226,16 @@ export default function Console() {
             Créez les accès de vos clients, gérez leurs utilisateurs et ouvrez leur espace pour les accompagner.
           </p>
         </div>
+
+        {champsManquants().length > 0 && (
+          <div className="rounded-sm border border-[#fab219] bg-[#fab219]/10 p-4 text-sm text-ardoise">
+            <p className="font-medium text-encre">Mentions légales à compléter avant la mise en ligne</p>
+            <p className="mt-1">
+              Renseignez dans <code>lib/legal.ts</code> : {champsManquants().join(", ")}. Ces informations apparaissent sur les{" "}
+              <Link href="/legal/mentions" className="text-bronze underline">pages légales</Link>.
+            </p>
+          </div>
+        )}
 
         {retour && (
           <div
