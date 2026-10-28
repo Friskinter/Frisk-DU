@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { FichesSalaries } from "@/components/fiches-epi";
+import { PaveSignature } from "@/components/signature";
 import {
   Carte,
   Chargement,
@@ -25,17 +27,26 @@ import { categoriesEpi } from "@/lib/referentiel";
 import { modifier, useDonnees } from "@/lib/stockage";
 import type { Article, Donnees, Mouvement } from "@/lib/types";
 
-type Onglet = "stocks" | "saisie" | "historique" | "catalogue";
+type Onglet = "stocks" | "saisie" | "fiches" | "historique" | "catalogue";
 
 const onglets: { valeur: Onglet; libelle: string }[] = [
   { valeur: "stocks", libelle: "Stocks & commandes" },
   { valeur: "saisie", libelle: "Saisir une sortie / entrée" },
+  { valeur: "fiches", libelle: "Fiches salariés" },
   { valeur: "historique", libelle: "Historique" },
   { valeur: "catalogue", libelle: "Catalogue d'articles" },
 ];
 
-function ajouterMouvement(m: Omit<Mouvement, "id">) {
-  modifier((d) => ({ ...d, mouvements: [{ id: nouvelId(), ...m }, ...d.mouvements] }));
+function ajouterMouvement(m: Omit<Mouvement, "id">, signature?: string) {
+  modifier((d) => {
+    if (!signature) return { ...d, mouvements: [{ id: nouvelId(), ...m }, ...d.mouvements] };
+    const signatureId = nouvelId();
+    return {
+      ...d,
+      signatures: { ...d.signatures, [signatureId]: { image: signature, date: dateDuJour(), salarieId: m.salarieId } },
+      mouvements: [{ id: nouvelId(), ...m, signatureId }, ...d.mouvements],
+    };
+  });
 }
 
 export default function PageEpi() {
@@ -67,6 +78,7 @@ export default function PageEpi() {
       </div>
       {onglet === "stocks" && <Stocks donnees={donnees} />}
       {onglet === "saisie" && <Saisie donnees={donnees} />}
+      {onglet === "fiches" && <FichesSalaries donnees={donnees} />}
       {onglet === "historique" && <Historique donnees={donnees} />}
       {onglet === "catalogue" && <Catalogue donnees={donnees} />}
     </div>
@@ -245,6 +257,8 @@ function Saisie({ donnees }: { donnees: Donnees }) {
   const [date, setDate] = useState(dateDuJour());
   const [motif, setMotif] = useState("Dotation");
   const [confirmation, setConfirmation] = useState("");
+  const [signature, setSignature] = useState<string | null>(null);
+  const [pave, setPave] = useState(0); // change la clé du pavé pour l'effacer après chaque remise
 
   const article = donnees.articles.find((a) => a.id === articleId);
   const salarie = donnees.salaries.find((s) => s.id === salarieId);
@@ -267,13 +281,15 @@ function Saisie({ donnees }: { donnees: Donnees }) {
       date, type, articleId: article.id, taille: tailleChoisie, quantite,
       salarieId: type === "sortie" ? salarie!.id : "", service: type === "sortie" ? salarie!.service : "",
       motif,
-    });
+    }, type === "sortie" && signature ? signature : undefined);
     setConfirmation(
       `${type === "sortie" ? "Sortie" : "Entrée"} enregistrée : ${quantite} × ${article.nom} (${tailleChoisie})${
-        type === "sortie" ? ` pour ${salarie!.nom}` : ""
+        type === "sortie" ? ` pour ${salarie!.nom}${signature ? ", signée" : ""}` : ""
       }.`,
     );
     setQuantite(1);
+    setSignature(null);
+    setPave((n) => n + 1);
   };
 
   return (
@@ -352,8 +368,18 @@ function Saisie({ donnees }: { donnees: Donnees }) {
             </select>
           </label>
 
+          {type === "sortie" && salarie && (
+            <div className="text-sm">
+              <p>Signature de {salarie.nom} <span className="text-gris">(facultatif, peut être faite plus tard)</span></p>
+              <p className="mb-2 text-xs text-gris">
+                En signant, le salarié reconnaît avoir reçu cet équipement et avoir été informé de ses conditions d&apos;utilisation.
+              </p>
+              <PaveSignature key={pave} onChange={setSignature} />
+            </div>
+          )}
+
           <button type="submit" className={`${classeBouton} w-full justify-center py-3`}>
-            Enregistrer
+            {type === "sortie" && signature ? "Enregistrer la remise signée" : "Enregistrer"}
           </button>
           {confirmation && <p className="text-sm text-[#006300]">✓ {confirmation}</p>}
         </form>
@@ -378,7 +404,9 @@ function HistoriqueSalarie({ donnees, salarieId }: { donnees: Donnees; salarieId
           <span>
             {m.quantite} × {donnees.articles.find((a) => a.id === m.articleId)?.nom ?? "Article supprimé"} ({m.taille})
           </span>
-          <span className="text-gris">{formaterDate(m.date)} · {m.motif}</span>
+          <span className="text-gris">
+            {formaterDate(m.date)} · {m.motif} · {m.signatureId ? <span className="text-[#006300]">✓ signée</span> : "non signée"}
+          </span>
         </li>
       ))}
     </ul>
