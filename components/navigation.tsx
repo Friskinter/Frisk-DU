@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { calculerAlertes } from "@/lib/alertes";
+import { libellesRoles } from "@/lib/operations";
 import { dateDuJour } from "@/lib/calculs";
 import { deconnecter, etablissementsDuGroupe, ouvrirEntreprise, useSession, type Enregistrement } from "@/lib/stockage";
 
@@ -111,8 +112,19 @@ export function Navigation() {
       </nav>
       <div className="flex items-center justify-between gap-3 border-t border-white/10 px-4 py-2 text-xs lg:block lg:px-5 lg:py-4">
         {session.statut === "pret" && <p className={enregistrement.classe}>{enregistrement.texte}</p>}
-        <p className="hidden truncate text-gris lg:mt-2 lg:block">{session.email}</p>
-        <button type="button" onClick={deconnecter} className="text-pierre underline hover:text-marbre lg:mt-1">
+        {/* Compte connecté : utile quand on passe d'un compte administrateur à un compte client. */}
+        <div className="min-w-0 lg:mt-3">
+          <p className="hidden text-[10px] uppercase tracking-wider text-gris lg:block">Connecté en tant que</p>
+          <p className="hidden truncate text-pierre lg:block" title={session.email}>{session.email}</p>
+          <span
+            className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${
+              session.admin ? "bg-bronze text-encre" : "bg-white/10 text-pierre"
+            }`}
+          >
+            {session.admin ? "Administrateur Frisk" : session.role !== "admin" ? libellesRoles[session.role].libelle : ""}
+          </span>
+        </div>
+        <button type="button" onClick={deconnecter} className="text-pierre underline hover:text-marbre lg:mt-2">
           Se déconnecter
         </button>
       </div>
