@@ -18,7 +18,7 @@ const DELAI_ENREGISTREMENT = 800;
 const DELAI_NOUVEL_ESSAI = 5000;
 const OPERATIONS_PAR_ENVOI = 200;
 // Version de la base attendue par cette version de Frisk DU (fonction frisk_version, migrations).
-export const VERSION_BASE = 8;
+export const VERSION_BASE = 9;
 
 export type Statut =
   | "chargement"
@@ -39,6 +39,9 @@ export type Session = {
   entrepriseId: string;
   enregistrement: Enregistrement;
   donnees: Donnees | null;
+  // Multi-établissements : groupe de l'entreprise active et espaces accessibles (tous groupes confondus).
+  groupe: { id: string; nom: string } | null;
+  espaces: { id: string; nom: string; groupeId: string | null }[];
 };
 
 let session: Session = {
@@ -49,6 +52,8 @@ let session: Session = {
   entrepriseId: "",
   enregistrement: "enregistre",
   donnees: null,
+  groupe: null,
+  espaces: [],
 };
 // Opérations pas encore envoyées, et celles en cours d'envoi.
 let enAttente: Operation[] = [];
@@ -132,17 +137,38 @@ async function charger() {
     return;
   }
 
-  const { data: entreprise } = await supabase.from("entreprises").select("nom, actif").eq("id", entrepriseId).maybeSingle();
-  if (!entreprise || (!entreprise.actif && !estAdmin)) {
-    publier({ statut: entreprise ? "suspendu" : "aucun-espace", email, admin: estAdmin });
-    return;
-  }
-
+  // Avant toute lecture : une base pas encore migrée ne connaît pas les colonnes récentes.
   const { data: versionBase } = await supabase.rpc("frisk_version");
   if (typeof versionBase !== "number" || versionBase < VERSION_BASE) {
     publier({ statut: "base-a-mettre-a-jour", email, admin: estAdmin });
     return;
   }
+
+  const { data: entreprise } = await supabase
+    .from("entreprises")
+    .select("nom, actif, groupe_id, groupes(nom)")
+    .eq("id", entrepriseId)
+    .maybeSingle();
+  if (!entreprise || (!entreprise.actif && !estAdmin)) {
+    publier({ statut: entreprise ? "suspendu" : "aucun-espace", email, admin: estAdmin });
+    return;
+  }
+
+  // Espaces entre lesquels l'utilisateur peut passer : ceux auxquels il est rattaché (pour Frisk, les
+  // établissements du groupe ; les autres clients s'ouvrent depuis la console). Les règles de la base filtrent.
+  const groupeId = (entreprise.groupe_id as string | null) ?? null;
+  const requete = supabase.from("entreprises").select("id, nom, actif, groupe_id").order("nom");
+  const { data: listeEspaces } = estAdmin
+    ? groupeId
+      ? await requete.eq("groupe_id", groupeId)
+      : { data: [] }
+    : await requete.in("id", autorisees.map((a) => a.entreprise_id));
+  const espaces = ((listeEspaces ?? []) as { id: string; nom: string; actif: boolean; groupe_id: string | null }[])
+    .filter((x) => x.actif || estAdmin)
+    .map((x) => ({ id: x.id, nom: x.nom, groupeId: x.groupe_id }));
+  const groupe: Session["groupe"] = groupeId
+    ? { id: groupeId, nom: (entreprise.groupes as unknown as { nom: string } | null)?.nom ?? "" }
+    : null;
 
   const contenu = await lireContenu(entrepriseId);
   if (contenu === undefined) {
@@ -156,6 +182,8 @@ async function charger() {
     admin: estAdmin,
     role,
     entrepriseId,
+    groupe,
+    espaces,
     donnees: contenu ? normaliser(contenu) : { ...donneesVides(), entreprise: entreprise.nom },
   });
   ecouterCollegues(entrepriseId);
@@ -256,6 +284,11 @@ export function modifier(transformation: (d: Donnees) => Donnees) {
 
 export function remplacer(donnees: Donnees) {
   modifier(() => donnees);
+}
+
+// Établissements du groupe de l'entreprise active, accessibles à l'utilisateur (vue d'ensemble).
+export function etablissementsDuGroupe(session: Pick<Session, "groupe" | "espaces">) {
+  return session.groupe ? session.espaces.filter((e) => e.groupeId === session.groupe!.id) : [];
 }
 
 export function enregistrementEnAttente() {

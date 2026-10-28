@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { calculerAlertes } from "@/lib/alertes";
 import { dateDuJour } from "@/lib/calculs";
-import { deconnecter, useSession, type Enregistrement } from "@/lib/stockage";
+import { deconnecter, etablissementsDuGroupe, ouvrirEntreprise, useSession, type Enregistrement } from "@/lib/stockage";
 
 const liens = [
   { href: "/", label: "Tableau de bord", icone: "▦" },
@@ -45,10 +45,35 @@ export function Navigation() {
           <p className="font-serif text-lg leading-none tracking-[0.2em] text-marbre">
             FRISK <span className="text-bronze-clair">DU</span>
           </p>
-          <p className="mt-1 truncate text-xs text-gris">{session.donnees?.entreprise ?? "…"}</p>
+          {session.espaces.length > 1 ? (
+            // Plusieurs établissements ou plusieurs clients : on passe de l'un à l'autre.
+            <select
+              value={session.entrepriseId}
+              onChange={(e) => ouvrirEntreprise(e.target.value)}
+              aria-label="Changer d'établissement"
+              className="mt-1 w-full max-w-48 truncate rounded-sm border border-white/15 bg-encre px-1 py-0.5 text-xs text-pierre"
+            >
+              {session.espaces.map((e) => (
+                <option key={e.id} value={e.id}>{e.nom}</option>
+              ))}
+            </select>
+          ) : (
+            <p className="mt-1 truncate text-xs text-gris">{session.donnees?.entreprise ?? "…"}</p>
+          )}
         </div>
       </div>
       <nav className="flex gap-1 overflow-x-auto px-2 pb-2 lg:flex-1 lg:flex-col lg:px-3">
+        {etablissementsDuGroupe(session).length > 1 && (
+          <Link
+            href="/groupe"
+            className={`flex shrink-0 items-center gap-3 rounded-sm px-3 py-2 text-sm transition-colors ${
+              chemin === "/groupe" ? "bg-bronze text-encre" : "text-bronze-clair hover:bg-white/5"
+            }`}
+          >
+            <span aria-hidden className="w-4 text-center">⊞</span>
+            Vue d&apos;ensemble
+          </Link>
+        )}
         {liens.map((lien) => {
           const actif = chemin === lien.href;
           return (
