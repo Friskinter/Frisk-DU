@@ -19,7 +19,7 @@ const DELAI_ENREGISTREMENT = 800;
 const DELAI_NOUVEL_ESSAI = 5000;
 const OPERATIONS_PAR_ENVOI = 200;
 // Version de la base attendue par cette version de Frisk DU (fonction frisk_version, migrations).
-export const VERSION_BASE = 9;
+export const VERSION_BASE = 10;
 
 export type Statut =
   | "chargement"
@@ -27,6 +27,7 @@ export type Statut =
   | "aucun-espace" // compte sans entreprise rattachée
   | "suspendu" // abonnement de l'entreprise suspendu
   | "mot-de-passe-provisoire"
+  | "double-authentification" // code de l'application d'authentification à saisir
   | "conditions-a-accepter" // CGU et accord de traitement à accepter (première connexion ou nouvelle version)
   | "base-a-mettre-a-jour" // migration Supabase manquante
   | "erreur";
@@ -108,6 +109,13 @@ async function charger() {
     return;
   }
   const email = user.email ?? "";
+  // Double authentification activée mais pas encore validée pour cette session : la base refuserait
+  // l'accès aux données (migration 010), on demande d'abord le code.
+  const { data: niveau } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (niveau?.nextLevel === "aal2" && niveau.currentLevel !== "aal2") {
+    publier({ statut: "double-authentification", email });
+    return;
+  }
   if (user.user_metadata?.mot_de_passe_provisoire) {
     publier({ statut: "mot-de-passe-provisoire", email });
     return;

@@ -20,6 +20,9 @@ async function verifierAdmin() {
   const supabase = await supabaseServeur();
   const { data } = await supabase.auth.getUser();
   if (!data.user) return false;
+  // Double authentification activée mais non validée pour cette session : refus.
+  const { data: niveau } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (niveau?.nextLevel === "aal2" && niveau.currentLevel !== "aal2") return false;
   const { data: admin } = await supabase.from("admins_frisk").select("user_id").eq("user_id", data.user.id).maybeSingle();
   return !!admin;
 }
@@ -117,4 +120,21 @@ export async function reinitialiserMotDePasse(userId: string): Promise<Resultat>
   });
   if (error) return { ok: false, message: "Le mot de passe n'a pas pu être réinitialisé." };
   return { ok: true, message: "Nouveau mot de passe provisoire créé.", motDePasse };
+}
+
+// Téléphone perdu : retire la double authentification d'un utilisateur, qui se reconnecte avec son
+// seul mot de passe puis peut la réactiver.
+export async function reinitialiserDoubleAuth(userId: string): Promise<Resultat> {
+  if (!(await verifierAdmin())) return { ok: false, message: "Accès réservé aux administrateurs Frisk." };
+  const admin = supabaseAdmin();
+  if (!admin) return { ok: false, message: SANS_CLE };
+
+  const { data, error } = await admin.auth.admin.mfa.listFactors({ userId });
+  if (error) return { ok: false, message: "La double authentification n'a pas pu être lue." };
+  if (!data.factors.length) return { ok: true, message: "Cet utilisateur n'avait pas de double authentification." };
+  for (const facteur of data.factors) {
+    const { error: erreur } = await admin.auth.admin.mfa.deleteFactor({ userId, id: facteur.id });
+    if (erreur) return { ok: false, message: "La double authentification n'a pas pu être retirée." };
+  }
+  return { ok: true, message: "Double authentification retirée : l'utilisateur se connecte avec son mot de passe et peut la réactiver." };
 }
