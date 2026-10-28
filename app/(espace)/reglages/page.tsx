@@ -11,7 +11,7 @@ import {
 } from "@/components/ui";
 import { dateDuJour, nouvelId, telecharger } from "@/lib/calculs";
 import { donneesDemo, donneesVides } from "@/lib/demo";
-import { modifier, remplacer, useDonnees } from "@/lib/stockage";
+import { modifier, peutModifier, remplacer, useDonnees, useSession } from "@/lib/stockage";
 import type { Donnees, FicheEntreprise, Salarie } from "@/lib/types";
 
 const categoriesTailles = ["Mains", "Pieds", "Corps", "Haute visibilité"];
@@ -28,7 +28,9 @@ const champsFiche: { cle: keyof FicheEntreprise; libelle: string; exemple: strin
 
 export default function PageReglages() {
   const donnees = useDonnees();
+  const { role } = useSession();
   if (!donnees) return <Chargement />;
+  const modifiable = peutModifier(role, "tout");
 
   const majSalarie = (id: string, champs: Partial<Salarie>) =>
     modifier((d) => ({ ...d, salaries: d.salaries.map((s) => (s.id === id ? { ...s, ...champs } : s)) }));
@@ -67,115 +69,120 @@ export default function PageReglages() {
     <div className="space-y-6">
       <EnTetePage titre="Salariés & réglages" description="Les listes utilisées dans tout Frisk DU." />
 
-      <Carte titre="Entreprise">
-        <p className="mb-4 text-sm text-ardoise">Ces informations figurent sur la page de garde du document unique.</p>
-        <div className="grid gap-4 md:grid-cols-2">
-          <label className="block text-sm">
-            Raison sociale
-            <input
-              value={donnees.entreprise}
-              onChange={(e) => modifier((d) => ({ ...d, entreprise: e.target.value }))}
-              className={`${classeChamp} mt-1`}
-            />
-          </label>
-          {champsFiche.map((c) => (
-            <label key={c.cle} className="block text-sm">
-              {c.libelle}
+      {/* Réservé aux responsables : un fieldset désactivé grise tous les champs pour les autres rôles. */}
+      <fieldset disabled={!modifiable} className="min-w-0 space-y-6">
+
+        <Carte titre="Entreprise">
+          <p className="mb-4 text-sm text-ardoise">Ces informations figurent sur la page de garde du document unique.</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block text-sm">
+              Raison sociale
               <input
-                value={donnees.fiche?.[c.cle] ?? ""}
-                placeholder={c.exemple}
-                onChange={(e) =>
-                  modifier((d) => ({ ...d, fiche: { ...ficheVide, ...d.fiche, [c.cle]: e.target.value } }))
-                }
+                value={donnees.entreprise}
+                onChange={(e) => modifier((d) => ({ ...d, entreprise: e.target.value }))}
                 className={`${classeChamp} mt-1`}
               />
             </label>
-          ))}
-        </div>
-      </Carte>
+            {champsFiche.map((c) => (
+              <label key={c.cle} className="block text-sm">
+                {c.libelle}
+                <input
+                  value={donnees.fiche?.[c.cle] ?? ""}
+                  placeholder={c.exemple}
+                  onChange={(e) =>
+                    modifier((d) => ({ ...d, fiche: { ...ficheVide, ...d.fiche, [c.cle]: e.target.value } }))
+                  }
+                  className={`${classeChamp} mt-1`}
+                />
+              </label>
+            ))}
+          </div>
+        </Carte>
 
-      <Carte titre="Alertes par e-mail">
-        <label className="flex items-start gap-3 text-sm">
-          <input
-            type="checkbox"
-            className="mt-1 accent-bronze"
-            checked={donnees.preferences?.alertesEmail !== false}
-            onChange={(e) => modifier((d) => ({ ...d, preferences: { ...d.preferences, alertesEmail: e.target.checked } }))}
-          />
-          <span>
-            Envoyer chaque lundi un récapitulatif des points à traiter à tous les utilisateurs de l&apos;entreprise
-            <span className="block text-xs text-gris">
-              Actions en retard ou proches de l&apos;échéance, stocks en rupture ou sous le stock tampon, mise à jour annuelle
-              du DUERP, remises d&apos;EPI non signées. Aucun e-mail n&apos;est envoyé s&apos;il n&apos;y a rien à signaler.
+        <Carte titre="Alertes par e-mail">
+          <label className="flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              className="mt-1 accent-bronze"
+              checked={donnees.preferences?.alertesEmail !== false}
+              onChange={(e) => modifier((d) => ({ ...d, preferences: { ...d.preferences, alertesEmail: e.target.checked } }))}
+            />
+            <span>
+              Envoyer chaque lundi un récapitulatif des points à traiter à tous les utilisateurs de l&apos;entreprise
+              <span className="block text-xs text-gris">
+                Actions en retard ou proches de l&apos;échéance, stocks en rupture ou sous le stock tampon, mise à jour annuelle
+                du DUERP, remises d&apos;EPI non signées. Aucun e-mail n&apos;est envoyé s&apos;il n&apos;y a rien à signaler.
+              </span>
             </span>
-          </span>
-        </label>
-      </Carte>
+          </label>
+        </Carte>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Liste
-          titre="Services"
-          aide="Utilisés pour les salariés et les bilans d'EPI."
-          valeurs={donnees.services}
-          onChange={(services) => modifier((d) => ({ ...d, services }))}
-        />
-        <Liste
-          titre="Unités de travail"
-          aide="Proposées dans la première colonne du DUERP."
-          valeurs={donnees.unites}
-          onChange={(unites) => modifier((d) => ({ ...d, unites }))}
-        />
-      </div>
-
-      <Carte titre={`Salariés (${donnees.salaries.length})`}>
-        <p className="mb-3 text-sm text-ardoise">
-          Les tailles renseignées ici sont proposées automatiquement lors de la remise d&apos;un EPI.
-        </p>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[56rem] text-sm">
-            <thead className="bg-marbre text-left text-xs uppercase tracking-wide text-ardoise">
-              <tr>
-                <th className="px-2 py-2">Nom</th>
-                <th className="px-2 py-2">Service</th>
-                <th className="px-2 py-2">Poste</th>
-                {categoriesTailles.map((c) => (
-                  <th key={c} className="px-2 py-2">Taille {c.toLowerCase()}</th>
-                ))}
-                <th className="px-2 py-2" />
-              </tr>
-            </thead>
-            <tbody>
-              {donnees.salaries.map((s) => (
-                <tr key={s.id} className="border-t border-pierre/60">
-                  <td className="px-2 py-1.5"><input value={s.nom} placeholder="Nom" onChange={(e) => majSalarie(s.id, { nom: e.target.value })} className={classeChamp} /></td>
-                  <td className="px-2 py-1.5">
-                    <select value={s.service} onChange={(e) => majSalarie(s.id, { service: e.target.value })} className={classeChamp}>
-                      <option value="">—</option>
-                      {donnees.services.map((x) => <option key={x}>{x}</option>)}
-                    </select>
-                  </td>
-                  <td className="px-2 py-1.5"><input value={s.poste} onChange={(e) => majSalarie(s.id, { poste: e.target.value })} className={classeChamp} /></td>
-                  {categoriesTailles.map((c) => (
-                    <td key={c} className="px-2 py-1.5">
-                      <input
-                        value={s.tailles[c] ?? ""}
-                        onChange={(e) => majSalarie(s.id, { tailles: { ...s.tailles, [c]: e.target.value } })}
-                        className={`${classeChamp} w-20`}
-                      />
-                    </td>
-                  ))}
-                  <td className="px-2 py-1.5 text-right">
-                    <button type="button" onClick={() => supprimerSalarie(s)} title="Supprimer" className="text-gris hover:text-[#b42318]">✕</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Liste
+            titre="Services"
+            aide="Utilisés pour les salariés et les bilans d'EPI."
+            valeurs={donnees.services}
+            onChange={(services) => modifier((d) => ({ ...d, services }))}
+          />
+          <Liste
+            titre="Unités de travail"
+            aide="Proposées dans la première colonne du DUERP."
+            valeurs={donnees.unites}
+            onChange={(unites) => modifier((d) => ({ ...d, unites }))}
+          />
         </div>
-        <button type="button" className={`${classeBoutonSecondaire} mt-3`} onClick={ajouterSalarie}>
-          + Ajouter un salarié
-        </button>
-      </Carte>
+
+        <Carte titre={`Salariés (${donnees.salaries.length})`}>
+          <p className="mb-3 text-sm text-ardoise">
+            Les tailles renseignées ici sont proposées automatiquement lors de la remise d&apos;un EPI.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[56rem] text-sm">
+              <thead className="bg-marbre text-left text-xs uppercase tracking-wide text-ardoise">
+                <tr>
+                  <th className="px-2 py-2">Nom</th>
+                  <th className="px-2 py-2">Service</th>
+                  <th className="px-2 py-2">Poste</th>
+                  {categoriesTailles.map((c) => (
+                    <th key={c} className="px-2 py-2">Taille {c.toLowerCase()}</th>
+                  ))}
+                  <th className="px-2 py-2" />
+                </tr>
+              </thead>
+              <tbody>
+                {donnees.salaries.map((s) => (
+                  <tr key={s.id} className="border-t border-pierre/60">
+                    <td className="px-2 py-1.5"><input value={s.nom} placeholder="Nom" onChange={(e) => majSalarie(s.id, { nom: e.target.value })} className={classeChamp} /></td>
+                    <td className="px-2 py-1.5">
+                      <select value={s.service} onChange={(e) => majSalarie(s.id, { service: e.target.value })} className={classeChamp}>
+                        <option value="">—</option>
+                        {donnees.services.map((x) => <option key={x}>{x}</option>)}
+                      </select>
+                    </td>
+                    <td className="px-2 py-1.5"><input value={s.poste} onChange={(e) => majSalarie(s.id, { poste: e.target.value })} className={classeChamp} /></td>
+                    {categoriesTailles.map((c) => (
+                      <td key={c} className="px-2 py-1.5">
+                        <input
+                          value={s.tailles[c] ?? ""}
+                          onChange={(e) => majSalarie(s.id, { tailles: { ...s.tailles, [c]: e.target.value } })}
+                          className={`${classeChamp} w-20`}
+                        />
+                      </td>
+                    ))}
+                    <td className="px-2 py-1.5 text-right">
+                      <button type="button" onClick={() => supprimerSalarie(s)} title="Supprimer" className="text-gris hover:text-[#b42318]">✕</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <button type="button" className={`${classeBoutonSecondaire} mt-3`} onClick={ajouterSalarie}>
+            + Ajouter un salarié
+          </button>
+        </Carte>
+
+      </fieldset>
 
       <Carte titre="Données">
         <p className="mb-4 text-sm text-ardoise">
@@ -186,29 +193,33 @@ export default function PageReglages() {
           <button type="button" className={classeBouton} onClick={sauvegarder}>
             Télécharger une sauvegarde
           </button>
-          <label className={`${classeBoutonSecondaire} cursor-pointer`}>
-            Restaurer une sauvegarde
-            <input
-              type="file"
-              accept="application/json,.json"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && restaurer(e.target.files[0])}
-            />
-          </label>
-          <button
-            type="button"
-            className={classeBoutonSecondaire}
-            onClick={() => confirm("Remplacer toutes les données de l'entreprise par l'exemple de démonstration ?") && remplacer(donneesDemo(dateDuJour()))}
-          >
-            Recharger la démonstration
-          </button>
-          <button
-            type="button"
-            className={`${classeBoutonSecondaire} hover:border-[#b42318] hover:text-[#b42318]`}
-            onClick={() => confirm("Tout effacer et repartir de zéro ? Cette action est irréversible.") && remplacer(donneesVides())}
-          >
-            Repartir de zéro
-          </button>
+          {modifiable && (
+            <>
+              <label className={`${classeBoutonSecondaire} cursor-pointer`}>
+                Restaurer une sauvegarde
+                <input
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  onChange={(e) => e.target.files?.[0] && restaurer(e.target.files[0])}
+                />
+              </label>
+              <button
+                type="button"
+                className={classeBoutonSecondaire}
+                onClick={() => confirm("Remplacer toutes les données de l'entreprise par l'exemple de démonstration ?") && remplacer(donneesDemo(dateDuJour()))}
+              >
+                Recharger la démonstration
+              </button>
+              <button
+                type="button"
+                className={`${classeBoutonSecondaire} hover:border-[#b42318] hover:text-[#b42318]`}
+                onClick={() => confirm("Tout effacer et repartir de zéro ? Cette action est irréversible.") && remplacer(donneesVides())}
+              >
+                Repartir de zéro
+              </button>
+            </>
+          )}
         </div>
       </Carte>
     </div>

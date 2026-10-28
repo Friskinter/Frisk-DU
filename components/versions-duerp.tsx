@@ -4,7 +4,7 @@ import { useState } from "react";
 import { classeBouton, classeBoutonSecondaire, classeChamp } from "@/components/ui";
 import { formaterDate } from "@/lib/calculs";
 import { telechargerDocumentUnique } from "@/lib/pdf/telecharger";
-import { useSession } from "@/lib/stockage";
+import { peutModifier, useSession } from "@/lib/stockage";
 import type { Donnees } from "@/lib/types";
 import { figerVersion, motifsVersion, useVersions, type VersionDuerp } from "@/lib/versions";
 
@@ -65,42 +65,48 @@ export function VersionsDuerp({ donnees, onFermer }: { donnees: Donnees; onFerme
           </button>
         </div>
 
-        <form onSubmit={figer} className="space-y-3 border-b border-pierre/70 p-5">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-ardoise">Figer la version actuelle</h3>
-          <div className="grid gap-3 md:grid-cols-2">
+        {!peutModifier(session.role, "tout") ? (
+          <p className="border-b border-pierre/70 p-5 text-sm text-ardoise">
+            Seul un responsable de l&apos;entreprise peut figer une nouvelle version.
+          </p>
+        ) : (
+          <form onSubmit={figer} className="space-y-3 border-b border-pierre/70 p-5">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-ardoise">Figer la version actuelle</h3>
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="block text-sm">
+                Motif de la mise à jour
+                <select value={motif} onChange={(e) => setMotif(e.target.value)} className={`${classeChamp} mt-1`}>
+                  {motifsVersion.map((m) => (
+                    <option key={m}>{m}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-sm">
+                Établie par
+                <input required value={auteur} onChange={(e) => setAuteur(e.target.value)} className={`${classeChamp} mt-1`} />
+              </label>
+            </div>
             <label className="block text-sm">
-              Motif de la mise à jour
-              <select value={motif} onChange={(e) => setMotif(e.target.value)} className={`${classeChamp} mt-1`}>
-                {motifsVersion.map((m) => (
-                  <option key={m}>{m}</option>
-                ))}
-              </select>
+              Précision {motif === "Autre" ? "" : <span className="text-gris">(facultatif)</span>}
+              <input
+                required={motif === "Autre"}
+                value={precision}
+                onChange={(e) => setPrecision(e.target.value)}
+                placeholder="Ex. : installation d'une nouvelle machine dans l'atelier"
+                className={`${classeChamp} mt-1`}
+              />
             </label>
-            <label className="block text-sm">
-              Établie par
-              <input required value={auteur} onChange={(e) => setAuteur(e.target.value)} className={`${classeChamp} mt-1`} />
-            </label>
-          </div>
-          <label className="block text-sm">
-            Précision {motif === "Autre" ? "" : <span className="text-gris">(facultatif)</span>}
-            <input
-              required={motif === "Autre"}
-              value={precision}
-              onChange={(e) => setPrecision(e.target.value)}
-              placeholder="Ex. : installation d'une nouvelle machine dans l'atelier"
-              className={`${classeChamp} mt-1`}
-            />
-          </label>
-          <div className="flex flex-wrap items-center gap-3">
-            <button type="submit" disabled={etat === "envoi" || !donnees.duerp.length} className={`${classeBouton} disabled:opacity-50`}>
-              {etat === "envoi" ? "Enregistrement…" : `🗄 Figer la version ${derniere ? derniere.numero + 1 : 1}`}
-            </button>
-            <span className="text-xs text-gris">
-              {donnees.duerp.length} risque{donnees.duerp.length > 1 ? "s" : ""} seront enregistrés.
-            </span>
-            {etat === "erreur" && <span className="text-sm text-[#b42318]">La version n&apos;a pas pu être enregistrée. Réessayez.</span>}
-          </div>
-        </form>
+            <div className="flex flex-wrap items-center gap-3">
+              <button type="submit" disabled={etat === "envoi" || !donnees.duerp.length} className={`${classeBouton} disabled:opacity-50`}>
+                {etat === "envoi" ? "Enregistrement…" : `🗄 Figer la version ${derniere ? derniere.numero + 1 : 1}`}
+              </button>
+              <span className="text-xs text-gris">
+                {donnees.duerp.length} risque{donnees.duerp.length > 1 ? "s" : ""} seront enregistrés.
+              </span>
+              {etat === "erreur" && <span className="text-sm text-[#b42318]">La version n&apos;a pas pu être enregistrée. Réessayez.</span>}
+            </div>
+          </form>
+        )}
 
         <div className="p-5">
           <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-ardoise">Versions enregistrées</h3>

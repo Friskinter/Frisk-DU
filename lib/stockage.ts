@@ -1,15 +1,21 @@
 "use client";
 
 // Données de l'entreprise active, chargées depuis Supabase et enregistrées automatiquement.
+// Chaque modification est convertie en opérations (lib/operations.ts) envoyées à la base, qui
+// vérifie les droits, les applique et tient le journal. Les modifications des collègues arrivent
+// en direct et sont fusionnées avec celles qui n'ont pas encore été envoyées.
 
 import { useSyncExternalStore } from "react";
 import { donneesVides } from "./demo";
+import { rechargerVers } from "./navigation";
+import { appliquerOperations, calculerOperations, operationAutorisee, type Operation, type Role } from "./operations";
 import { supabaseNavigateur } from "./supabase/client";
 import type { Donnees } from "./types";
-import { rechargerVers } from "./navigation";
 
 const CLE_ENTREPRISE = "frisk-du-entreprise";
 const DELAI_ENREGISTREMENT = 800;
+const DELAI_NOUVEL_ESSAI = 5000;
+const OPERATIONS_PAR_ENVOI = 200;
 
 export type Statut =
   | "chargement"
@@ -19,12 +25,13 @@ export type Statut =
   | "mot-de-passe-provisoire"
   | "erreur";
 
-export type Enregistrement = "enregistre" | "en-cours" | "erreur" | "conflit";
+export type Enregistrement = "enregistre" | "en-cours" | "erreur" | "refuse";
 
 export type Session = {
   statut: Statut;
   email: string;
   admin: boolean;
+  role: Role;
   entrepriseId: string;
   enregistrement: Enregistrement;
   donnees: Donnees | null;
@@ -34,13 +41,18 @@ let session: Session = {
   statut: "chargement",
   email: "",
   admin: false,
+  role: "lecteur",
   entrepriseId: "",
   enregistrement: "enregistre",
   donnees: null,
 };
-let version: string | null = null; // updated_at de la ligne chargée
+// Opérations pas encore envoyées, et celles en cours d'envoi.
+let enAttente: Operation[] = [];
+let enCours: Operation[] = [];
 let minuteur: ReturnType<typeof setTimeout> | null = null;
 let chargementLance = false;
+// Identifiant de cet onglet : permet d'ignorer nos propres modifications renvoyées en direct.
+let client = "";
 const abonnes = new Set<() => void>();
 
 function publier(changements: Partial<Session>) {
@@ -68,7 +80,15 @@ export function useDonnees(): Donnees | null {
   return s.statut === "pret" ? s.donnees : null;
 }
 
+// L'utilisateur peut-il modifier cette partie de Frisk DU ?
+export function peutModifier(role: Role, zone: "tout" | "epi") {
+  if (role === "admin" || role === "responsable") return true;
+  return zone === "epi" && role === "contributeur";
+}
+
 async function charger() {
+  // randomUUID n'existe qu'en connexion sécurisée (https ou localhost).
+  client = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
   const supabase = supabaseNavigateur();
   const { data: utilisateur } = await supabase.auth.getUser();
   const user = utilisateur.user;
@@ -76,17 +96,18 @@ async function charger() {
     rechargerVers("/connexion");
     return;
   }
+  const email = user.email ?? "";
   if (user.user_metadata?.mot_de_passe_provisoire) {
-    publier({ statut: "mot-de-passe-provisoire", email: user.email ?? "" });
+    publier({ statut: "mot-de-passe-provisoire", email });
     return;
   }
 
   const [{ data: admin }, { data: adhesions, error }] = await Promise.all([
     supabase.from("admins_frisk").select("user_id").eq("user_id", user.id).maybeSingle(),
-    supabase.from("membres").select("entreprise_id").eq("user_id", user.id),
+    supabase.from("membres").select("entreprise_id, role").eq("user_id", user.id),
   ]);
   if (error) {
-    publier({ statut: "erreur", email: user.email ?? "" });
+    publier({ statut: "erreur", email });
     return;
   }
 
@@ -97,78 +118,130 @@ async function charger() {
   } catch {
     // Stockage indisponible : on prend la première entreprise.
   }
-  const autorisees = (adhesions ?? []).map((a: { entreprise_id: string }) => a.entreprise_id);
-  const entrepriseId = estAdmin && choix ? choix : autorisees.includes(choix) ? choix : autorisees[0] ?? "";
+  const autorisees = (adhesions ?? []) as { entreprise_id: string; role: Role }[];
+  const entrepriseId =
+    estAdmin && choix ? choix : autorisees.some((a) => a.entreprise_id === choix) ? choix : autorisees[0]?.entreprise_id ?? "";
+  const role: Role = estAdmin ? "admin" : autorisees.find((a) => a.entreprise_id === entrepriseId)?.role ?? "lecteur";
 
   if (!entrepriseId) {
-    publier({ statut: "aucun-espace", email: user.email ?? "", admin: estAdmin });
+    publier({ statut: "aucun-espace", email, admin: estAdmin });
     return;
   }
 
-  const { data: entreprise } = await supabase
-    .from("entreprises")
-    .select("nom, actif")
-    .eq("id", entrepriseId)
-    .maybeSingle();
+  const { data: entreprise } = await supabase.from("entreprises").select("nom, actif").eq("id", entrepriseId).maybeSingle();
   if (!entreprise || (!entreprise.actif && !estAdmin)) {
-    publier({ statut: entreprise ? "suspendu" : "aucun-espace", email: user.email ?? "", admin: estAdmin });
+    publier({ statut: entreprise ? "suspendu" : "aucun-espace", email, admin: estAdmin });
     return;
   }
 
-  const { data: espace, error: erreurEspace } = await supabase
-    .from("espaces")
-    .select("contenu, updated_at")
-    .eq("entreprise_id", entrepriseId)
-    .maybeSingle();
-  if (erreurEspace) {
-    publier({ statut: "erreur", email: user.email ?? "" });
+  const contenu = await lireContenu(entrepriseId);
+  if (contenu === undefined) {
+    publier({ statut: "erreur", email });
     return;
   }
 
-  version = espace?.updated_at ?? null;
   publier({
     statut: "pret",
-    email: user.email ?? "",
+    email,
     admin: estAdmin,
+    role,
     entrepriseId,
-    donnees: (espace?.contenu as Donnees | undefined) ?? { ...donneesVides(), entreprise: entreprise.nom },
+    donnees: contenu ?? { ...donneesVides(), entreprise: entreprise.nom },
+  });
+  ecouterCollegues(entrepriseId);
+}
+
+// undefined : erreur de lecture ; null : aucun contenu enregistré pour l'instant.
+async function lireContenu(entrepriseId: string): Promise<Donnees | null | undefined> {
+  const { data, error } = await supabaseNavigateur()
+    .from("espaces")
+    .select("contenu")
+    .eq("entreprise_id", entrepriseId)
+    .maybeSingle();
+  if (error) return undefined;
+  return (data?.contenu as Donnees | undefined) ?? null;
+}
+
+// Réapplique nos opérations non confirmées sur la dernière version enregistrée par un collègue.
+function fusionner(contenu: Donnees) {
+  publier({ donnees: appliquerOperations(appliquerOperations(contenu, enCours), enAttente) });
+}
+
+function ecouterCollegues(entrepriseId: string) {
+  const supabase = supabaseNavigateur();
+  supabase
+    .channel(`espace-${entrepriseId}`)
+    .on(
+      "postgres_changes",
+      { event: "UPDATE", schema: "public", table: "espaces", filter: `entreprise_id=eq.${entrepriseId}` },
+      (evenement: { new: Record<string, unknown> }) => {
+        const ligne = evenement.new as { contenu?: Donnees; updated_client?: string | null };
+        if (ligne.updated_client === client || !ligne.contenu) return;
+        fusionner(ligne.contenu);
+      },
+    )
+    .subscribe();
+
+  // Au retour sur l'onglet (veille, perte de réseau), on relit la dernière version.
+  document.addEventListener("visibilitychange", async () => {
+    if (document.visibilityState !== "visible" || enCours.length) return;
+    const contenu = await lireContenu(entrepriseId);
+    if (contenu) fusionner(contenu);
   });
 }
 
-async function enregistrer() {
+function planifierEnvoi(delai = DELAI_ENREGISTREMENT) {
+  if (minuteur) clearTimeout(minuteur);
+  minuteur = setTimeout(envoyer, delai);
+}
+
+async function envoyer() {
   minuteur = null;
-  const { donnees, entrepriseId } = session;
-  if (!donnees || !entrepriseId) return;
-  const supabase = supabaseNavigateur();
+  if (enCours.length || !enAttente.length || !session.entrepriseId) return;
+  enCours = enAttente.slice(0, OPERATIONS_PAR_ENVOI);
+  enAttente = enAttente.slice(OPERATIONS_PAR_ENVOI);
 
-  // La version chargée doit être la dernière : sinon un collègue a modifié entre-temps.
-  const requete = version
-    ? supabase
-        .from("espaces")
-        .update({ contenu: donnees })
-        .eq("entreprise_id", entrepriseId)
-        .eq("updated_at", version)
-        .select("updated_at")
-    : supabase.from("espaces").insert({ entreprise_id: entrepriseId, contenu: donnees }).select("updated_at");
+  const { error } = await supabaseNavigateur().rpc("appliquer_operations", {
+    p_entreprise: session.entrepriseId,
+    p_operations: enCours,
+    p_client: client,
+  });
 
-  const { data, error } = await requete;
+  if (error?.code === "42501") {
+    // Droits insuffisants : on abandonne ces modifications et on revient à la version enregistrée.
+    enCours = [];
+    enAttente = [];
+    publier({ enregistrement: "refuse" });
+    const contenu = await lireContenu(session.entrepriseId);
+    if (contenu) publier({ donnees: contenu });
+    return;
+  }
   if (error) {
-    publier({ enregistrement: version ? "erreur" : "conflit" });
+    // Coupure réseau ou erreur passagère : nouvel essai, sans rien perdre.
+    enAttente = [...enCours, ...enAttente];
+    enCours = [];
+    publier({ enregistrement: "erreur" });
+    planifierEnvoi(DELAI_NOUVEL_ESSAI);
     return;
   }
-  if (!data?.length) {
-    publier({ enregistrement: "conflit" });
-    return;
-  }
-  version = data[0].updated_at;
-  if (!minuteur) publier({ enregistrement: "enregistre" });
+
+  enCours = [];
+  if (enAttente.length) planifierEnvoi(0);
+  else if (!minuteur) publier({ enregistrement: "enregistre" });
 }
 
 export function modifier(transformation: (d: Donnees) => Donnees) {
-  if (!session.donnees || session.enregistrement === "conflit") return;
-  publier({ donnees: transformation(session.donnees), enregistrement: "en-cours" });
-  if (minuteur) clearTimeout(minuteur);
-  minuteur = setTimeout(enregistrer, DELAI_ENREGISTREMENT);
+  if (!session.donnees) return;
+  const suivant = transformation(session.donnees);
+  const ops = calculerOperations(session.donnees, suivant);
+  if (!ops.length) return;
+  if (!ops.every((op) => operationAutorisee(session.role, op))) {
+    publier({ enregistrement: "refuse" });
+    return;
+  }
+  enAttente.push(...ops);
+  publier({ donnees: suivant, enregistrement: "en-cours" });
+  planifierEnvoi();
 }
 
 export function remplacer(donnees: Donnees) {
@@ -176,7 +249,7 @@ export function remplacer(donnees: Donnees) {
 }
 
 export function enregistrementEnAttente() {
-  return session.enregistrement === "en-cours";
+  return enAttente.length > 0 || enCours.length > 0;
 }
 
 export function ouvrirEntreprise(id: string) {
