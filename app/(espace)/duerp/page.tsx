@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { BibliothequeRisques } from "@/components/bibliotheque-risques";
+import { actionEnRetard, actionsDuRisque, nouvelleAction } from "@/lib/actions";
 import { BoutonDocumentUnique } from "@/components/bouton-document-unique";
 import { GuideCotation } from "@/components/guide-cotation";
 import { VersionsDuerp } from "@/components/versions-duerp";
@@ -15,7 +17,6 @@ import {
   classeChamp,
 } from "@/components/ui";
 import {
-  actionEnRetard,
   criticiteBrute,
   dateDuJour,
   formaterDate,
@@ -55,10 +56,7 @@ const colonnes: { titre: string; aide: string; largeur: number }[] = [
   { titre: "Risque résiduel", aide: "Criticité brute × coefficient de maîtrise : fixe la priorité.", largeur: 140 },
   { titre: "Pénibilité", aide: "Facteur de risques professionnels concerné (10 facteurs du Code du travail).", largeur: 190 },
   { titre: "Seuil", aide: "L'exposition dépasse-t-elle le seuil réglementaire ? Voir la page Pénibilité.", largeur: 140 },
-  { titre: "Action à mener", aide: "Mesure de prévention à mettre en place.", largeur: 200 },
-  { titre: "Responsable", aide: "Personne chargée de l'action.", largeur: 150 },
-  { titre: "Échéance", aide: "Date limite de réalisation.", largeur: 150 },
-  { titre: "Statut", aide: "Avancement de l'action.", largeur: 120 },
+  { titre: "Actions de prévention", aide: "Mesures prévues ou réalisées pour ce risque : elles se gèrent dans le plan d'actions.", largeur: 280 },
 ];
 
 function ligneVide(unite: string): LigneDuerp {
@@ -75,10 +73,6 @@ function ligneVide(unite: string): LigneDuerp {
     maitrise: "insuffisante",
     penibilite: "",
     seuilPenibilite: "non",
-    action: "",
-    responsable: "",
-    echeance: "",
-    statut: "a-faire",
   };
 }
 
@@ -92,6 +86,7 @@ function mettreAJour(id: string, champs: Partial<LigneDuerp>) {
 export default function PageDuerp() {
   const donnees = useDonnees();
   const { role } = useSession();
+  const router = useRouter();
   const modifiable = peutModifier(role, "tout");
   const [recherche, setRecherche] = useState("");
   const [unite, setUnite] = useState("");
@@ -113,7 +108,7 @@ export default function PageDuerp() {
       (!unite || l.unite === unite) &&
       (!niveau || niveauDe(risqueResiduel(l)).code === niveau) &&
       (!terme ||
-        [l.unite, l.activite, l.danger, l.risque, l.mesures, l.action, l.responsable]
+        [l.unite, l.activite, l.danger, l.risque, l.mesures, ...actionsDuRisque(donnees.actions, l).map((a) => `${a.intitule} ${a.responsable}`)]
           .join(" ")
           .toLowerCase()
           .includes(terme)),
@@ -123,7 +118,7 @@ export default function PageDuerp() {
   const ajouter = (apres?: LigneDuerp) =>
     modifier((d) => {
       const nouvelle = apres
-        ? { ...apres, id: nouvelId(), statut: "a-faire" as const }
+        ? { ...apres, id: nouvelId() }
         : ligneVide(unite || unitesConnues[0] || "");
       const index = apres ? d.duerp.findIndex((l) => l.id === apres.id) + 1 : d.duerp.length;
       const duerp = [...d.duerp];
@@ -132,9 +127,20 @@ export default function PageDuerp() {
     });
 
   const supprimer = (l: LigneDuerp) => {
-    if (confirm(`Supprimer la ligne « ${l.danger || l.activite || "sans titre"} » ?`)) {
-      modifier((d) => ({ ...d, duerp: d.duerp.filter((x) => x.id !== l.id) }));
+    const nbActions = actionsDuRisque(donnees.actions, l).length;
+    const avertissement = nbActions ? ` Ses ${nbActions} action(s) de prévention seront aussi supprimées.` : "";
+    if (confirm(`Supprimer la ligne « ${l.danger || l.activite || "sans titre"} » ?${avertissement}`)) {
+      modifier((d) => ({
+        ...d,
+        duerp: d.duerp.filter((x) => x.id !== l.id),
+        actions: d.actions.filter((a) => a.risqueId !== l.id),
+      }));
     }
+  };
+
+  const ajouterAction = (l: LigneDuerp) => {
+    modifier((d) => ({ ...d, actions: [...d.actions, nouvelleAction(l.id)] }));
+    router.push(`/actions?risque=${l.id}`);
   };
 
   const exporter = () =>
@@ -146,8 +152,13 @@ export default function PageDuerp() {
         `${risqueResiduel(l)} (${niveauDe(risqueResiduel(l)).libelle})`,
         facteursPenibilite.find((f) => f.code === l.penibilite)?.libelle ?? "",
         seuilsPenibilite.find((s) => s.valeur === l.seuilPenibilite)?.libelle ?? "",
-        l.action, l.responsable, formaterDate(l.echeance),
-        statutsAction.find((s) => s.valeur === l.statut)?.libelle ?? "",
+        actionsDuRisque(donnees.actions, l)
+          .map((a) =>
+            [a.intitule, a.responsable, formaterDate(a.echeance), statutsAction.find((s) => s.valeur === a.statut)?.libelle]
+              .filter(Boolean)
+              .join(" · "),
+          )
+          .join(" | "),
       ]),
     ]);
 
@@ -199,7 +210,7 @@ export default function PageDuerp() {
           <p>
             <strong>✓ {ajoutes} risque{ajoutes > 1 ? "s" : ""} ajouté{ajoutes > 1 ? "s" : ""} en bas du tableau.</strong>{" "}
             Pour chacun, indiquez l&apos;effectif exposé et les mesures déjà en place, ajustez la gravité, la fréquence et
-            la maîtrise, puis désignez un responsable et une échéance pour l&apos;action proposée.
+            la maîtrise. Les mesures conseillées ont été ajoutées au plan d&apos;actions : précisez-y leur type, un responsable et une échéance.
           </p>
           <button type="button" onClick={() => setAjoutes(0)} aria-label="Fermer" className="text-gris">✕</button>
         </div>
@@ -288,7 +299,7 @@ export default function PageDuerp() {
             </thead>
             <tbody>
               {lignes.map((l) => {
-                const enRetard = actionEnRetard(l, aujourdhui);
+                const actionsLigne = actionsDuRisque(donnees.actions, l);
                 const facteur = facteursPenibilite.find((f) => f.code === l.penibilite);
                 return (
                   <tr key={l.id} className="hover:bg-ivoire">
@@ -392,24 +403,40 @@ export default function PageDuerp() {
                         ))}
                       </select>
                     </td>
-                    <td className={cellule}>
-                      <textarea rows={2} value={l.action} onChange={(e) => mettreAJour(l.id, { action: e.target.value })} className={`${champCellule} resize-y`} />
-                    </td>
-                    <td className={cellule}>
-                      <input value={l.responsable} onChange={(e) => mettreAJour(l.id, { responsable: e.target.value })} className={champCellule} />
-                    </td>
-                    <td className={cellule}>
-                      <input type="date" value={l.echeance} onChange={(e) => mettreAJour(l.id, { echeance: e.target.value })} className={`${champCellule} ${enRetard ? "font-semibold text-[#b42318]" : ""}`} />
-                      {enRetard && <p className="px-1.5 text-xs text-[#b42318]">⚠ En retard</p>}
-                    </td>
-                    <td className={cellule}>
-                      <select value={l.statut} onChange={(e) => mettreAJour(l.id, { statut: e.target.value as LigneDuerp["statut"] })} className={champCellule}>
-                        {statutsAction.map((s) => (
-                          <option key={s.valeur} value={s.valeur}>
-                            {s.libelle}
-                          </option>
-                        ))}
-                      </select>
+                    <td className={`${cellule} px-2 py-1.5`}>
+                      <ul className="space-y-1">
+                        {actionsLigne.map((a) => {
+                          const retard = actionEnRetard(a, aujourdhui);
+                          return (
+                            <li key={a.id} className="flex items-start gap-1.5 text-xs">
+                              <span
+                                aria-hidden
+                                className="mt-1 h-2 w-2 shrink-0 rounded-full"
+                                style={{ background: a.statut === "fait" ? "#0ca30c" : retard ? "#d03b3b" : a.statut === "en-cours" ? "#fab219" : "#d9cfc1" }}
+                              />
+                              <span className="min-w-0">
+                                <span className={a.statut === "fait" ? "text-gris line-through" : ""}>{a.intitule || "Action sans intitulé"}</span>
+                                {a.echeance && a.statut !== "fait" && (
+                                  <span className={retard ? "font-semibold text-[#b42318]" : "text-gris"}>
+                                    {" "}· {retard ? "en retard, " : ""}
+                                    {formaterDate(a.echeance)}
+                                  </span>
+                                )}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      <span className="mt-1 flex gap-3 text-xs print:hidden">
+                        <button type="button" onClick={() => ajouterAction(l)} className="text-bronze underline disabled:hidden">
+                          + Action
+                        </button>
+                        {actionsLigne.length > 0 && (
+                          <Link href={`/actions?risque=${l.id}`} className="text-ardoise underline">
+                            Gérer ({actionsLigne.length})
+                          </Link>
+                        )}
+                      </span>
                     </td>
                     <td className="border-b border-pierre/60 p-1 align-top whitespace-nowrap print:hidden">
                       <Link href={`/journal?element=${l.id}`} title="Historique des modifications de la ligne" className="rounded-sm px-2 py-1 text-ardoise hover:bg-marbre">

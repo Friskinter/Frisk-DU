@@ -61,6 +61,20 @@ export function Garde({ children }: { children: ReactNode }) {
           <button type="button" onClick={deconnecter} className="text-bronze underline">Se déconnecter</button>
         </Message>
       );
+    case "base-a-mettre-a-jour":
+      return (
+        <Message titre="Mise à jour en cours">
+          {session.admin ? (
+            <p>
+              La base de données doit être mise à jour pour cette version de Frisk DU : exécutez dans Supabase
+              (SQL Editor) les migrations de <code>supabase/migrations</code> qui n&apos;ont pas encore été appliquées.
+            </p>
+          ) : (
+            <p>Frisk DU est en cours de mise à jour. Réessayez dans quelques minutes ; contactez Frisk si cela persiste.</p>
+          )}
+          <button type="button" onClick={() => window.location.reload()} className={classeBouton}>Réessayer</button>
+        </Message>
+      );
     case "erreur":
       return (
         <Message titre="Connexion impossible">

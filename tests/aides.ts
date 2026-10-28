@@ -1,12 +1,13 @@
 import { nouvelId } from "@/lib/calculs";
 import { donneesVides } from "@/lib/demo";
 import type { Article, Donnees, LigneDuerp, Mouvement } from "@/lib/types";
+export { nouvelleAction as action } from "@/lib/actions";
 
 export function ligne(champs: Partial<LigneDuerp> = {}): LigneDuerp {
   return {
     id: nouvelId(), unite: "Atelier", activite: "Activité", danger: "Danger", risque: "Risque",
     effectif: 1, gravite: 1, frequence: 1, mesures: "", maitrise: "insuffisante", penibilite: "",
-    seuilPenibilite: "non", action: "", responsable: "", echeance: "", statut: "a-faire", ...champs,
+    seuilPenibilite: "non", ...champs,
   };
 }
 

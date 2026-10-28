@@ -6,7 +6,8 @@ import { useEffect, useState } from "react";
 import { supabaseNavigateur } from "./supabase/client";
 import type { Donnees } from "./types";
 
-export type Instantane = Pick<Donnees, "entreprise" | "fiche" | "unites" | "duerp">;
+// Les versions figées avant le plan d'actions n'ont pas de liste « actions » (voir actionsDe).
+export type Instantane = Pick<Donnees, "entreprise" | "fiche" | "unites" | "duerp"> & { actions?: Donnees["actions"] };
 
 export type VersionDuerp = {
   id: string;
@@ -42,6 +43,7 @@ export async function figerVersion(entrepriseId: string, donnees: Donnees, motif
     fiche: donnees.fiche,
     unites: donnees.unites,
     duerp: donnees.duerp,
+    actions: donnees.actions,
   };
   const { error } = await supabaseNavigateur()
     .from("versions")

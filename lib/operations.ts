@@ -4,7 +4,7 @@
 
 import type { Donnees, Signature } from "./types";
 
-export const collections = ["duerp", "salaries", "articles", "mouvements"] as const;
+export const collections = ["duerp", "actions", "salaries", "articles", "mouvements"] as const;
 export type Collection = (typeof collections)[number];
 
 export const clesRacine = ["entreprise", "fiche", "services", "unites", "preferences"] as const;
@@ -51,7 +51,7 @@ export function calculerOperations(avant: Donnees, apres: Donnees): Operation[] 
     if (!identique(avant[cle], apres[cle])) ops.push({ type: "racine", cle, valeur: apres[cle] ?? null });
   }
   for (const c of collections) {
-    ops.push(...differencesCollection(c, avant[c] as unknown as Element[], apres[c] as unknown as Element[]));
+    ops.push(...differencesCollection(c, (avant[c] ?? []) as unknown as Element[], (apres[c] ?? []) as unknown as Element[]));
   }
   const signaturesAvant = avant.signatures ?? {};
   for (const [id, valeur] of Object.entries(apres.signatures ?? {})) {
@@ -70,7 +70,7 @@ export function appliquerOperations(donnees: Donnees, ops: Operation[]): Donnees
     } else if (op.type === "signature") {
       if (!d.signatures?.[op.id]) d = { ...d, signatures: { ...d.signatures, [op.id]: op.valeur } };
     } else {
-      const liste = [...(d[op.collection] as unknown as Element[])];
+      const liste = [...((d[op.collection] ?? []) as unknown as Element[])];
       const pos = liste.findIndex((e) => e.id === op.id);
       if (op.type === "ajout") {
         if (pos >= 0) liste[pos] = op.valeur as Element;

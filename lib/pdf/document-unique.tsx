@@ -3,24 +3,27 @@
 
 import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { ReactNode } from "react";
+import { actionEnRetard, actionsDe, estPapripact } from "@/lib/actions";
 import {
-  actionEnRetard,
   criticiteBrute,
+  formatEuros,
   formatNombre,
   formaterDate,
   niveauDe,
   risqueResiduel,
 } from "@/lib/calculs";
 import {
+  efficacites,
   facteursPenibilite,
   grilleFrequence,
   grilleGravite,
   grilleMaitrise,
   niveauxCriticite,
+  principesPrevention,
   seuilsPenibilite,
   statutsAction,
 } from "@/lib/referentiel";
-import type { Donnees, LigneDuerp } from "@/lib/types";
+import type { Action, Donnees, LigneDuerp } from "@/lib/types";
 
 const c = {
   encre: "#0c0b0a",
@@ -122,7 +125,11 @@ function Titre({ numero, surtitre, titre }: { numero: string; surtitre: string; 
 }
 
 const libelleMaitrise = (l: LigneDuerp) => grilleMaitrise.find((m) => m.valeur === l.maitrise)?.libelle ?? "";
-const libelleStatut = (l: LigneDuerp) => statutsAction.find((x) => x.valeur === l.statut)?.libelle ?? "";
+// Les espaces insécables du format français ne figurent pas dans la police standard du PDF.
+const euros = (montant: number) => formatEuros.format(montant).replace(/[\u00a0\u202f]/g, " ");
+
+const libelleStatut = (a: Action) => statutsAction.find((x) => x.valeur === a.statut)?.libelle ?? "";
+const libellePrincipe = (a: Action) => principesPrevention.find((p) => p.valeur === a.principe)?.libelle.replace(/^\d\. /, "") ?? "-";
 const libelleFacteur = (code: string) => facteursPenibilite.find((f) => f.code === code)?.libelle ?? "";
 
 export type LigneHistorique = { numero: number; date: string; motif: string; auteur: string };
@@ -134,7 +141,7 @@ export function DocumentUnique({
   numero,
   historique = [],
 }: {
-  donnees: Pick<Donnees, "entreprise" | "fiche" | "duerp">;
+  donnees: Pick<Donnees, "entreprise" | "fiche" | "duerp"> & { actions?: Action[] };
   aujourdhui: string; // date de la version (AAAA-MM-JJ)
   logo: string;
   numero?: number; // numéro de la version figée ; absent pour un document de travail
@@ -147,7 +154,13 @@ export function DocumentUnique({
   const fiche = donnees.fiche;
   const risques = donnees.duerp;
   const unites = [...new Set(risques.map((l) => l.unite || "Sans unité"))];
-  const actions = [...risques].filter((l) => l.action).sort((a, b) => risqueResiduel(b) - risqueResiduel(a));
+  // Actions classées par priorité du risque ; les versions figées à l'ancien format sont reconstituées.
+  const risqueDe = new Map(risques.map((l) => [l.id, l]));
+  const actions = actionsDe(donnees)
+    .filter((a) => risqueDe.has(a.risqueId))
+    .sort((a, b) => risqueResiduel(risqueDe.get(b.risqueId)!) - risqueResiduel(risqueDe.get(a.risqueId)!));
+  const budget = actions.reduce((t, a) => t + (a.cout ?? 0), 0);
+  const papripact = estPapripact(donnees);
   const penibles = risques.filter((l) => l.penibilite);
 
   const colonnesInventaire: Colonne[] = [
@@ -165,13 +178,14 @@ export function DocumentUnique({
   ];
 
   const colonnesActions: Colonne[] = [
-    { titre: "Priorité", largeur: "10%" },
-    { titre: "Unité de travail", largeur: "13%" },
+    { titre: "Priorité", largeur: "9%" },
     { titre: "Risque", largeur: "17%" },
-    { titre: "Action de prévention", largeur: "28%" },
-    { titre: "Responsable", largeur: "13%" },
-    { titre: "Échéance", largeur: "9%" },
-    { titre: "Statut", largeur: "10%" },
+    { titre: "Action de prévention", largeur: "23%" },
+    { titre: "Type de mesure", largeur: "11%" },
+    { titre: "Responsable", largeur: "11%" },
+    { titre: "Échéance", largeur: "8%" },
+    { titre: "Coût HT", largeur: "7%" },
+    { titre: "Statut / efficacité", largeur: "14%" },
   ];
 
   return (
@@ -219,7 +233,7 @@ export function DocumentUnique({
               [String(risques.length), "risques évalués"],
               [String(unites.length), "unités de travail"],
               [String(risques.filter((l) => ["important", "critique"].includes(niveauDe(risqueResiduel(l)).code)).length), "risques prioritaires"],
-              [String(actions.filter((l) => l.statut !== "fait").length), "actions en cours ou à mener"],
+              [String(actions.filter((a) => a.statut !== "fait").length), "actions en cours ou à mener"],
             ].map(([valeur, libelle]) => (
               <View key={libelle} style={{ flex: 1, borderWidth: 0.5, borderColor: c.pierre, padding: 10 }}>
                 <Text style={{ fontSize: 20, lineHeight: 1.2, fontFamily: "Helvetica-Bold" }}>{valeur}</Text>
@@ -429,30 +443,51 @@ export function DocumentUnique({
 
       {/* Plan d'actions */}
       <Page size="A4" orientation="landscape" style={s.page}>
-        <Titre numero="4" surtitre="Prévention" titre="Plan d'actions de prévention" />
+        <Titre
+          numero="4"
+          surtitre="Prévention"
+          titre={papripact ? "Programme annuel de prévention des risques professionnels" : "Liste des actions de prévention"}
+        />
         <Text style={s.texte}>
-          Actions classées par priorité, du risque résiduel le plus élevé au plus faible. Les actions dont
-          l&apos;échéance est dépassée sont signalées.
+          {papripact
+            ? "Programme établi en application de l'article L4121-3-1 du Code du travail (entreprises d'au moins 50 salariés) : mesures de prévention, conditions d'exécution, indicateurs, coût estimé et calendrier."
+            : "Liste des actions de prévention établie en application de l'article L4121-3-1 du Code du travail (entreprises de moins de 50 salariés)."}{" "}
+          Actions classées par priorité, du risque résiduel le plus élevé au plus faible ; les mesures sont choisies en
+          privilégiant la suppression du risque et la protection collective (principes généraux de prévention, article
+          L4121-2). Les actions dont l&apos;échéance est dépassée sont signalées.
+          {budget > 0 && ` Coût total estimé : ${euros(budget)} HT.`}
         </Text>
         {actions.length === 0 ? (
           <Text style={s.texte}>Aucune action de prévention n&apos;est planifiée.</Text>
         ) : (
           <View style={[s.table, { marginTop: 6 }]}>
             <Entete colonnes={colonnesActions} />
-            {actions.map((l) => (
-              <View key={l.id} style={s.ligne} wrap={false}>
-                <Cellule largeur="10%"><Niveau score={risqueResiduel(l)} /></Cellule>
-                <Cellule largeur="13%">{l.unite || "-"}</Cellule>
-                <Cellule largeur="17%">{[l.danger, l.risque].filter(Boolean).join(" : ") || "-"}</Cellule>
-                <Cellule largeur="28%">{l.action}</Cellule>
-                <Cellule largeur="13%">{l.responsable || "-"}</Cellule>
-                <View style={[s.td, { width: "9%" }]}>
-                  <Text>{l.echeance ? formaterDate(l.echeance) : "-"}</Text>
-                  {actionEnRetard(l, aujourdhui) && <Text style={{ color: "#b42318", fontSize: 7, fontFamily: "Helvetica-Bold" }}>En retard</Text>}
+            {actions.map((a) => {
+              const l = risqueDe.get(a.risqueId)!;
+              const efficacite = efficacites.find((e) => e.valeur === a.efficacite);
+              return (
+                <View key={a.id} style={s.ligne} wrap={false}>
+                  <Cellule largeur="9%"><Niveau score={risqueResiduel(l)} /></Cellule>
+                  <Cellule largeur="17%">{[l.unite, l.danger || l.risque].filter(Boolean).join(" : ") || "-"}</Cellule>
+                  <View style={[s.td, { width: "23%" }]}>
+                    <Text>{a.intitule || "-"}</Text>
+                    {a.indicateur ? <Text style={{ color: c.gris, fontSize: 7 }}>Indicateur : {a.indicateur}</Text> : null}
+                    {a.ressources ? <Text style={{ color: c.gris, fontSize: 7 }}>Moyens : {a.ressources}</Text> : null}
+                  </View>
+                  <Cellule largeur="11%">{libellePrincipe(a)}</Cellule>
+                  <Cellule largeur="11%">{a.responsable || "-"}</Cellule>
+                  <View style={[s.td, { width: "8%" }]}>
+                    <Text>{a.echeance ? formaterDate(a.echeance) : "-"}</Text>
+                    {actionEnRetard(a, aujourdhui) && <Text style={{ color: "#b42318", fontSize: 7, fontFamily: "Helvetica-Bold" }}>En retard</Text>}
+                  </View>
+                  <Cellule largeur="7%">{a.cout != null ? euros(a.cout) : "-"}</Cellule>
+                  <View style={[s.td, { width: "14%" }]}>
+                    <Text>{libelleStatut(a)}{a.statut === "fait" && a.realiseeLe ? ` le ${formaterDate(a.realiseeLe)}` : ""}</Text>
+                    {a.statut === "fait" && efficacite ? <Text style={{ color: c.gris, fontSize: 7 }}>{efficacite.libelle}</Text> : null}
+                  </View>
                 </View>
-                <Cellule largeur="10%">{libelleStatut(l)}</Cellule>
-              </View>
-            ))}
+              );
+            })}
           </View>
         )}
         <Pied entreprise={donnees.entreprise} version={version} />

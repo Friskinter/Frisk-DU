@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { calculerAlertes } from "@/lib/alertes";
 import { donneesDemo } from "@/lib/demo";
-import { article, donnees, ligne, mouvement } from "./aides";
+import { action, article, donnees, ligne, mouvement } from "./aides";
 
 const aujourdhui = "2026-10-28";
 const ids = (d: Parameters<typeof calculerAlertes>[0], v?: string | null) =>
@@ -23,11 +23,13 @@ describe("alertes", () => {
   });
 
   it("actions en retard et à échéance proche", () => {
+    const l = ligne({ id: "l1" });
     const d = donnees({
-      duerp: [
-        ligne({ action: "Barrières", echeance: "2026-10-20" }),
-        ligne({ action: "Formation", echeance: "2026-11-05" }),
-        ligne({ action: "Faite", echeance: "2026-10-01", statut: "fait" }),
+      duerp: [l],
+      actions: [
+        action("l1", { intitule: "Barrières", echeance: "2026-10-20" }),
+        action("l1", { intitule: "Formation", echeance: "2026-11-05" }),
+        action("l1", { intitule: "Faite", echeance: "2026-10-01", statut: "fait" }),
       ],
     });
     const a = calculerAlertes(d, aujourdhui);
@@ -36,8 +38,26 @@ describe("alertes", () => {
   });
 
   it("risque critique sans action prévue", () => {
-    const d = donnees({ duerp: [ligne({ gravite: 4, frequence: 4, action: "" })] });
+    const d = donnees({ duerp: [ligne({ gravite: 4, frequence: 4 })] });
     expect(ids(d)).toContain("critiques-sans-action");
+  });
+
+  it("risque prioritaire traité uniquement par des EPI", () => {
+    const l = ligne({ id: "l1", gravite: 4, frequence: 3 });
+    const seulEpi = donnees({ duerp: [l], actions: [action("l1", { principe: "epi" })] });
+    expect(ids(seulEpi)).toContain("seulement-epi");
+    const complete = donnees({ duerp: [l], actions: [action("l1", { principe: "epi" }), action("l1", { principe: "collective" })] });
+    expect(ids(complete)).not.toContain("seulement-epi");
+  });
+
+  it("efficacité à vérifier un mois après la réalisation", () => {
+    const d = donnees({
+      duerp: [ligne({ id: "l1" })],
+      actions: [action("l1", { statut: "fait", realiseeLe: "2026-09-01" }), action("l1", { statut: "fait", realiseeLe: "2026-10-20" })],
+    });
+    expect(calculerAlertes(d, aujourdhui).find((a) => a.id === "efficacite-a-verifier")?.titre).toBe(
+      "1 action réalisée dont l'efficacité reste à vérifier",
+    );
   });
 
   it("stocks en rupture et sous le tampon", () => {

@@ -34,7 +34,7 @@ const logo = () => `${window.location.origin}/logo-frisk.png`;
 
 // Sans version : document de travail à la date du jour. Avec version : la version figée, telle qu'enregistrée.
 export async function telechargerDocumentUnique(
-  donnees: Pick<Donnees, "entreprise" | "fiche" | "duerp">,
+  donnees: Pick<Donnees, "entreprise" | "fiche" | "duerp"> & { actions?: Donnees["actions"] },
   version?: { numero: number; date: string; historique: LigneHistorique[] },
 ) {
   const { DocumentUnique } = await import("./document-unique");

@@ -6,6 +6,7 @@
 // en direct et sont fusionnées avec celles qui n'ont pas encore été envoyées.
 
 import { useSyncExternalStore } from "react";
+import { avecActions } from "./actions";
 import { donneesVides } from "./demo";
 import { rechargerVers } from "./navigation";
 import { appliquerOperations, calculerOperations, operationAutorisee, type Operation, type Role } from "./operations";
@@ -16,6 +17,8 @@ const CLE_ENTREPRISE = "frisk-du-entreprise";
 const DELAI_ENREGISTREMENT = 800;
 const DELAI_NOUVEL_ESSAI = 5000;
 const OPERATIONS_PAR_ENVOI = 200;
+// Version de la base attendue par cette version de Frisk DU (fonction frisk_version, migrations).
+export const VERSION_BASE = 4;
 
 export type Statut =
   | "chargement"
@@ -23,6 +26,7 @@ export type Statut =
   | "aucun-espace" // compte sans entreprise rattachée
   | "suspendu" // abonnement de l'entreprise suspendu
   | "mot-de-passe-provisoire"
+  | "base-a-mettre-a-jour" // migration Supabase manquante
   | "erreur";
 
 export type Enregistrement = "enregistre" | "en-cours" | "erreur" | "refuse";
@@ -134,6 +138,12 @@ async function charger() {
     return;
   }
 
+  const { data: versionBase } = await supabase.rpc("frisk_version");
+  if (typeof versionBase !== "number" || versionBase < VERSION_BASE) {
+    publier({ statut: "base-a-mettre-a-jour", email, admin: estAdmin });
+    return;
+  }
+
   const contenu = await lireContenu(entrepriseId);
   if (contenu === undefined) {
     publier({ statut: "erreur", email });
@@ -146,7 +156,7 @@ async function charger() {
     admin: estAdmin,
     role,
     entrepriseId,
-    donnees: contenu ?? { ...donneesVides(), entreprise: entreprise.nom },
+    donnees: contenu ? avecActions(contenu) : { ...donneesVides(), entreprise: entreprise.nom },
   });
   ecouterCollegues(entrepriseId);
 }
@@ -164,7 +174,7 @@ async function lireContenu(entrepriseId: string): Promise<Donnees | null | undef
 
 // Réapplique nos opérations non confirmées sur la dernière version enregistrée par un collègue.
 function fusionner(contenu: Donnees) {
-  publier({ donnees: appliquerOperations(appliquerOperations(contenu, enCours), enAttente) });
+  publier({ donnees: appliquerOperations(appliquerOperations(avecActions(contenu), enCours), enAttente) });
 }
 
 function ecouterCollegues(entrepriseId: string) {
@@ -213,7 +223,7 @@ async function envoyer() {
     enAttente = [];
     publier({ enregistrement: "refuse" });
     const contenu = await lireContenu(session.entrepriseId);
-    if (contenu) publier({ donnees: contenu });
+    if (contenu) publier({ donnees: avecActions(contenu) });
     return;
   }
   if (error) {

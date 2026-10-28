@@ -1,6 +1,6 @@
 // Méthode de cotation Frisk : grilles expliquées pour un non-spécialiste.
 
-import type { NiveauMaitrise, SeuilPenibilite, StatutAction } from "./types";
+import type { Efficacite, NiveauMaitrise, PrincipePrevention, SeuilPenibilite, StatutAction } from "./types";
 
 export type Echelon = {
   valeur: number;
@@ -163,6 +163,25 @@ export const statutsAction: { valeur: StatutAction; libelle: string }[] = [
   { valeur: "a-faire", libelle: "À faire" },
   { valeur: "en-cours", libelle: "En cours" },
   { valeur: "fait", libelle: "Réalisée" },
+];
+
+export type EchelonPrincipe = { valeur: PrincipePrevention; libelle: string; definition: string };
+
+// Hiérarchie des mesures de prévention : on privilégie toujours les premières.
+export const principesPrevention: EchelonPrincipe[] = [
+  { valeur: "eviter", libelle: "1. Supprimer le risque", definition: "Éviter le risque ou le combattre à la source (supprimer l'opération, le produit, la situation)." },
+  { valeur: "substituer", libelle: "2. Remplacer", definition: "Remplacer ce qui est dangereux par ce qui l'est moins (produit, procédé, équipement)." },
+  { valeur: "collective", libelle: "3. Protection collective", definition: "Protéger tout le monde à la fois : garde-corps, aspiration, capotage, signalisation…" },
+  { valeur: "organisation", libelle: "4. Organisation", definition: "Adapter le travail : planification, rotation, procédures, aménagement des postes." },
+  { valeur: "formation", libelle: "5. Formation et information", definition: "Former et informer les salariés : consignes, habilitations, sensibilisation." },
+  { valeur: "epi", libelle: "6. Protection individuelle", definition: "Équipements de protection individuelle, en complément des mesures précédentes." },
+];
+
+export const efficacites: { valeur: Efficacite; libelle: string; couleur: string; texte: string }[] = [
+  { valeur: "non-evaluee", libelle: "Non vérifiée", couleur: "#d9cfc1", texte: "#0c0b0a" },
+  { valeur: "efficace", libelle: "Efficace", couleur: "#0ca30c", texte: "#ffffff" },
+  { valeur: "partielle", libelle: "Partiellement efficace", couleur: "#fab219", texte: "#0b0b0b" },
+  { valeur: "inefficace", libelle: "Inefficace", couleur: "#d03b3b", texte: "#ffffff" },
 ];
 
 export const seuilsPenibilite: { valeur: SeuilPenibilite; libelle: string }[] = [
