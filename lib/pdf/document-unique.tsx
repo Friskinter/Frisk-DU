@@ -33,17 +33,18 @@ const c = {
 };
 
 const s = StyleSheet.create({
-  page: { paddingTop: 42, paddingBottom: 54, paddingHorizontal: 42, fontFamily: "Helvetica", fontSize: 9, color: c.encre, lineHeight: 1.35 },
+  // Pas d'interligne sur la page : il empêche la bibliothèque PDF d'afficher les pieds de page fixes.
+  page: { paddingTop: 42, paddingBottom: 54, paddingHorizontal: 42, fontFamily: "Helvetica", fontSize: 9, color: c.encre },
   pied: { position: "absolute", bottom: 22, left: 42, right: 42, flexDirection: "row", justifyContent: "space-between", fontSize: 7.5, color: c.gris, borderTopWidth: 0.5, borderTopColor: c.pierre, paddingTop: 6 },
   surtitre: { fontSize: 8, letterSpacing: 2, color: c.bronze, textTransform: "uppercase" },
   h1: { fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4, marginBottom: 14 },
   h2: { fontFamily: "Times-Bold", fontSize: 12.5, marginTop: 14, marginBottom: 6 },
-  texte: { color: c.ardoise, marginBottom: 4 },
+  texte: { color: c.ardoise, marginBottom: 4, fontSize: 9, lineHeight: 1.35 },
   table: { borderWidth: 0.5, borderColor: c.pierre, borderBottomWidth: 0 },
   ligne: { flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: c.pierre },
   entete: { flexDirection: "row", backgroundColor: c.marbre, borderBottomWidth: 0.5, borderBottomColor: c.pierre },
   th: { padding: 4, fontFamily: "Helvetica-Bold", fontSize: 7, textTransform: "uppercase", color: c.ardoise },
-  td: { padding: 4, fontSize: 8 },
+  td: { padding: 4, fontSize: 8, lineHeight: 1.35 },
   pastille: { borderRadius: 6, paddingTop: 2.5, paddingBottom: 1.5, paddingHorizontal: 5, fontSize: 7, lineHeight: 1.2, fontFamily: "Helvetica-Bold", alignSelf: "flex-start" },
 });
 
@@ -104,7 +105,7 @@ function Pied({ entreprise, version }: { entreprise: string; version: string }) 
   return (
     <View style={s.pied} fixed>
       <Text>{entreprise} · Document unique d&apos;évaluation des risques professionnels</Text>
-      <Text render={({ pageNumber, totalPages }) => `Version du ${version} · Page ${pageNumber} / ${totalPages}`} />
+      <Text render={({ pageNumber, totalPages }) => `${version} · Page ${pageNumber} / ${totalPages}`} />
     </View>
   );
 }
@@ -124,22 +125,30 @@ const libelleMaitrise = (l: LigneDuerp) => grilleMaitrise.find((m) => m.valeur =
 const libelleStatut = (l: LigneDuerp) => statutsAction.find((x) => x.valeur === l.statut)?.libelle ?? "";
 const libelleFacteur = (code: string) => facteursPenibilite.find((f) => f.code === code)?.libelle ?? "";
 
+export type LigneHistorique = { numero: number; date: string; motif: string; auteur: string };
+
 export function DocumentUnique({
   donnees,
   aujourdhui,
   logo,
+  numero,
+  historique = [],
 }: {
-  donnees: Donnees;
-  aujourdhui: string;
+  donnees: Pick<Donnees, "entreprise" | "fiche" | "duerp">;
+  aujourdhui: string; // date de la version (AAAA-MM-JJ)
   logo: string;
+  numero?: number; // numéro de la version figée ; absent pour un document de travail
+  historique?: LigneHistorique[]; // versions figées jusqu'à celle-ci incluse
 }) {
-  const version = formaterDate(aujourdhui);
+  // Libellé de version repris sur la page de garde et en pied de page.
+  const version = numero
+    ? `Version n° ${numero} du ${formaterDate(aujourdhui)}`
+    : `Document de travail du ${formaterDate(aujourdhui)}`;
   const fiche = donnees.fiche;
   const risques = donnees.duerp;
   const unites = [...new Set(risques.map((l) => l.unite || "Sans unité"))];
   const actions = [...risques].filter((l) => l.action).sort((a, b) => risqueResiduel(b) - risqueResiduel(a));
   const penibles = risques.filter((l) => l.penibilite);
-  const pied = <Pied entreprise={donnees.entreprise} version={version} />;
 
   const colonnesInventaire: Colonne[] = [
     { titre: "Activité / situation", largeur: "14%" },
@@ -196,7 +205,7 @@ export function DocumentUnique({
               ["Activité", fiche?.activite],
               ["Effectif", fiche?.effectif],
               ["Responsable du document", fiche?.responsable],
-              ["Version", `Mise à jour du ${version}`],
+              ["Version", version],
             ].map(([libelle, valeur]) => (
               <View key={libelle} style={s.ligne}>
                 <Text style={[s.td, { width: "32%", color: c.gris, backgroundColor: c.ivoire }]}>{libelle}</Text>
@@ -227,7 +236,7 @@ export function DocumentUnique({
         </View>
         <View style={[s.pied, { left: 42, right: 42 }]} fixed>
           <Text>Document établi avec Frisk DU</Text>
-          <Text>Version du {version}</Text>
+          <Text>{version}</Text>
         </View>
       </Page>
 
@@ -311,7 +320,7 @@ export function DocumentUnique({
             </View>
           </View>
         </View>
-        {pied}
+        <Pied entreprise={donnees.entreprise} version={version} />
       </Page>
 
       {/* Synthèse */}
@@ -386,7 +395,7 @@ export function DocumentUnique({
             );
           })}
         </View>
-        {pied}
+        <Pied entreprise={donnees.entreprise} version={version} />
       </Page>
 
       {/* Inventaire des risques */}
@@ -415,7 +424,7 @@ export function DocumentUnique({
             </View>
           );
         })}
-        {pied}
+        <Pied entreprise={donnees.entreprise} version={version} />
       </Page>
 
       {/* Plan d'actions */}
@@ -446,7 +455,7 @@ export function DocumentUnique({
             ))}
           </View>
         )}
-        {pied}
+        <Pied entreprise={donnees.entreprise} version={version} />
       </Page>
 
       {/* Pénibilité et validation */}
@@ -490,14 +499,19 @@ export function DocumentUnique({
                 { titre: "Visa", largeur: "18%" },
               ]}
             />
-            {[version, "", "", ""].map((v, i) => (
-              <View key={i} style={[s.ligne, { minHeight: 22 }]}>
-                <Cellule largeur="18%">{v}</Cellule>
-                <Cellule largeur="42%">{i === 0 ? "Mise à jour du document unique" : ""}</Cellule>
-                <Cellule largeur="22%">{i === 0 ? fiche?.responsable ?? "" : ""}</Cellule>
-                <Cellule largeur="18%">{""}</Cellule>
-              </View>
-            ))}
+            {(historique.length
+              ? [...historique].sort((a, b) => a.numero - b.numero).map((h) => ({ v: `n° ${h.numero} du ${formaterDate(h.date)}`, motif: h.motif, auteur: h.auteur }))
+              : [{ v: formaterDate(aujourdhui), motif: "Document de travail (version non figée)", auteur: fiche?.responsable ?? "" }]
+            )
+              .concat([{ v: "", motif: "", auteur: "" }, { v: "", motif: "", auteur: "" }])
+              .map((ligne, i) => (
+                <View key={i} style={[s.ligne, { minHeight: 22 }]} wrap={false}>
+                  <Cellule largeur="18%">{ligne.v}</Cellule>
+                  <Cellule largeur="42%">{ligne.motif}</Cellule>
+                  <Cellule largeur="22%">{ligne.auteur}</Cellule>
+                  <Cellule largeur="18%">{""}</Cellule>
+                </View>
+              ))}
           </View>
 
           <View style={{ flexDirection: "row", gap: 12, marginTop: 18 }}>
@@ -510,7 +524,7 @@ export function DocumentUnique({
             ))}
           </View>
         </View>
-        {pied}
+        <Pied entreprise={donnees.entreprise} version={version} />
       </Page>
     </Document>
   );

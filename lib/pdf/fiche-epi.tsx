@@ -7,13 +7,14 @@ import type { Donnees } from "@/lib/types";
 const c = { encre: "#0c0b0a", ardoise: "#3a3530", gris: "#8a837a", bronze: "#b08d57", marbre: "#ece6dc", pierre: "#d9cfc1", ivoire: "#f7f4ef" };
 
 const s = StyleSheet.create({
-  page: { paddingTop: 40, paddingBottom: 54, paddingHorizontal: 40, fontFamily: "Helvetica", fontSize: 9, color: c.encre, lineHeight: 1.35 },
+  // Pas d'interligne sur la page : il empêche la bibliothèque PDF d'afficher les pieds de page fixes.
+  page: { paddingTop: 40, paddingBottom: 54, paddingHorizontal: 40, fontFamily: "Helvetica", fontSize: 9, color: c.encre },
   pied: { position: "absolute", bottom: 22, left: 40, right: 40, flexDirection: "row", justifyContent: "space-between", fontSize: 7.5, color: c.gris, borderTopWidth: 0.5, borderTopColor: c.pierre, paddingTop: 6 },
   table: { borderWidth: 0.5, borderColor: c.pierre, borderBottomWidth: 0 },
   ligne: { flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: c.pierre, alignItems: "center" },
   entete: { flexDirection: "row", backgroundColor: c.marbre, borderBottomWidth: 0.5, borderBottomColor: c.pierre },
   th: { padding: 4, fontFamily: "Helvetica-Bold", fontSize: 7, textTransform: "uppercase", color: c.ardoise },
-  td: { padding: 4, fontSize: 8.5 },
+  td: { padding: 4, fontSize: 8.5, lineHeight: 1.35 },
 });
 
 const colonnes = [

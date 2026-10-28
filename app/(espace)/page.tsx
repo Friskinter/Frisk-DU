@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { BoutonDocumentUnique } from "@/components/bouton-document-unique";
+import { RappelVersion } from "@/components/rappel-version";
 import {
   BarresHorizontales,
   Carte,
@@ -71,6 +72,8 @@ export default function TableauDeBord() {
           </>
         }
       />
+
+      <RappelVersion aujourdhui={aujourdhui} />
 
       <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Indicateur libelle="Risques évalués" valeur={risques.length} detail={`${new Set(risques.map((l) => l.unite)).size} unités de travail`} />
