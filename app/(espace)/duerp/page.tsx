@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { BibliothequeRisques } from "@/components/bibliotheque-risques";
 import { BoutonDocumentUnique } from "@/components/bouton-document-unique";
 import { GuideCotation } from "@/components/guide-cotation";
 import {
@@ -93,6 +94,8 @@ export default function PageDuerp() {
   const [niveau, setNiveau] = useState("");
   const [tri, setTri] = useState(false);
   const [guide, setGuide] = useState(false);
+  const [bibliotheque, setBibliotheque] = useState(false);
+  const [ajoutes, setAjoutes] = useState(0);
 
   if (!donnees) return <Chargement />;
 
@@ -157,12 +160,53 @@ export default function PageDuerp() {
               Exporter (Excel)
             </button>
             <BoutonDocumentUnique donnees={donnees} />
+            <button type="button" className={classeBoutonSecondaire} onClick={() => setBibliotheque(true)}>
+              📚 Bibliothèque de risques
+            </button>
             <button type="button" className={classeBouton} onClick={() => ajouter()}>
               + Ajouter un risque
             </button>
           </>
         }
       />
+
+      {bibliotheque && (
+        <BibliothequeRisques
+          donnees={donnees}
+          onFermer={() => setBibliotheque(false)}
+          onAjout={(nombre) => {
+            setBibliotheque(false);
+            setAjoutes(nombre);
+            setUnite("");
+            setNiveau("");
+            setRecherche("");
+          }}
+        />
+      )}
+
+      {ajoutes > 0 && (
+        <div className="mb-4 flex items-start justify-between gap-3 rounded-sm border border-[#0ca30c] bg-[#0ca30c]/10 p-3 text-sm">
+          <p>
+            <strong>✓ {ajoutes} risque{ajoutes > 1 ? "s" : ""} ajouté{ajoutes > 1 ? "s" : ""} en bas du tableau.</strong>{" "}
+            Pour chacun, indiquez l&apos;effectif exposé et les mesures déjà en place, ajustez la gravité, la fréquence et
+            la maîtrise, puis désignez un responsable et une échéance pour l&apos;action proposée.
+          </p>
+          <button type="button" onClick={() => setAjoutes(0)} aria-label="Fermer" className="text-gris">✕</button>
+        </div>
+      )}
+
+      {donnees.duerp.length === 0 && (
+        <div className="mb-6 rounded-sm border border-bronze/60 bg-white p-6 text-center">
+          <p className="font-serif text-xl">Votre document unique est vide</p>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-ardoise">
+            Démarrez à partir de la bibliothèque : choisissez votre métier, cochez les situations qui vous concernent, et
+            les risques sont ajoutés au tableau, déjà rédigés.
+          </p>
+          <button type="button" className={`${classeBouton} mt-4`} onClick={() => setBibliotheque(true)}>
+            📚 Ouvrir la bibliothèque de risques
+          </button>
+        </div>
+      )}
 
       {guide && (
         <div className="mb-8 rounded-sm border border-pierre/70 bg-white p-5 print:hidden">
