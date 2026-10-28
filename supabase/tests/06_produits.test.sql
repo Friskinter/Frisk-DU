@@ -8,7 +8,7 @@ reset role;
 -- Les tests précédents relancent des migrations antérieures : on réapplique la 008.
 \ir ../migrations/008_produits.sql
 
-do $$ begin assert public.frisk_version() = 8, 'version de la base'; end $$;
+do $$ begin assert public.frisk_version() >= 8, 'version de la base'; end $$;
 
 -- Le responsable enregistre un produit puis ses mentions de danger.
 set role authenticated;

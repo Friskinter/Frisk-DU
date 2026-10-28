@@ -23,9 +23,12 @@ type Client = {
   nom: string;
   actif: boolean;
   created_at: string;
+  groupe_id: string | null;
   membres: { user_id: string; email: string; role: RoleMembre }[];
   espaces: { updated_at: string } | null;
 };
+
+type Groupe = { id: string; nom: string };
 
 type Identifiants = { email: string; motDePasse: string };
 type RoleMembre = keyof typeof libellesRoles;
@@ -34,6 +37,7 @@ const rolesMembre = Object.keys(libellesRoles) as RoleMembre[];
 export default function Console() {
   const [etat, setEtat] = useState<"chargement" | "refuse" | "pret">("chargement");
   const [clients, setClients] = useState<Client[]>([]);
+  const [groupes, setGroupes] = useState<Groupe[]>([]);
   const [recherche, setRecherche] = useState("");
   const [retour, setRetour] = useState<{ resultat: Resultat; identifiants?: Identifiants } | null>(null);
 
@@ -47,11 +51,15 @@ export default function Console() {
       .eq("user_id", utilisateur.user.id)
       .maybeSingle();
     if (!admin) return setEtat("refuse");
-    const { data } = await supabase
-      .from("entreprises")
-      .select("id, nom, actif, created_at, membres(user_id, email, role), espaces(updated_at)")
-      .order("nom");
+    const [{ data }, { data: listeGroupes }] = await Promise.all([
+      supabase
+        .from("entreprises")
+        .select("id, nom, actif, created_at, groupe_id, membres(user_id, email, role), espaces(updated_at)")
+        .order("nom"),
+      supabase.from("groupes").select("id, nom").order("nom"),
+    ]);
     setClients((data ?? []) as unknown as Client[]);
+    setGroupes((listeGroupes ?? []) as Groupe[]);
     setEtat("pret");
   }, []);
 
@@ -102,6 +110,46 @@ export default function Console() {
     await recharger();
   };
 
+  // Rattache un client à un groupe existant, à un nouveau groupe, ou le détache.
+  const changerGroupe = async (client: Client, valeur: string) => {
+    const supabase = supabaseNavigateur();
+    let groupeId: string | null = valeur || null;
+    if (valeur === "nouveau") {
+      const nom = prompt("Nom du groupe (souvent le nom de la société) :", client.nom)?.trim();
+      if (!nom) return;
+      const { data, error } = await supabase.from("groupes").insert({ nom }).select("id").single();
+      if (error || !data) return setRetour({ resultat: { ok: false, message: "Le groupe n'a pas pu être créé." } });
+      groupeId = data.id;
+    }
+    const { error } = await supabase.from("entreprises").update({ groupe_id: groupeId }).eq("id", client.id);
+    setRetour({ resultat: error ? { ok: false, message: "Le rattachement n'a pas pu être enregistré." } : { ok: true, message: groupeId ? `« ${client.nom} » rattaché au groupe.` : `« ${client.nom} » ne fait plus partie d'un groupe.` } });
+    await recharger();
+  };
+
+  // Nouvel établissement : même groupe (créé si besoin), mêmes utilisateurs si demandé.
+  const creerEtablissement = async (client: Client, nom: string, memesUtilisateurs: boolean) => {
+    const supabase = supabaseNavigateur();
+    let groupeId = client.groupe_id;
+    if (!groupeId) {
+      const { data, error } = await supabase.from("groupes").insert({ nom: client.nom }).select("id").single();
+      if (error || !data) return setRetour({ resultat: { ok: false, message: "Le groupe n'a pas pu être créé." } });
+      groupeId = data.id as string;
+      await supabase.from("entreprises").update({ groupe_id: groupeId }).eq("id", client.id);
+    }
+    const { data: site, error } = await supabase.from("entreprises").insert({ nom, groupe_id: groupeId }).select("id").single();
+    if (error || !site) return setRetour({ resultat: { ok: false, message: "L'établissement n'a pas pu être créé." } });
+    if (memesUtilisateurs && client.membres.length) {
+      await supabase.from("membres").insert(client.membres.map((m) => ({ user_id: m.user_id, entreprise_id: site.id, email: m.email, role: m.role })));
+    }
+    setRetour({
+      resultat: {
+        ok: true,
+        message: `Établissement « ${nom} » créé${memesUtilisateurs && client.membres.length ? ` avec les ${client.membres.length} utilisateur(s) de « ${client.nom} »` : ""}.`,
+      },
+    });
+    await recharger();
+  };
+
   if (etat === "chargement") return <Chargement />;
   if (etat === "refuse") {
     return (
@@ -114,9 +162,17 @@ export default function Console() {
   }
 
   const terme = recherche.trim().toLowerCase();
-  const visibles = clients.filter(
-    (c) => !terme || c.nom.toLowerCase().includes(terme) || c.membres.some((m) => m.email.includes(terme)),
-  );
+  const nomGroupe = (c: Client) => groupes.find((g) => g.id === c.groupe_id)?.nom ?? "";
+  // Les établissements d'un même groupe se suivent.
+  const visibles = clients
+    .filter(
+      (c) =>
+        !terme ||
+        c.nom.toLowerCase().includes(terme) ||
+        nomGroupe(c).toLowerCase().includes(terme) ||
+        c.membres.some((m) => m.email.includes(terme)),
+    )
+    .sort((a, b) => (nomGroupe(a) || a.nom).localeCompare(nomGroupe(b) || b.nom, "fr") || a.nom.localeCompare(b.nom, "fr"));
 
   return (
     <div className="min-h-screen">
@@ -191,6 +247,11 @@ export default function Console() {
                         <Pastille couleur="#d03b3b" texte="#ffffff" icone="✕">Suspendu</Pastille>
                       )}
                     </div>
+                    {c.groupe_id && (
+                      <p className="mt-1 text-xs text-bronze">
+                        Groupe {nomGroupe(c)} · {clients.filter((x) => x.groupe_id === c.groupe_id).length} établissement(s)
+                      </p>
+                    )}
                     <p className="mt-1 text-xs text-gris">
                       Client depuis le {formaterDate(c.created_at.slice(0, 10))}
                       {c.espaces?.updated_at && ` · dernière modification le ${formaterDate(c.espaces.updated_at.slice(0, 10))}`}
@@ -204,6 +265,24 @@ export default function Console() {
                       {c.actif ? "Suspendre" : "Réactiver"}
                     </button>
                   </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-end gap-x-6 gap-y-3 border-t border-pierre/60 pt-3 text-sm">
+                  <label className="text-xs text-gris">
+                    <span className="mb-1 block uppercase tracking-wider">Groupe</span>
+                    <select
+                      value={c.groupe_id ?? ""}
+                      onChange={(e) => changerGroupe(c, e.target.value)}
+                      className={`${classeChamp} w-auto py-1 text-xs`}
+                    >
+                      <option value="">Aucun (entreprise seule)</option>
+                      {groupes.map((g) => (
+                        <option key={g.id} value={g.id}>{g.nom}</option>
+                      ))}
+                      <option value="nouveau">+ Nouveau groupe…</option>
+                    </select>
+                  </label>
+                  <NouvelEtablissement onCreer={(nom, memes) => creerEtablissement(c, nom, memes)} />
                 </div>
 
                 <div className="mt-4 border-t border-pierre/60 pt-3">
@@ -253,6 +332,42 @@ export default function Console() {
         )}
       </div>
     </div>
+  );
+}
+
+function NouvelEtablissement({ onCreer }: { onCreer: (nom: string, memesUtilisateurs: boolean) => Promise<void> }) {
+  const [ouvert, setOuvert] = useState(false);
+  const [nom, setNom] = useState("");
+  const [memes, setMemes] = useState(true);
+  if (!ouvert) {
+    return (
+      <button type="button" className="text-xs text-bronze underline" onClick={() => setOuvert(true)}>
+        + Ajouter un établissement
+      </button>
+    );
+  }
+  return (
+    <form
+      className="flex flex-wrap items-end gap-2"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        if (!nom.trim()) return;
+        await onCreer(nom.trim(), memes);
+        setNom("");
+        setOuvert(false);
+      }}
+    >
+      <label className="text-xs text-gris">
+        <span className="mb-1 block uppercase tracking-wider">Nom de l&apos;établissement</span>
+        <input required autoFocus value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Société X – site de Lyon" className={`${classeChamp} w-64 py-1 text-sm`} />
+      </label>
+      <label className="flex items-center gap-1.5 pb-1.5 text-xs text-ardoise">
+        <input type="checkbox" className="accent-bronze" checked={memes} onChange={(e) => setMemes(e.target.checked)} />
+        Mêmes utilisateurs
+      </label>
+      <button type="submit" className={`${classeBouton} py-1 text-xs`}>Créer</button>
+      <button type="button" className="pb-1.5 text-xs text-gris underline" onClick={() => setOuvert(false)}>Annuler</button>
+    </form>
   );
 }
 
