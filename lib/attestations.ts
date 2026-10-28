@@ -1,7 +1,7 @@
 "use client";
 
-// Attestations de formation et rapports de vérification : fichiers privés dans le stockage Supabase (bucket « attestations »),
-// rangés par entreprise puis par élément (<entreprise>/<formation ou vérification>/<fichier>).
+// Attestations de formation, rapports de vérification et FDS : fichiers privés dans le stockage Supabase (bucket « attestations »),
+// rangés par entreprise puis par élément (<entreprise>/<formation, vérification ou produit>/<fichier>).
 // Les droits sont vérifiés par la base (migration 006).
 
 import { supabaseNavigateur } from "./supabase/client";

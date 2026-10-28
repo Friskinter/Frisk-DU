@@ -18,7 +18,7 @@ const DELAI_ENREGISTREMENT = 800;
 const DELAI_NOUVEL_ESSAI = 5000;
 const OPERATIONS_PAR_ENVOI = 200;
 // Version de la base attendue par cette version de Frisk DU (fonction frisk_version, migrations).
-export const VERSION_BASE = 7;
+export const VERSION_BASE = 8;
 
 export type Statut =
   | "chargement"

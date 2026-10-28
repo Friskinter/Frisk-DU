@@ -3,6 +3,7 @@
 import { nouvelleAction } from "./actions";
 import { nouvelEvenement } from "./evenements";
 import { ajouterMois, nouvelleExigence, nouvelleFormation } from "./formations";
+import { nouveauProduit } from "./produits";
 import { nouvelEquipement, nouvelleObservation, nouvelleVerification } from "./verifications";
 import { cle, decalerJours, nouvelId } from "./calculs";
 import type { Action, Article, Donnees, Evenement, Formation, LigneDuerp, Mouvement, PrincipePrevention, Salarie } from "./types";
@@ -32,6 +33,7 @@ export function donneesVides(): Donnees {
     exigences: [],
     equipements: [],
     verifications: [],
+    produits: [],
   };
 }
 
@@ -339,6 +341,30 @@ export function donneesDemo(aujourdhui: string): Donnees {
     verifie(portes, 120),
   ];
 
+  // Produits chimiques : un solvant à substituer, un CMR à documenter, une FDS manquante.
+  const produits = [
+    nouveauProduit({
+      nom: "Dégraissant solvanté DX 40", fournisseur: "Chimie Industrie", usage: "Dégraissage des pièces mécaniques au pinceau",
+      unite: "Atelier maintenance", stockage: "Armoire de sécurité de l'atelier", quantite: "60 L",
+      mentionsH: ["H225", "H304", "H315", "H336", "H411"], fdsDate: decalerJours(aujourdhui, -1500),
+      epi: "Gants nitrile, lunettes de protection", consignes: "Utiliser sous la hotte aspirante. Refermer le bidon après usage. Pas de flamme à proximité.",
+      risqueId: risque("Produits chimiques"),
+      substitution: "Essai d'un dégraissant aqueux prévu (voir plan d'actions).",
+      salariesExposes: [salarie("Simon T."), salarie("Michel R.")],
+    }),
+    nouveauProduit({
+      nom: "Huile moteur usagée (vidanges des chariots)", fournisseur: "—", usage: "Vidange des chariots thermiques",
+      unite: "Atelier maintenance", stockage: "Fût de récupération", quantite: "200 L",
+      mentionsH: ["H350", "H373", "H411"], fdsDate: decalerJours(aujourdhui, -400),
+      epi: "Gants nitrile à manchettes, lunettes", risqueId: risque("Produits chimiques"),
+    }),
+    nouveauProduit({
+      nom: "Nettoyant sols industriel", fournisseur: "Hygiène Pro", usage: "Lavage des sols de l'entrepôt",
+      unite: "Zone de stockage", stockage: "Local ménage", quantite: "120 L",
+      mentionsH: ["H315", "H319"], epi: "Gants de ménage",
+    }),
+  ];
+
   const premier = evenements[0];
   actions.push(
     nouvelleAction(premier.risqueId, {
@@ -367,6 +393,7 @@ export function donneesDemo(aujourdhui: string): Donnees {
     exigences,
     equipements,
     verifications,
+    produits,
     salaries,
     articles,
     mouvements,

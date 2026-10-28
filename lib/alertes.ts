@@ -5,6 +5,7 @@ import { actionEnRetard, actionsDe } from "./actions";
 import { calculerStocks, decalerJours, formaterDate, niveauDe, risqueResiduel } from "./calculs";
 import { analyseFaite, declarationEnRetard, echeanceDeclaration, estAccident } from "./evenements";
 import { etatFormation, formationsEnVigueur, formationsManquantes, libelleFormation, typeFormation } from "./formations";
+import { classementCmr, estCmr, etatFds } from "./produits";
 import { typesEvenement } from "./referentiel";
 import { derniereVerification, etatEquipement, observationsOuvertes } from "./verifications";
 import type { Donnees } from "./types";
@@ -12,7 +13,7 @@ import type { Donnees } from "./types";
 export type Alerte = {
   id: string;
   gravite: "critique" | "importante" | "info";
-  categorie: "DUERP" | "Accidents" | "Formations" | "Vérifications" | "EPI" | "Pénibilité";
+  categorie: "DUERP" | "Accidents" | "Formations" | "Vérifications" | "Produits chimiques" | "EPI" | "Pénibilité";
   titre: string;
   detail: string;
   lien: string; // page de l'application où traiter l'alerte
@@ -233,6 +234,42 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
       id: "observations-a-lever", gravite: "importante", categorie: "Vérifications", lien: "/verifications",
       titre: `${pluriel(ouvertes.length, "observation")} de vérification non levée${ouvertes.length > 1 ? "s" : ""} depuis plus d'un mois`,
       detail: liste(ouvertes.map((o) => `${nomEquipement(o.equipement)} : ${o.observation.texte}`)),
+    });
+  }
+
+  // Produits chimiques (seuls les produits encore utilisés)
+  const produits = (donnees.produits ?? []).filter((p) => p.actif);
+  const nomProduit = (p: (typeof produits)[number]) => p.nom || "Produit sans nom";
+  const cmrADocumenter = produits.filter((p) => estCmr(p) && (!p.substitution.trim() || !p.salariesExposes.length));
+  if (cmrADocumenter.length) {
+    alertes.push({
+      id: "chimie-cmr", gravite: "critique", categorie: "Produits chimiques", lien: "/produits",
+      titre: `${pluriel(cmrADocumenter.length, "produit")} CMR à documenter`,
+      detail: `Recherche de substitution et liste des salariés exposés (suivi médical renforcé) : ${liste(cmrADocumenter.map(nomProduit))}.`,
+    });
+  }
+  const sansFds = produits.filter((p) => etatFds(p, aujourdhui) === "manquante");
+  if (sansFds.length) {
+    alertes.push({
+      id: "chimie-fds-manquante", gravite: "importante", categorie: "Produits chimiques", lien: "/produits",
+      titre: `${pluriel(sansFds.length, "produit")} sans fiche de données de sécurité`,
+      detail: `Demandez la FDS au fournisseur (elle est gratuite et obligatoire) : ${liste(sansFds.map(nomProduit))}.`,
+    });
+  }
+  const fdsAnciennes = produits.filter((p) => etatFds(p, aujourdhui) === "ancienne");
+  if (fdsAnciennes.length) {
+    alertes.push({
+      id: "chimie-fds-ancienne", gravite: "info", categorie: "Produits chimiques", lien: "/produits",
+      titre: `${pluriel(fdsAnciennes.length, "FDS")} de plus de 3 ans`,
+      detail: `Vérifiez auprès du fournisseur qu'il n'existe pas de version plus récente : ${liste(fdsAnciennes.map(nomProduit))}.`,
+    });
+  }
+  const horsDuerp = produits.filter((p) => (p.mentionsH.length || classementCmr(p)) && !risques.some((l) => l.id === p.risqueId));
+  if (horsDuerp.length) {
+    alertes.push({
+      id: "chimie-duerp", gravite: "info", categorie: "Produits chimiques", lien: "/produits",
+      titre: `${pluriel(horsDuerp.length, "produit")} dangereux non rattaché${horsDuerp.length > 1 ? "s" : ""} au DUERP`,
+      detail: `Le risque chimique doit être évalué dans le document unique (art. R4412-5) : ${liste(horsDuerp.map(nomProduit))}.`,
     });
   }
 

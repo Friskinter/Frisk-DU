@@ -8,7 +8,7 @@ reset role;
 -- Les tests précédents relancent des migrations antérieures : on réapplique la 007.
 \ir ../migrations/007_verifications.sql
 
-do $$ begin assert public.frisk_version() = 7, 'version de la base'; end $$;
+do $$ begin assert public.frisk_version() >= 7, 'version de la base'; end $$;
 
 -- Le responsable enregistre un équipement et sa vérification, puis lève une observation.
 set role authenticated;

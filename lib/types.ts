@@ -138,6 +138,27 @@ export type Verification = {
   rapport?: { chemin: string; nom: string }; // fichier dans le stockage Supabase
 };
 
+// Produit chimique utilisé dans l'entreprise (inventaire du risque chimique).
+export type Produit = {
+  id: string;
+  nom: string;
+  fournisseur: string;
+  reference: string; // référence commerciale
+  usage: string; // à quoi il sert, comment il est utilisé
+  unite: string; // unité de travail du DUERP
+  stockage: string;
+  quantite: string; // quantité utilisée par an, en texte libre (ex. « 40 L »)
+  mentionsH: string[]; // mentions de danger de la FDS (ex. « H225 », « H350 »)
+  fds?: { chemin: string; nom: string }; // fiche de données de sécurité (stockage Supabase)
+  fdsDate: string; // date de révision de la FDS, AAAA-MM-JJ
+  epi: string; // protections à porter (notice de poste)
+  consignes: string; // consignes d'utilisation et en cas d'accident (notice de poste)
+  risqueId: string; // risque du DUERP concerné
+  substitution: string; // recherche d'un produit moins dangereux (obligatoire pour les CMR)
+  salariesExposes: string[];
+  actif: boolean; // false : produit retiré, conservé pour mémoire
+};
+
 export type Salarie = {
   id: string;
   nom: string;
@@ -201,6 +222,7 @@ export type Donnees = {
   exigences: Exigence[];
   equipements: Equipement[];
   verifications: Verification[];
+  produits: Produit[];
   salaries: Salarie[];
   articles: Article[];
   mouvements: Mouvement[];

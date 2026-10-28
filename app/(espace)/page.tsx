@@ -22,6 +22,7 @@ import {
 } from "@/lib/calculs";
 import { calculerIndicateurs, estClos } from "@/lib/evenements";
 import { etatFormation, formationsEnVigueur, formationsManquantes } from "@/lib/formations";
+import { classementCmr, estCmr, etatFds } from "@/lib/produits";
 import { grilleFrequence, grilleGravite, niveauxCriticite } from "@/lib/referentiel";
 import { etatEquipement, observationsOuvertes } from "@/lib/verifications";
 import { useDonnees } from "@/lib/stockage";
@@ -52,6 +53,7 @@ export default function TableauDeBord() {
     .map((f) => etatFormation(f, aujourdhui));
   const formationsAManquer = formationsManquantes(donnees, aujourdhui).length;
   const etatsEquipements = donnees.equipements.map((e) => etatEquipement(donnees.verifications, e, aujourdhui));
+  const produitsActifs = donnees.produits.filter((p) => p.actif);
   const observationsALever = observationsOuvertes(donnees.equipements, donnees.verifications, actions).length;
 
   const parNiveau = niveauxCriticite.map((n) => ({
@@ -203,6 +205,26 @@ export default function TableauDeBord() {
 
         <Carte titre="Risque résiduel le plus élevé par unité">
           <BarresHorizontales donnees={parUnite} />
+        </Carte>
+
+        <Carte
+          titre="Produits chimiques"
+          actions={<Link href="/produits" className="text-xs text-bronze underline">Inventaire</Link>}
+          className="lg:col-span-2"
+        >
+          <dl className="grid gap-3 text-sm sm:grid-cols-4">
+            {[
+              { libelle: "Produits utilisés", valeur: produitsActifs.length, alerte: false },
+              { libelle: "CMR", valeur: produitsActifs.filter(estCmr).length, alerte: true },
+              { libelle: "CMR suspectés", valeur: produitsActifs.filter((p) => classementCmr(p)?.categorie === 2).length, alerte: false },
+              { libelle: "FDS manquantes", valeur: produitsActifs.filter((p) => etatFds(p, aujourdhui) === "manquante").length, alerte: true },
+            ].map((x) => (
+              <div key={x.libelle} className="rounded-sm bg-marbre/60 px-3 py-2">
+                <dt className="text-xs text-gris">{x.libelle}</dt>
+                <dd className={`text-xl font-semibold tabular-nums ${x.alerte && x.valeur > 0 ? "text-[#b42318]" : ""}`}>{x.valeur}</dd>
+              </div>
+            ))}
+          </dl>
         </Carte>
 
         <Carte
