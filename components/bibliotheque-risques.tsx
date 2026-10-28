@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PastilleCriticite, classeBouton, classeBoutonSecondaire, classeChamp } from "@/components/ui";
 import { metiers, type Metier, type ModeleRisque } from "@/lib/bibliotheque";
+import { nouvelleAction } from "@/lib/actions";
 import { nouvelId } from "@/lib/calculs";
 import { facteursPenibilite } from "@/lib/referentiel";
 import { modifier } from "@/lib/stockage";
@@ -24,10 +25,6 @@ function versLigne(m: ModeleRisque, unite: string): LigneDuerp {
     maitrise: "insuffisante",
     penibilite: m.penibilite ?? "",
     seuilPenibilite: m.penibilite ? "a-evaluer" : "non",
-    action: m.prevention,
-    responsable: "",
-    echeance: "",
-    statut: "a-faire",
   };
 }
 
@@ -76,8 +73,11 @@ export function BibliothequeRisques({
   const ajouter = () => {
     if (!metier || !selection.length) return;
     const lignes = selection.map(({ m }) => versLigne(m, uniteCible(m.unite)));
+    // La prévention conseillée devient une action du plan, à compléter (type, responsable, échéance).
+    const actions = lignes.map((l, i) => nouvelleAction(l.id, { intitule: selection[i].m.prevention }));
     modifier((d) => ({
       ...d,
+      actions: [...d.actions, ...actions],
       unites: [...new Set([...d.unites, ...lignes.map((l) => l.unite)])],
       duerp: [...d.duerp, ...lignes],
     }));

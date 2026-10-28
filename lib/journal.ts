@@ -2,10 +2,12 @@
 
 import { formaterDate } from "./calculs";
 import {
+  efficacites,
   facteursPenibilite,
   grilleFrequence,
   grilleGravite,
   grilleMaitrise,
+  principesPrevention,
   seuilsPenibilite,
   statutsAction,
 } from "./referentiel";
@@ -24,6 +26,7 @@ export type EntreeJournal = {
 
 export const zones: Record<string, string> = {
   duerp: "DUERP",
+  actions: "Plan d'actions",
   salaries: "Salariés",
   articles: "Catalogue EPI",
   mouvements: "Mouvements d'EPI",
@@ -47,6 +50,18 @@ const champsDuerp: Record<string, string> = {
   responsable: "Responsable",
   echeance: "Échéance",
   statut: "Statut",
+};
+
+const champsActions: Record<string, string> = {
+  intitule: "Intitulé",
+  principe: "Type de mesure",
+  cout: "Coût estimé",
+  ressources: "Ressources",
+  indicateur: "Indicateur",
+  realiseeLe: "Réalisée le",
+  efficacite: "Efficacité",
+  commentaire: "Constat d'efficacité",
+  risqueId: "Risque",
 };
 
 const champsAutres: Record<string, string> = {
@@ -75,7 +90,7 @@ const clesRacine: Record<string, string> = {
 };
 
 export function libelleChamp(champ: string) {
-  return champsDuerp[champ] ?? champsAutres[champ] ?? champ;
+  return champsDuerp[champ] ?? champsActions[champ] ?? champsAutres[champ] ?? champ;
 }
 
 export function valeurLisible(champ: string, valeur: unknown): string {
@@ -93,7 +108,14 @@ export function valeurLisible(champ: string, valeur: unknown): string {
       return facteursPenibilite.find((f) => f.code === valeur)?.libelle ?? String(valeur);
     case "seuilPenibilite":
       return seuilsPenibilite.find((s) => s.valeur === valeur)?.libelle ?? String(valeur);
+    case "principe":
+      return principesPrevention.find((p) => p.valeur === valeur)?.libelle ?? String(valeur);
+    case "efficacite":
+      return efficacites.find((e) => e.valeur === valeur)?.libelle ?? String(valeur);
+    case "cout":
+      return `${valeur} € HT`;
     case "echeance":
+    case "realiseeLe":
     case "date":
       return formaterDate(String(valeur));
     case "signatureId":
@@ -121,6 +143,10 @@ export function libelleElement(e: EntreeJournal, donnees: Donnees): string {
     case "duerp": {
       const l = { ...source, ...(donnees.duerp.find((x) => x.id === e.element_id) ?? {}) } as Record<string, unknown>;
       return [l.danger || l.activite || "Ligne", l.unite].filter(Boolean).join(" — ");
+    }
+    case "actions": {
+      const a = { ...source, ...(donnees.actions?.find((x) => x.id === e.element_id) ?? {}) } as Record<string, unknown>;
+      return String(a.intitule || "Action sans intitulé");
     }
     case "salaries":
       return String(donnees.salaries.find((s) => s.id === e.element_id)?.nom ?? source.nom ?? "Salarié");

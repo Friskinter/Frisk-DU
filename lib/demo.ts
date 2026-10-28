@@ -1,7 +1,8 @@
 // Jeu de données de démonstration : une PME fictive de logistique.
 
+import { nouvelleAction } from "./actions";
 import { cle, decalerJours, nouvelId } from "./calculs";
-import type { Article, Donnees, LigneDuerp, Mouvement, Salarie } from "./types";
+import type { Action, Article, Donnees, LigneDuerp, Mouvement, PrincipePrevention, Salarie } from "./types";
 
 // Générateur pseudo-aléatoire déterministe pour des démos reproductibles.
 function aleatoire(graine: number) {
@@ -22,6 +23,7 @@ export function donneesVides(): Donnees {
     salaries: [],
     articles: [],
     mouvements: [],
+    actions: [],
   };
 }
 
@@ -31,7 +33,7 @@ export function donneesDemo(aujourdhui: string): Donnees {
 
   const ligne = (l: Omit<LigneDuerp, "id">): LigneDuerp => ({ id: nouvelId(), ...l });
 
-  const duerp: LigneDuerp[] = [
+  const lignes: LigneDuerp[] = [
     ligne({
       unite: "Quai de réception", activite: "Déchargement des camions", danger: "Manutention manuelle",
       risque: "Lombalgies, TMS du dos et des épaules", effectif: 6, gravite: 3, frequence: 4,
@@ -110,6 +112,46 @@ export function donneesDemo(aujourdhui: string): Donnees {
       echeance: decalerJours(aujourdhui, 120), statut: "a-faire",
     }),
   ];
+
+  // Les actions saisies sur les lignes deviennent des actions du plan, complétées pour l'exemple.
+  const complements: Record<string, Partial<Action>> = {
+    "Acheter 2 transpalettes électriques": { principe: "collective", cout: 4800, indicateur: "Nombre de manutentions manuelles > 15 kg par jour" },
+    "Installer des barrières de quai et cales de roues": { principe: "collective", cout: 6500, ressources: "Prestataire de quais" },
+    "Rotation des postes toutes les 2 h": { principe: "organisation", indicateur: "Temps passé en chambre froide par salarié" },
+    "Installer des feux bleus de signalisation sur les chariots": { principe: "collective", cout: 900 },
+    "Poser des filets anti-chute sur les racks": { principe: "collective", cout: 2200, realiseeLe: decalerJours(aujourdhui, -62), efficacite: "efficace", commentaire: "Aucune chute d'objet constatée depuis l'installation." },
+    "Faire réaliser une mesure de bruit (sonométrie)": { principe: "organisation", cout: 650, ressources: "Service de prévention et de santé au travail" },
+    "Remplacer par un dégraissant aqueux": { principe: "substituer", cout: 300 },
+    "Formation éco-conduite et sécurité routière": { principe: "formation", cout: 1500, ressources: "Organisme de formation" },
+    "Équiper les livreurs d'un dispositif d'alarme travailleur isolé": { principe: "collective", cout: 1200 },
+    "Remplacer les sièges par des modèles ergonomiques": { principe: "collective", cout: 1800, realiseeLe: decalerJours(aujourdhui, -95), efficacite: "partielle", commentaire: "Plaintes en baisse, deux postes restent à régler." },
+    "Questionnaire anonyme sur la charge de travail": { principe: "organisation" },
+  };
+  const actions: Action[] = lignes
+    .filter((l) => l.action)
+    .map((l) =>
+      nouvelleAction(l.id, {
+        intitule: l.action,
+        responsable: l.responsable,
+        echeance: l.echeance,
+        statut: l.statut,
+        ...complements[l.action ?? ""],
+      }),
+    );
+  // Exemple de risque traité par plusieurs actions complémentaires.
+  const quai = lignes.find((l) => l.danger === "Chute de hauteur");
+  if (quai) {
+    actions.push(
+      nouvelleAction(quai.id, {
+        intitule: "Consigne d'accès aux quais et sensibilisation des équipes",
+        principe: "formation" as PrincipePrevention,
+        responsable: "Responsable entrepôt",
+        echeance: decalerJours(aujourdhui, 30),
+      }),
+    );
+  }
+  const anciensChamps = new Set(["action", "responsable", "echeance", "statut"]);
+  const duerp = lignes.map((l) => Object.fromEntries(Object.entries(l).filter(([k]) => !anciensChamps.has(k))) as LigneDuerp);
 
   const noms = [
     ["Martin L.", "Entrepôt", "Cariste"], ["Bernard S.", "Entrepôt", "Préparateur"],
@@ -216,6 +258,7 @@ export function donneesDemo(aujourdhui: string): Donnees {
     services,
     unites,
     duerp,
+    actions,
     salaries,
     articles,
     mouvements,

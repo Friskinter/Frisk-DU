@@ -11,3 +11,4 @@ psql -f schema.sql
 psql -f schema.sql
 for f in migrations/*.sql; do psql -f "$f"; done
 psql -At -f tests/01_roles_journal.test.sql | grep -v '^$' | tail -1
+psql -At -f tests/02_plan_actions.test.sql | grep -v '^$' | tail -1

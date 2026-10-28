@@ -10,6 +10,7 @@ import { deconnecter, useSession, type Enregistrement } from "@/lib/stockage";
 const liens = [
   { href: "/", label: "Tableau de bord", icone: "▦" },
   { href: "/duerp", label: "DUERP", icone: "☰" },
+  { href: "/actions", label: "Plan d'actions", icone: "✓" },
   { href: "/penibilite", label: "Pénibilité", icone: "⚠" },
   { href: "/epi", label: "EPI & stocks", icone: "⛑" },
   { href: "/bilans", label: "Bilans", icone: "▤" },

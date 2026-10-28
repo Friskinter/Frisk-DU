@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  actionEnRetard, calculerStocks, criticiteBrute, decalerJours, niveauDe, risqueResiduel, stocksActuels,
+  calculerStocks, criticiteBrute, decalerJours, niveauDe, risqueResiduel, stocksActuels,
 } from "@/lib/calculs";
 import { article, donnees, ligne, mouvement } from "./aides";
 
@@ -24,14 +24,6 @@ describe("cotation des risques", () => {
     expect(niveauDe(11.9).code).toBe("important");
     expect(niveauDe(12).code).toBe("critique");
     expect(niveauDe(16).code).toBe("critique");
-  });
-
-  it("une action est en retard seulement si elle n'est pas réalisée et que l'échéance est passée", () => {
-    const aujourdhui = "2026-10-28";
-    expect(actionEnRetard(ligne({ echeance: "2026-10-27", statut: "a-faire" }), aujourdhui)).toBe(true);
-    expect(actionEnRetard(ligne({ echeance: "2026-10-28", statut: "a-faire" }), aujourdhui)).toBe(false);
-    expect(actionEnRetard(ligne({ echeance: "2026-10-01", statut: "fait" }), aujourdhui)).toBe(false);
-    expect(actionEnRetard(ligne({ echeance: "", statut: "a-faire" }), aujourdhui)).toBe(false);
   });
 });
 

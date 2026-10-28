@@ -43,3 +43,14 @@ describe("PDF", () => {
     expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
   }, 30_000);
 });
+
+describe("PDF des versions figées", () => {
+  it("relit une version à l'ancien format (une action par ligne)", async () => {
+    const ancienne = {
+      entreprise: "Ancienne SARL",
+      duerp: [{ ...d.duerp[0], action: "Garde-corps", responsable: "Direction", echeance: "2025-06-01", statut: "fait" as const }],
+    };
+    const pdf = await renderToBuffer(<DocumentUnique donnees={ancienne} aujourdhui="2025-01-10" logo={logo} numero={1} />);
+    expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
+  }, 30_000);
+});

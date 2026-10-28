@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { BoutonDocumentUnique } from "@/components/bouton-document-unique";
+import { actionEnRetard, actionsDuRisque } from "@/lib/actions";
 import { Alertes } from "@/components/alertes";
 import {
   BarresHorizontales,
@@ -13,7 +14,6 @@ import {
   classeBouton,
 } from "@/components/ui";
 import {
-  actionEnRetard,
   calculerStocks,
   dateDuJour,
   formaterDate,
@@ -30,9 +30,14 @@ export default function TableauDeBord() {
   const aujourdhui = dateDuJour();
   const risques = donnees.duerp;
   const prioritaires = risques.filter((l) => ["important", "critique"].includes(niveauDe(risqueResiduel(l)).code));
-  const avecAction = risques.filter((l) => l.action);
-  const realisees = avecAction.filter((l) => l.statut === "fait");
-  const enRetard = risques.filter((l) => actionEnRetard(l, aujourdhui));
+  const actions = donnees.actions;
+  const realisees = actions.filter((a) => a.statut === "fait");
+  const enRetard = actions.filter((a) => actionEnRetard(a, aujourdhui));
+  // Prochaine action à mener sur un risque : la plus proche échéance parmi celles non réalisées.
+  const prochaineAction = (l: (typeof risques)[number]) =>
+    actionsDuRisque(actions, l)
+      .filter((a) => a.statut !== "fait")
+      .sort((a, b) => (a.echeance || "9999").localeCompare(b.echeance || "9999"))[0];
   const stocks = calculerStocks(donnees, aujourdhui);
   const aCommander = stocks.filter((s) => s.aCommander > 0);
 
@@ -53,8 +58,9 @@ export default function TableauDeBord() {
     })
     .sort((a, b) => b.valeur - a.valeur);
 
+  // Risques encore à traiter : une action en attente, ou aucune action alors que le risque n'est pas faible.
   const top = [...risques]
-    .filter((l) => l.statut !== "fait")
+    .filter((l) => prochaineAction(l) || (!actionsDuRisque(actions, l).length && risqueResiduel(l) >= 4))
     .sort((a, b) => risqueResiduel(b) - risqueResiduel(a))
     .slice(0, 5);
 
@@ -85,8 +91,8 @@ export default function TableauDeBord() {
         />
         <Indicateur
           libelle="Actions réalisées"
-          valeur={avecAction.length ? `${Math.round((realisees.length / avecAction.length) * 100)} %` : "—"}
-          detail={`${realisees.length} sur ${avecAction.length} actions`}
+          valeur={actions.length ? `${Math.round((realisees.length / actions.length) * 100)} %` : "—"}
+          detail={`${realisees.length} sur ${actions.length} actions`}
         />
         <Indicateur
           libelle="Actions en retard"
@@ -154,26 +160,30 @@ export default function TableauDeBord() {
 
         <Carte
           titre="Priorités d'action"
-          actions={<Link href="/duerp" className="text-xs text-bronze underline">Tout voir</Link>}
+          actions={<Link href="/actions" className="text-xs text-bronze underline">Plan d&apos;actions</Link>}
         >
           {top.length === 0 ? (
             <p className="text-sm text-gris">Aucune action en attente.</p>
           ) : (
             <ul className="divide-y divide-pierre/60">
-              {top.map((l) => (
-                <li key={l.id} className="flex items-start justify-between gap-3 py-2.5 text-sm">
-                  <div className="min-w-0">
-                    <p className="font-medium">{l.danger || "Danger non précisé"} — {l.unite}</p>
-                    <p className="truncate text-ardoise">{l.action || "Aucune action définie"}</p>
-                    {l.echeance && (
-                      <p className={`text-xs ${actionEnRetard(l, aujourdhui) ? "text-[#b42318]" : "text-gris"}`}>
-                        Échéance : {formaterDate(l.echeance)}{actionEnRetard(l, aujourdhui) ? " · en retard" : ""}
-                      </p>
-                    )}
-                  </div>
-                  <PastilleCriticite score={risqueResiduel(l)} />
-                </li>
-              ))}
+              {top.map((l) => {
+                const a = prochaineAction(l);
+                const retard = a ? actionEnRetard(a, aujourdhui) : false;
+                return (
+                  <li key={l.id} className="flex items-start justify-between gap-3 py-2.5 text-sm">
+                    <div className="min-w-0">
+                      <p className="font-medium">{l.danger || "Danger non précisé"} — {l.unite}</p>
+                      <p className="truncate text-ardoise">{a ? a.intitule || "Action sans intitulé" : "Aucune action définie"}</p>
+                      {a?.echeance && (
+                        <p className={`text-xs ${retard ? "text-[#b42318]" : "text-gris"}`}>
+                          Échéance : {formaterDate(a.echeance)}{retard ? " · en retard" : ""}
+                        </p>
+                      )}
+                    </div>
+                    <PastilleCriticite score={risqueResiduel(l)} />
+                  </li>
+                );
+              })}
             </ul>
           )}
         </Carte>

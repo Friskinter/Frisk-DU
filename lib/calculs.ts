@@ -55,9 +55,6 @@ export function niveauDe(score: number) {
   return [...niveauxCriticite].reverse().find((n) => score >= n.min)!;
 }
 
-export function actionEnRetard(ligne: LigneDuerp, aujourdhui: string) {
-  return ligne.statut !== "fait" && !!ligne.echeance && ligne.echeance < aujourdhui;
-}
 
 // ---------- Stocks EPI ----------
 

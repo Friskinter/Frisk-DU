@@ -1,7 +1,8 @@
 // Points à traiter : calculés à partir des données de l'entreprise.
 // Utilisé dans l'application (tableau de bord) et pour le récapitulatif hebdomadaire par e-mail.
 
-import { actionEnRetard, calculerStocks, decalerJours, formaterDate, niveauDe, risqueResiduel } from "./calculs";
+import { actionEnRetard, actionsDe } from "./actions";
+import { calculerStocks, decalerJours, formaterDate, niveauDe, risqueResiduel } from "./calculs";
 import type { Donnees } from "./types";
 
 export type Alerte = {
@@ -49,32 +50,54 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   }
 
   // Actions de prévention
-  const enRetard = risques.filter((l) => actionEnRetard(l, aujourdhui));
+  const actions = actionsDe(donnees);
+  const enRetard = actions.filter((a) => actionEnRetard(a, aujourdhui));
   if (enRetard.length) {
     alertes.push({
-      id: "actions-retard", gravite: "critique", categorie: "DUERP", lien: "/duerp",
+      id: "actions-retard", gravite: "critique", categorie: "DUERP", lien: "/actions",
       titre: `${pluriel(enRetard.length, "action")} de prévention en retard`,
-      detail: liste(enRetard.map((l) => `${l.action} (${formaterDate(l.echeance)})`)),
+      detail: liste(enRetard.map((a) => `${a.intitule || "Action sans intitulé"} (${formaterDate(a.echeance)})`)),
     });
   }
-  const bientot = risques.filter(
-    (l) => l.statut !== "fait" && l.echeance && l.echeance >= aujourdhui && l.echeance <= decalerJours(aujourdhui, 15),
+  const bientot = actions.filter(
+    (a) => a.statut !== "fait" && a.echeance && a.echeance >= aujourdhui && a.echeance <= decalerJours(aujourdhui, 15),
   );
   if (bientot.length) {
     alertes.push({
-      id: "actions-bientot", gravite: "importante", categorie: "DUERP", lien: "/duerp",
+      id: "actions-bientot", gravite: "importante", categorie: "DUERP", lien: "/actions",
       titre: `${pluriel(bientot.length, "action")} à échéance dans les 15 jours`,
-      detail: liste(bientot.map((l) => `${l.action} (${formaterDate(l.echeance)})`)),
+      detail: liste(bientot.map((a) => `${a.intitule || "Action sans intitulé"} (${formaterDate(a.echeance)})`)),
     });
   }
-  const critiquesSansAction = risques.filter(
-    (l) => niveauDe(risqueResiduel(l)).code === "critique" && !l.action.trim() && l.statut !== "fait",
+  const prioritaires = risques.filter((l) => ["important", "critique"].includes(niveauDe(risqueResiduel(l)).code));
+  const critiquesSansAction = prioritaires.filter(
+    (l) => niveauDe(risqueResiduel(l)).code === "critique" && !actions.some((a) => a.risqueId === l.id),
   );
   if (critiquesSansAction.length) {
     alertes.push({
       id: "critiques-sans-action", gravite: "critique", categorie: "DUERP", lien: "/duerp",
       titre: `${pluriel(critiquesSansAction.length, "risque")} critique${critiquesSansAction.length > 1 ? "s" : ""} sans action prévue`,
       detail: liste(critiquesSansAction.map((l) => `${l.danger || l.activite} (${l.unite})`)),
+    });
+  }
+  // Les EPI ne doivent venir qu'en complément de mesures collectives ou d'organisation.
+  const seulementEpi = prioritaires.filter((l) => {
+    const principes = actions.filter((a) => a.risqueId === l.id && a.principe).map((a) => a.principe);
+    return principes.length > 0 && principes.every((p) => p === "epi");
+  });
+  if (seulementEpi.length) {
+    alertes.push({
+      id: "seulement-epi", gravite: "importante", categorie: "DUERP", lien: "/actions",
+      titre: `${pluriel(seulementEpi.length, "risque")} prioritaire${seulementEpi.length > 1 ? "s" : ""} traité${seulementEpi.length > 1 ? "s" : ""} uniquement par des EPI`,
+      detail: `Prévoir une mesure de suppression, de protection collective ou d'organisation : ${liste(seulementEpi.map((l) => `${l.danger || l.activite} (${l.unite})`))}.`,
+    });
+  }
+  const aVerifier = actions.filter((a) => a.statut === "fait" && a.efficacite === "non-evaluee" && a.realiseeLe && a.realiseeLe <= decalerJours(aujourdhui, -30));
+  if (aVerifier.length) {
+    alertes.push({
+      id: "efficacite-a-verifier", gravite: "info", categorie: "DUERP", lien: "/actions",
+      titre: `${pluriel(aVerifier.length, "action")} réalisée${aVerifier.length > 1 ? "s" : ""} dont l'efficacité reste à vérifier`,
+      detail: liste(aVerifier.map((a) => a.intitule || "Action sans intitulé")),
     });
   }
 
