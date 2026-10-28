@@ -57,9 +57,19 @@ export type Mouvement = {
   motif: string;
 };
 
+// Informations reprises sur la page de garde du document unique.
+export type FicheEntreprise = {
+  siret: string;
+  adresse: string;
+  activite: string;
+  effectif: string;
+  responsable: string; // employeur ou personne qui établit le document
+};
+
 export type Donnees = {
   version: 1;
   entreprise: string;
+  fiche?: FicheEntreprise;
   services: string[];
   unites: string[];
   duerp: LigneDuerp[];

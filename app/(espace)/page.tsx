@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { BoutonDocumentUnique } from "@/components/bouton-document-unique";
 import {
   BarresHorizontales,
   Carte,
@@ -62,9 +63,12 @@ export default function TableauDeBord() {
         titre="Tableau de bord"
         description={`Vue d'ensemble de la prévention chez ${donnees.entreprise}.`}
         actions={
-          <Link href="/duerp" className={classeBouton}>
-            Ouvrir le DUERP
-          </Link>
+          <>
+            <BoutonDocumentUnique donnees={donnees} />
+            <Link href="/duerp" className={classeBouton}>
+              Ouvrir le DUERP
+            </Link>
+          </>
         }
       />
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { BoutonDocumentUnique } from "@/components/bouton-document-unique";
 import { GuideCotation } from "@/components/guide-cotation";
 import {
   Chargement,
@@ -155,9 +156,7 @@ export default function PageDuerp() {
             <button type="button" className={classeBoutonSecondaire} onClick={exporter}>
               Exporter (Excel)
             </button>
-            <button type="button" className={`${classeBoutonSecondaire} print:hidden`} onClick={() => window.print()}>
-              Imprimer / PDF
-            </button>
+            <BoutonDocumentUnique donnees={donnees} />
             <button type="button" className={classeBouton} onClick={() => ajouter()}>
               + Ajouter un risque
             </button>

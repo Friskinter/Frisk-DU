@@ -12,9 +12,19 @@ import {
 import { dateDuJour, nouvelId, telecharger } from "@/lib/calculs";
 import { donneesDemo, donneesVides } from "@/lib/demo";
 import { modifier, remplacer, useDonnees } from "@/lib/stockage";
-import type { Donnees, Salarie } from "@/lib/types";
+import type { Donnees, FicheEntreprise, Salarie } from "@/lib/types";
 
 const categoriesTailles = ["Mains", "Pieds", "Corps", "Haute visibilité"];
+
+const ficheVide: FicheEntreprise = { siret: "", adresse: "", activite: "", effectif: "", responsable: "" };
+
+const champsFiche: { cle: keyof FicheEntreprise; libelle: string; exemple: string }[] = [
+  { cle: "siret", libelle: "SIRET", exemple: "123 456 789 00012" },
+  { cle: "adresse", libelle: "Adresse", exemple: "12 rue des Lilas, 69000 Lyon" },
+  { cle: "activite", libelle: "Activité (et code NAF)", exemple: "Entreposage et stockage (52.10B)" },
+  { cle: "effectif", libelle: "Effectif", exemple: "14 salariés" },
+  { cle: "responsable", libelle: "Responsable du document", exemple: "Nom et fonction de l'employeur" },
+];
 
 export default function PageReglages() {
   const donnees = useDonnees();
@@ -58,14 +68,30 @@ export default function PageReglages() {
       <EnTetePage titre="Salariés & réglages" description="Les listes utilisées dans tout Frisk DU." />
 
       <Carte titre="Entreprise">
-        <label className="block max-w-md text-sm">
-          Raison sociale
-          <input
-            value={donnees.entreprise}
-            onChange={(e) => modifier((d) => ({ ...d, entreprise: e.target.value }))}
-            className={`${classeChamp} mt-1`}
-          />
-        </label>
+        <p className="mb-4 text-sm text-ardoise">Ces informations figurent sur la page de garde du document unique.</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="block text-sm">
+            Raison sociale
+            <input
+              value={donnees.entreprise}
+              onChange={(e) => modifier((d) => ({ ...d, entreprise: e.target.value }))}
+              className={`${classeChamp} mt-1`}
+            />
+          </label>
+          {champsFiche.map((c) => (
+            <label key={c.cle} className="block text-sm">
+              {c.libelle}
+              <input
+                value={donnees.fiche?.[c.cle] ?? ""}
+                placeholder={c.exemple}
+                onChange={(e) =>
+                  modifier((d) => ({ ...d, fiche: { ...ficheVide, ...d.fiche, [c.cle]: e.target.value } }))
+                }
+                className={`${classeChamp} mt-1`}
+              />
+            </label>
+          ))}
+        </div>
       </Carte>
 
       <div className="grid gap-6 lg:grid-cols-2">
