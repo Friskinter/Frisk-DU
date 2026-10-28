@@ -3,7 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { supabaseClePublique, supabaseUrl } from "@/lib/supabase/config";
 
 // /api/alertes est appelée par le planificateur, sans session : elle vérifie son propre secret.
-const pagesPubliques = ["/connexion", "/auth/", "/api/alertes"];
+// Les pages /legal/ (mentions légales, CGU, confidentialité) sont lisibles sans compte.
+const pagesPubliques = ["/connexion", "/auth/", "/api/alertes", "/legal/"];
 
 // Rafraîchit la session Supabase et renvoie vers la connexion les visiteurs non connectés.
 export async function proxy(requete: NextRequest) {
