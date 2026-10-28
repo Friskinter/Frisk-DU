@@ -206,6 +206,13 @@ export function donneesDemo(aujourdhui: string): Donnees {
   return {
     version: 1,
     entreprise: "Logistique Démo SAS",
+    fiche: {
+      siret: "123 456 789 00012",
+      adresse: "12 avenue des Entrepôts, 69200 Vénissieux",
+      activite: "Entreposage et stockage non frigorifique (52.10B)",
+      effectif: "14 salariés",
+      responsable: "Claire Moreau, gérante",
+    },
     services,
     unites,
     duerp,
