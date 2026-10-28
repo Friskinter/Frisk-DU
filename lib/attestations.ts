@@ -38,6 +38,8 @@ export async function deposerAttestation(entrepriseId: string, formationId: stri
 // Lien temporaire (une minute) : les attestations ne sont jamais publiques.
 export async function ouvrirAttestation(chemin: string) {
   const fenetre = window.open("", "_blank");
+  // Le document ouvert ne doit pas pouvoir agir sur l'onglet Frisk DU.
+  if (fenetre) fenetre.opener = null;
   const { data, error } = await supabaseNavigateur().storage.from(BUCKET).createSignedUrl(chemin, 60);
   if (error || !data) {
     fenetre?.close();
