@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { donneesDemo } from "@/lib/demo";
 import { DocumentUnique } from "@/lib/pdf/document-unique";
 import { FicheEpi } from "@/lib/pdf/fiche-epi";
+import { EtatFormations } from "@/lib/pdf/etat-formations";
 import { RegistreBenins } from "@/lib/pdf/registre-benins";
 
 const logo = `${process.cwd()}/public/logo-frisk.png`;
@@ -58,6 +59,11 @@ describe("PDF des versions figées", () => {
   it("registre des accidents bénins", async () => {
     expect(d.evenements.some((e) => e.declaration === "registre")).toBe(true);
     const pdf = await renderToBuffer(<RegistreBenins donnees={d} aujourdhui="2026-10-28" logo={logo} />);
+    expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
+  }, 30_000);
+
+  it("état des formations et habilitations", async () => {
+    const pdf = await renderToBuffer(<EtatFormations donnees={d} aujourdhui="2026-10-28" logo={logo} />);
     expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
   }, 30_000);
 });

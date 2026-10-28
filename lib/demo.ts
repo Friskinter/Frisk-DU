@@ -2,8 +2,9 @@
 
 import { nouvelleAction } from "./actions";
 import { nouvelEvenement } from "./evenements";
+import { ajouterMois, nouvelleExigence, nouvelleFormation } from "./formations";
 import { cle, decalerJours, nouvelId } from "./calculs";
-import type { Action, Article, Donnees, Evenement, LigneDuerp, Mouvement, PrincipePrevention, Salarie } from "./types";
+import type { Action, Article, Donnees, Evenement, Formation, LigneDuerp, Mouvement, PrincipePrevention, Salarie } from "./types";
 
 // Générateur pseudo-aléatoire déterministe pour des démos reproductibles.
 function aleatoire(graine: number) {
@@ -26,6 +27,8 @@ export function donneesVides(): Donnees {
     mouvements: [],
     actions: [],
     evenements: [],
+    formations: [],
+    exigences: [],
   };
 }
 
@@ -285,6 +288,28 @@ export function donneesDemo(aujourdhui: string): Donnees {
       gravitePotentielle: 4, risqueId: risque("Circulation interne (chariots, piétons)"),
     }),
   ];
+  // Formations et habilitations : une à renouveler, une manquante, un recyclage déjà fait.
+  const formation = (nom: string, type: string, moisEcoules: number, champs: Partial<Formation> = {}) =>
+    nouvelleFormation({ salarieId: salarie(nom), type, obtenueLe: ajouterMois(aujourdhui, -moisEcoules), ...champs });
+  const formations: Formation[] = [
+    formation("Martin L.", "caces-r489", 58, { intitule: "Catégories 1A, 3", organisme: "Centre de formation Rhône Manutention" }),
+    formation("Martin L.", "autorisation-conduite", 58, { intitule: "Chariots catégories 1A et 3" }),
+    formation("Leroy M.", "caces-r489", 24, { intitule: "Catégorie 3", organisme: "Centre de formation Rhône Manutention" }),
+    formation("Moreau J.", "sst", 22, { organisme: "Organisme habilité INRS" }),
+    formation("Simon T.", "sst", 6, { organisme: "Organisme habilité INRS" }),
+    formation("Simon T.", "habilitation-electrique", 48, { intitule: "B1V, BR", organisme: "Formelec" }),
+    formation("Simon T.", "habilitation-electrique", 12, { intitule: "B1V, BR", organisme: "Formelec" }),
+    formation("Michel R.", "habilitation-electrique", 40, { intitule: "B0, H0V", organisme: "Formelec" }),
+    formation("Laurent P.", "autre", 30, { intitule: "Sécurité des opérations de soudage", organisme: "Soudure Formation" }),
+    formation("Garcia N.", "accueil-securite", 8),
+  ];
+  const exigences = [
+    nouvelleExigence("Cariste", "caces-r489"),
+    nouvelleExigence("Cariste", "autorisation-conduite"),
+    nouvelleExigence("Technicien", "habilitation-electrique"),
+    nouvelleExigence("Chef d'équipe", "sst"),
+  ];
+
   const premier = evenements[0];
   actions.push(
     nouvelleAction(premier.risqueId, {
@@ -309,6 +334,8 @@ export function donneesDemo(aujourdhui: string): Donnees {
     duerp,
     actions,
     evenements,
+    formations,
+    exigences,
     salaries,
     articles,
     mouvements,

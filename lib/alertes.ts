@@ -4,13 +4,14 @@
 import { actionEnRetard, actionsDe } from "./actions";
 import { calculerStocks, decalerJours, formaterDate, niveauDe, risqueResiduel } from "./calculs";
 import { analyseFaite, declarationEnRetard, echeanceDeclaration, estAccident } from "./evenements";
+import { etatFormation, formationsEnVigueur, formationsManquantes, libelleFormation, typeFormation } from "./formations";
 import { typesEvenement } from "./referentiel";
 import type { Donnees } from "./types";
 
 export type Alerte = {
   id: string;
   gravite: "critique" | "importante" | "info";
-  categorie: "DUERP" | "Accidents" | "EPI" | "Pénibilité";
+  categorie: "DUERP" | "Accidents" | "Formations" | "EPI" | "Pénibilité";
   titre: string;
   detail: string;
   lien: string; // page de l'application où traiter l'alerte
@@ -140,6 +141,47 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
       id: "accidents-duerp", gravite: "importante", categorie: "Accidents", lien: lienEvenement(aRapprocher),
       titre: `${pluriel(aRapprocher.length, "événement")} à reporter dans le DUERP`,
       detail: `Rattachez chaque événement à un risque et revoyez sa cotation (art. R4121-2) : ${liste(aRapprocher.map(nomEvenement))}.`,
+    });
+  }
+
+  // Formations et habilitations
+  const nomSalarie = new Map(donnees.salaries.map((s) => [s.id, s.nom || "Salarié sans nom"]));
+  const manquantes = formationsManquantes({ ...donnees, formations: donnees.formations ?? [], exigences: donnees.exigences ?? [] }, aujourdhui);
+  if (manquantes.length) {
+    alertes.push({
+      id: "formations-manquantes", gravite: "critique", categorie: "Formations", lien: "/formations",
+      titre: `${pluriel(manquantes.length, "formation")} exigée${manquantes.length > 1 ? "s" : ""} pour le poste manquante${manquantes.length > 1 ? "s" : ""} ou expirée${manquantes.length > 1 ? "s" : ""}`,
+      detail: liste(manquantes.map((m) => `${m.salarie.nom || "Salarié sans nom"} : ${typeFormation(m.type).court}${m.expiree ? " (expirée)" : ""}`)),
+    });
+  }
+  const enVigueur = formationsEnVigueur(donnees.formations ?? []).filter((f) => nomSalarie.has(f.salarieId));
+  const nomFormation = (f: (typeof enVigueur)[number]) =>
+    `${nomSalarie.get(f.salarieId)} : ${f.type === "autre" ? libelleFormation(f) : typeFormation(f.type).court} (${formaterDate(f.expireLe)})`;
+  const expirees = enVigueur.filter(
+    (f) => etatFormation(f, aujourdhui) === "expiree" && !manquantes.some((m) => m.salarie.id === f.salarieId && m.type === f.type),
+  );
+  if (expirees.length) {
+    alertes.push({
+      id: "formations-expirees", gravite: "importante", categorie: "Formations", lien: "/formations",
+      titre: `${pluriel(expirees.length, "formation")} ou habilitation${expirees.length > 1 ? "s" : ""} expirée${expirees.length > 1 ? "s" : ""}`,
+      detail: `À renouveler si le salarié en a toujours besoin : ${liste(expirees.map(nomFormation))}.`,
+    });
+  }
+  const aRenouveler = enVigueur.filter((f) => etatFormation(f, aujourdhui) === "a-renouveler");
+  const dansLeMois = aRenouveler.filter((f) => f.expireLe <= decalerJours(aujourdhui, 30));
+  if (dansLeMois.length) {
+    alertes.push({
+      id: "formations-30j", gravite: "importante", categorie: "Formations", lien: "/formations",
+      titre: `${pluriel(dansLeMois.length, "formation")} expire${dansLeMois.length > 1 ? "nt" : ""} dans moins d'un mois`,
+      detail: liste(dansLeMois.map(nomFormation)),
+    });
+  }
+  const aPlanifier = aRenouveler.filter((f) => f.expireLe > decalerJours(aujourdhui, 30));
+  if (aPlanifier.length) {
+    alertes.push({
+      id: "formations-90j", gravite: "info", categorie: "Formations", lien: "/formations",
+      titre: `${pluriel(aPlanifier.length, "recyclage")} à planifier dans les 3 mois`,
+      detail: liste(aPlanifier.map(nomFormation)),
     });
   }
 
