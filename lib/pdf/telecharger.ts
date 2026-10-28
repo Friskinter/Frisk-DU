@@ -89,3 +89,21 @@ export async function telechargerRegistreSecurite(donnees: Donnees) {
     `Registre de securite - ${donnees.entreprise} - ${aujourdhui}.pdf`,
   );
 }
+
+export async function telechargerInventaireProduits(donnees: Donnees) {
+  const { InventaireProduits } = await import("./produits");
+  const aujourdhui = dateDuJour();
+  await enregistrerPdf(
+    createElement(InventaireProduits, { donnees, aujourdhui, logo: logo() }),
+    `Inventaire des produits chimiques - ${donnees.entreprise} - ${aujourdhui}.pdf`,
+  );
+}
+
+export async function telechargerNoticesDePoste(donnees: Donnees) {
+  const { NoticesDePoste } = await import("./produits");
+  const aujourdhui = dateDuJour();
+  await enregistrerPdf(
+    createElement(NoticesDePoste, { donnees, aujourdhui, logo: logo() }),
+    `Notices de poste - ${donnees.entreprise} - ${aujourdhui}.pdf`,
+  );
+}

@@ -29,3 +29,4 @@ export function salarie(champs: Partial<import("@/lib/types").Salarie> = {}): im
   return { id: nouvelId(), nom: "Salarié", service: "", poste: "", tailles: {}, ...champs };
 }
 export { nouvelEquipement as equipement, nouvelleObservation as observation, nouvelleVerification as verification } from "@/lib/verifications";
+export { nouveauProduit as produit } from "@/lib/produits";

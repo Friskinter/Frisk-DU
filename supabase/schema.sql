@@ -715,3 +715,22 @@ language sql
 immutable
 set search_path = ''
 as $$ select array['duerp', 'actions', 'evenements', 'formations', 'exigences', 'equipements', 'verifications', 'salaries', 'articles', 'mouvements']; $$;
+
+-- ---------------------------------------------------------------
+-- Produits chimiques (migration 008)
+
+create or replace function public.frisk_version()
+returns integer
+language sql
+immutable
+set search_path = ''
+as $$ select 8; $$;
+grant execute on function public.frisk_version() to authenticated, anon;
+
+-- Nouvelle liste « produits », modifiable par le responsable.
+create or replace function public.collections_frisk()
+returns text[]
+language sql
+immutable
+set search_path = ''
+as $$ select array['duerp', 'actions', 'evenements', 'formations', 'exigences', 'equipements', 'verifications', 'produits', 'salaries', 'articles', 'mouvements']; $$;

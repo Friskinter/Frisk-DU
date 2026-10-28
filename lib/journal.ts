@@ -38,6 +38,7 @@ export const zones: Record<string, string> = {
   exigences: "Formations exigées",
   equipements: "Équipements",
   verifications: "Vérifications",
+  produits: "Produits chimiques",
   salaries: "Salariés",
   articles: "Catalogue EPI",
   mouvements: "Mouvements d'EPI",
@@ -113,6 +114,17 @@ const champsFormations: Record<string, string> = {
   prochaine: "Prochaine vérification",
   observations: "Observations",
   rapport: "Rapport",
+  fournisseur: "Fournisseur",
+  usage: "Usage",
+  stockage: "Stockage",
+  mentionsH: "Mentions de danger",
+  fds: "Fiche de données de sécurité",
+  fdsDate: "Date de la FDS",
+  epi: "Protections",
+  consignes: "Consignes",
+  substitution: "Recherche de substitution",
+  salariesExposes: "Salariés exposés",
+  actif: "Utilisé",
 };
 
 const champsAutres: Record<string, string> = {
@@ -172,9 +184,14 @@ export function valeurLisible(champ: string, valeur: unknown): string {
       );
     case "attestation":
     case "rapport":
+    case "fds":
       return (valeur as { nom?: string }).nom ?? "fichier joint";
     case "resultat":
       return resultats.find((r) => r.valeur === valeur)?.libelle ?? String(valeur);
+    case "actif":
+      return valeur ? "oui" : "non (produit retiré)";
+    case "salariesExposes":
+      return `${(valeur as string[]).length} salarié(s)`;
     case "periodicite":
       return `${valeur} mois`;
     case "observations":
@@ -210,6 +227,7 @@ export function valeurLisible(champ: string, valeur: unknown): string {
     case "obtenueLe":
     case "expireLe":
     case "prochaine":
+    case "fdsDate":
     case "declareeLe":
     case "analyseeLe":
     case "reevalueLe":
@@ -258,6 +276,8 @@ export function libelleElement(e: EntreeJournal, donnees: Donnees): string {
       const x = { ...source, ...(donnees.exigences?.find((y) => y.id === e.element_id) ?? {}) } as Record<string, unknown>;
       return `${x.poste ?? "Poste"} : ${libelleFormation({ type: String(x.type ?? "autre"), intitule: "" })}`;
     }
+    case "produits":
+      return String(donnees.produits?.find((x) => x.id === e.element_id)?.nom || source.nom || "Produit");
     case "equipements":
       return String(donnees.equipements?.find((x) => x.id === e.element_id)?.nom || source.nom || "Équipement");
     case "verifications": {
