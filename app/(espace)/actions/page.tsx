@@ -15,7 +15,7 @@ import { actionEnRetard, actionsDuRisque, effectifDeclare, estPapripact, nouvell
 import { dateDuJour, formatEuros, formaterDate, risqueResiduel, telechargerCsv } from "@/lib/calculs";
 import { efficacites, principesPrevention, statutsAction } from "@/lib/referentiel";
 import { modifier, peutModifier, useDonnees, useSession } from "@/lib/stockage";
-import type { Action, LigneDuerp } from "@/lib/types";
+import type { Action, Evenement, LigneDuerp } from "@/lib/types";
 
 const cellule = "border-b border-pierre/60 p-1 align-top";
 const champ =
@@ -226,6 +226,7 @@ function PlanActions() {
                     risque={l}
                     actions={actions}
                     aujourdhui={aujourdhui}
+                    evenements={donnees.evenements}
                     onAjouter={() => ajouter(l)}
                     onSupprimer={supprimer}
                     onStatut={changerStatut}
@@ -244,6 +245,7 @@ function GroupeRisque({
   risque: l,
   actions,
   aujourdhui,
+  evenements,
   onAjouter,
   onSupprimer,
   onStatut,
@@ -251,6 +253,7 @@ function GroupeRisque({
   risque: LigneDuerp;
   actions: Action[];
   aujourdhui: string;
+  evenements: Evenement[];
   onAjouter: () => void;
   onSupprimer: (a: Action) => void;
   onStatut: (a: Action, statut: Action["statut"]) => void;
@@ -281,6 +284,7 @@ function GroupeRisque({
       {actions.map((a) => {
         const retard = actionEnRetard(a, aujourdhui);
         const fait = a.statut === "fait";
+        const origine = a.evenementId ? evenements.find((e) => e.id === a.evenementId) : undefined;
         return (
           <tr key={a.id}>
             <td className={cellule}>
@@ -303,6 +307,11 @@ function GroupeRisque({
                 onChange={(e) => mettreAJour(a.id, { indicateur: e.target.value })}
                 className={`${champ} text-xs`}
               />
+              {origine && (
+                <Link href={`/accidents?evenement=${origine.id}`} className="block px-1.5 text-xs text-[#b42318] underline">
+                  ⚑ Suite {origine.type === "presque-accident" || origine.type === "situation-dangereuse" ? "à l'événement" : "à l'accident"} du {formaterDate(origine.date)}
+                </Link>
+              )}
             </td>
             <td className={cellule}>
               <select

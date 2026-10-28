@@ -3,12 +3,14 @@
 
 import { actionEnRetard, actionsDe } from "./actions";
 import { calculerStocks, decalerJours, formaterDate, niveauDe, risqueResiduel } from "./calculs";
+import { analyseFaite, declarationEnRetard, echeanceDeclaration, estAccident } from "./evenements";
+import { typesEvenement } from "./referentiel";
 import type { Donnees } from "./types";
 
 export type Alerte = {
   id: string;
   gravite: "critique" | "importante" | "info";
-  categorie: "DUERP" | "EPI" | "Pénibilité";
+  categorie: "DUERP" | "Accidents" | "EPI" | "Pénibilité";
   titre: string;
   detail: string;
   lien: string; // page de l'application où traiter l'alerte
@@ -98,6 +100,46 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
       id: "efficacite-a-verifier", gravite: "info", categorie: "DUERP", lien: "/actions",
       titre: `${pluriel(aVerifier.length, "action")} réalisée${aVerifier.length > 1 ? "s" : ""} dont l'efficacité reste à vérifier`,
       detail: liste(aVerifier.map((a) => a.intitule || "Action sans intitulé")),
+    });
+  }
+
+  // Accidents et presque-accidents (sans nom de victime : le récapitulatif part aussi par e-mail).
+  const evenements = (donnees.evenements ?? []).filter((e) => e.date && e.date <= aujourdhui);
+  const nomEvenement = (e: (typeof evenements)[number]) =>
+    `${typesEvenement.find((t) => t.valeur === e.type)?.libelle ?? "Événement"} du ${formaterDate(e.date)}${e.lieu ? ` (${e.lieu})` : ""}`;
+  const lienEvenement = (liste: typeof evenements) => (liste.length === 1 ? `/accidents?evenement=${liste[0].id}` : "/accidents");
+
+  const aDeclarer = evenements.filter((e) => e.declaration === "a-faire");
+  if (aDeclarer.length) {
+    const retard = aDeclarer.filter((e) => declarationEnRetard(e, aujourdhui));
+    alertes.push({
+      id: "accidents-a-declarer", gravite: "critique", categorie: "Accidents", lien: lienEvenement(aDeclarer),
+      titre: `${pluriel(aDeclarer.length, "accident")} à déclarer à la CPAM${retard.length ? ` (dont ${retard.length} hors délai)` : ""}`,
+      detail: `Déclaration dans les 48 heures : ${liste(aDeclarer.map((e) => `${nomEvenement(e)}, avant le ${formaterDate(echeanceDeclaration(e))}`))}.`,
+    });
+  }
+  const accidentsNonAnalyses = evenements.filter((e) => estAccident(e) && !analyseFaite(e) && e.date <= decalerJours(aujourdhui, -7));
+  if (accidentsNonAnalyses.length) {
+    alertes.push({
+      id: "accidents-a-analyser", gravite: "importante", categorie: "Accidents", lien: lienEvenement(accidentsNonAnalyses),
+      titre: `${pluriel(accidentsNonAnalyses.length, "accident")} dont les causes restent à analyser`,
+      detail: liste(accidentsNonAnalyses.map(nomEvenement)),
+    });
+  }
+  const signalementsNonAnalyses = evenements.filter((e) => !estAccident(e) && !analyseFaite(e) && e.date <= decalerJours(aujourdhui, -30));
+  if (signalementsNonAnalyses.length) {
+    alertes.push({
+      id: "presque-accidents-a-analyser", gravite: "info", categorie: "Accidents", lien: lienEvenement(signalementsNonAnalyses),
+      titre: `${pluriel(signalementsNonAnalyses.length, "presque-accident")} ou situation${signalementsNonAnalyses.length > 1 ? "s" : ""} dangereuse${signalementsNonAnalyses.length > 1 ? "s" : ""} à analyser`,
+      detail: liste(signalementsNonAnalyses.map(nomEvenement)),
+    });
+  }
+  const aRapprocher = evenements.filter((e) => (!e.risqueId || !e.reevalueLe) && e.date <= decalerJours(aujourdhui, -7));
+  if (aRapprocher.length) {
+    alertes.push({
+      id: "accidents-duerp", gravite: "importante", categorie: "Accidents", lien: lienEvenement(aRapprocher),
+      titre: `${pluriel(aRapprocher.length, "événement")} à reporter dans le DUERP`,
+      detail: `Rattachez chaque événement à un risque et revoyez sa cotation (art. R4121-2) : ${liste(aRapprocher.map(nomEvenement))}.`,
     });
   }
 

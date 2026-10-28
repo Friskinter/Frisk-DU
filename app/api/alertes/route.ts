@@ -1,5 +1,6 @@
 import { calculerAlertes } from "@/lib/alertes";
 import { dateDuJour } from "@/lib/calculs";
+import { normaliser } from "@/lib/donnees";
 import { emailAlertes } from "@/lib/email-alertes";
 import { supabaseAdmin } from "@/lib/supabase/serveur";
 import type { Donnees } from "@/lib/types";
@@ -40,7 +41,7 @@ export async function GET(requete: Request) {
     if (!donnees || !destinataires.length || donnees.preferences?.alertesEmail === false) continue;
 
     const dates = ((e.versions ?? []) as { created_at: string }[]).map((v) => v.created_at.slice(0, 10)).sort();
-    const alertes = calculerAlertes(donnees, aujourdhui, dates.at(-1) ?? null);
+    const alertes = calculerAlertes(normaliser(donnees), aujourdhui, dates.at(-1) ?? null);
     if (!alertes.length) continue;
 
     let envoye = false;

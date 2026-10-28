@@ -5,7 +5,7 @@
 set client_min_messages = warning;
 reset role;
 
-do $$ begin assert public.frisk_version() = 4, 'version de la base'; end $$;
+do $$ begin assert public.frisk_version() >= 4, 'version de la base'; end $$;
 
 -- Un contenu à l'ancien format : l'action est portée par la ligne du DUERP.
 update public.espaces set contenu = '{

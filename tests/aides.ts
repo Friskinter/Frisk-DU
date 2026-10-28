@@ -22,3 +22,4 @@ export function mouvement(champs: Partial<Mouvement> = {}): Mouvement {
 export function donnees(champs: Partial<Donnees> = {}): Donnees {
   return { ...donneesVides(), ...champs };
 }
+export { nouvelEvenement as evenement } from "@/lib/evenements";

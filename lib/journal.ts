@@ -2,14 +2,18 @@
 
 import { formaterDate } from "./calculs";
 import {
+  declarations,
   efficacites,
+  facteursAnalyse,
   facteursPenibilite,
   grilleFrequence,
   grilleGravite,
   grilleMaitrise,
+  niveauxSoins,
   principesPrevention,
   seuilsPenibilite,
   statutsAction,
+  typesEvenement,
 } from "./referentiel";
 import type { Donnees } from "./types";
 
@@ -27,6 +31,7 @@ export type EntreeJournal = {
 export const zones: Record<string, string> = {
   duerp: "DUERP",
   actions: "Plan d'actions",
+  evenements: "Accidents",
   salaries: "Salariés",
   articles: "Catalogue EPI",
   mouvements: "Mouvements d'EPI",
@@ -62,6 +67,30 @@ const champsActions: Record<string, string> = {
   efficacite: "Efficacité",
   commentaire: "Constat d'efficacité",
   risqueId: "Risque",
+  evenementId: "Événement à l'origine",
+};
+
+const champsEvenements: Record<string, string> = {
+  type: "Type d'événement",
+  heure: "Heure",
+  lieu: "Lieu",
+  salarieId: "Personne concernée",
+  victime: "Personne extérieure",
+  temoins: "Témoins",
+  description: "Circonstances",
+  lesions: "Lésions",
+  soins: "Conséquences",
+  joursArret: "Jours d'arrêt",
+  secouriste: "Premiers soins donnés par",
+  declaration: "Déclaration",
+  declareeLe: "Déclarée le",
+  gravitePotentielle: "Gravité potentielle",
+  pourquoi: "5 pourquoi",
+  facteurs: "Faits (individu, tâche, matériel, milieu)",
+  enseignements: "Cause principale et enseignements",
+  analyseeLe: "Analysé le",
+  analysePar: "Analysé par",
+  reevalueLe: "Cotation revue le",
 };
 
 const champsAutres: Record<string, string> = {
@@ -90,7 +119,7 @@ const clesRacine: Record<string, string> = {
 };
 
 export function libelleChamp(champ: string) {
-  return champsDuerp[champ] ?? champsActions[champ] ?? champsAutres[champ] ?? champ;
+  return champsDuerp[champ] ?? champsActions[champ] ?? champsEvenements[champ] ?? champsAutres[champ] ?? champ;
 }
 
 export function valeurLisible(champ: string, valeur: unknown): string {
@@ -112,10 +141,32 @@ export function valeurLisible(champ: string, valeur: unknown): string {
       return principesPrevention.find((p) => p.valeur === valeur)?.libelle ?? String(valeur);
     case "efficacite":
       return efficacites.find((e) => e.valeur === valeur)?.libelle ?? String(valeur);
+    case "type":
+      return typesEvenement.find((t) => t.valeur === valeur)?.libelle ?? String(valeur);
+    case "soins":
+      return niveauxSoins.find((n) => n.valeur === valeur)?.libelle ?? String(valeur);
+    case "declaration":
+      return declarations.find((x) => x.valeur === valeur)?.libelle ?? String(valeur);
+    case "gravitePotentielle":
+      return valeur === 0 ? "(non évaluée)" : `${valeur} – ${grilleGravite.find((g) => g.valeur === valeur)?.libelle ?? ""}`;
+    case "facteurs":
+      return (
+        facteursAnalyse
+          .filter((f) => (valeur as Record<string, string>)[f.cle])
+          .map((f) => `${f.libelle} : ${(valeur as Record<string, string>)[f.cle]}`)
+          .join(" · ") || "(vide)"
+      );
+    case "pourquoi":
+      return (valeur as string[]).filter(Boolean).map((p, i) => `${i + 1}. ${p}`).join(" ") || "(vide)";
+    case "salarieId":
+      return valeur === "externe" ? "personne extérieure à l'entreprise" : "salarié de l'entreprise";
     case "cout":
       return `${valeur} € HT`;
     case "echeance":
     case "realiseeLe":
+    case "declareeLe":
+    case "analyseeLe":
+    case "reevalueLe":
     case "date":
       return formaterDate(String(valeur));
     case "signatureId":
@@ -147,6 +198,11 @@ export function libelleElement(e: EntreeJournal, donnees: Donnees): string {
     case "actions": {
       const a = { ...source, ...(donnees.actions?.find((x) => x.id === e.element_id) ?? {}) } as Record<string, unknown>;
       return String(a.intitule || "Action sans intitulé");
+    }
+    case "evenements": {
+      const ev = { ...source, ...(donnees.evenements?.find((x) => x.id === e.element_id) ?? {}) } as Record<string, unknown>;
+      const type = typesEvenement.find((t) => t.valeur === ev.type)?.libelle ?? "Événement";
+      return [type, ev.date ? `du ${formaterDate(String(ev.date))}` : "", ev.lieu ? `(${ev.lieu})` : ""].filter(Boolean).join(" ");
     }
     case "salaries":
       return String(donnees.salaries.find((s) => s.id === e.element_id)?.nom ?? source.nom ?? "Salarié");

@@ -1,6 +1,16 @@
 // Méthode de cotation Frisk : grilles expliquées pour un non-spécialiste.
 
-import type { Efficacite, NiveauMaitrise, PrincipePrevention, SeuilPenibilite, StatutAction } from "./types";
+import type {
+  Declaration,
+  Efficacite,
+  FacteurAnalyse,
+  NiveauMaitrise,
+  PrincipePrevention,
+  SeuilPenibilite,
+  Soins,
+  StatutAction,
+  TypeEvenement,
+} from "./types";
 
 export type Echelon = {
   valeur: number;
@@ -182,6 +192,52 @@ export const efficacites: { valeur: Efficacite; libelle: string; couleur: string
   { valeur: "efficace", libelle: "Efficace", couleur: "#0ca30c", texte: "#ffffff" },
   { valeur: "partielle", libelle: "Partiellement efficace", couleur: "#fab219", texte: "#0b0b0b" },
   { valeur: "inefficace", libelle: "Inefficace", couleur: "#d03b3b", texte: "#ffffff" },
+];
+
+// ---------- Accidents et presque-accidents ----------
+
+export const typesEvenement: { valeur: TypeEvenement; libelle: string; definition: string; couleur: string; texte: string }[] = [
+  {
+    valeur: "accident-travail", libelle: "Accident du travail", couleur: "#d03b3b", texte: "#ffffff",
+    definition: "Survenu par le fait ou à l'occasion du travail et ayant causé une lésion, même légère.",
+  },
+  {
+    valeur: "accident-trajet", libelle: "Accident de trajet", couleur: "#ec835a", texte: "#0b0b0b",
+    definition: "Survenu sur le trajet entre le domicile et le travail, ou entre le travail et le lieu du repas.",
+  },
+  {
+    valeur: "presque-accident", libelle: "Presque-accident", couleur: "#fab219", texte: "#0b0b0b",
+    definition: "Aurait pu blesser quelqu'un, mais sans conséquence cette fois (ex. un colis tombe à côté d'un salarié).",
+  },
+  {
+    valeur: "situation-dangereuse", libelle: "Situation dangereuse", couleur: "#d9cfc1", texte: "#0c0b0a",
+    definition: "Repérée avant tout incident et pouvant conduire à un accident (ex. garde-corps manquant, flaque d'huile).",
+  },
+];
+
+export const niveauxSoins: { valeur: Soins; libelle: string }[] = [
+  { valeur: "aucun", libelle: "Aucune lésion" },
+  { valeur: "premiers-soins", libelle: "Premiers soins sur place" },
+  { valeur: "soins-medicaux", libelle: "Soins médicaux, sans arrêt" },
+  { valeur: "arret", libelle: "Arrêt de travail" },
+];
+
+export const declarations: { valeur: Declaration; libelle: string; definition: string }[] = [
+  { valeur: "a-faire", libelle: "À déclarer", definition: "Déclaration d'accident du travail (DAT) à faire à la CPAM dans les 48 heures." },
+  { valeur: "faite", libelle: "Déclarée à la CPAM", definition: "La déclaration d'accident du travail a été envoyée (net-entreprises.fr ou formulaire Cerfa 14463)." },
+  {
+    valeur: "registre", libelle: "Inscrit au registre des accidents bénins",
+    definition: "Possible seulement sans arrêt ni soins médicaux, si l'entreprise tient ce registre (secouriste présent en permanence, poste de secours, CSE informé).",
+  },
+  { valeur: "non-requise", libelle: "Pas de déclaration", definition: "Presque-accident ou situation dangereuse : pas de déclaration à la CPAM, mais une analyse." },
+];
+
+// Méthode ITMaMi (INRS) : les quatre familles de faits à rechercher pour comprendre un accident.
+export const facteursAnalyse: { cle: FacteurAnalyse; libelle: string; question: string }[] = [
+  { cle: "individu", libelle: "Individu", question: "La personne : formation, expérience, ancienneté au poste, fatigue, intérimaire ou nouvel arrivant ?" },
+  { cle: "tache", libelle: "Tâche", question: "Le travail : mode opératoire, tâche inhabituelle, urgence, consignes absentes ou inadaptées ?" },
+  { cle: "materiel", libelle: "Matériel", question: "Les équipements : machine, outil, EPI, état, entretien, adaptés à la tâche ?" },
+  { cle: "milieu", libelle: "Milieu", question: "L'environnement : sol, éclairage, bruit, encombrement, météo, travail à plusieurs entreprises ?" },
 ];
 
 export const seuilsPenibilite: { valeur: SeuilPenibilite; libelle: string }[] = [

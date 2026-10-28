@@ -20,6 +20,7 @@ import {
   niveauDe,
   risqueResiduel,
 } from "@/lib/calculs";
+import { calculerIndicateurs, estClos } from "@/lib/evenements";
 import { grilleFrequence, grilleGravite, niveauxCriticite } from "@/lib/referentiel";
 import { useDonnees } from "@/lib/stockage";
 
@@ -40,6 +41,9 @@ export default function TableauDeBord() {
       .sort((a, b) => (a.echeance || "9999").localeCompare(b.echeance || "9999"))[0];
   const stocks = calculerStocks(donnees, aujourdhui);
   const aCommander = stocks.filter((s) => s.aCommander > 0);
+
+  const accidents = calculerIndicateurs(donnees, aujourdhui);
+  const evenementsATraiter = donnees.evenements.filter((e) => !estClos(e, actions)).length;
 
   const parNiveau = niveauxCriticite.map((n) => ({
     ...n,
@@ -190,6 +194,26 @@ export default function TableauDeBord() {
 
         <Carte titre="Risque résiduel le plus élevé par unité">
           <BarresHorizontales donnees={parUnite} />
+        </Carte>
+
+        <Carte
+          titre="Accidents et presque-accidents"
+          actions={<Link href="/accidents" className="text-xs text-bronze underline">Registre</Link>}
+          className="lg:col-span-2"
+        >
+          <dl className="grid gap-3 text-sm sm:grid-cols-4">
+            {[
+              { libelle: "Jours sans accident avec arrêt", valeur: accidents.joursSansAccident ?? "—" },
+              { libelle: "Accidents avec arrêt (12 mois)", valeur: accidents.accidentsAvecArret },
+              { libelle: "Presque-accidents signalés (12 mois)", valeur: accidents.presqueAccidents },
+              { libelle: "Événements à traiter", valeur: evenementsATraiter },
+            ].map((x) => (
+              <div key={x.libelle} className="rounded-sm bg-marbre/60 px-3 py-2">
+                <dt className="text-xs text-gris">{x.libelle}</dt>
+                <dd className="text-xl font-semibold tabular-nums">{x.valeur}</dd>
+              </div>
+            ))}
+          </dl>
         </Carte>
 
         <Carte
