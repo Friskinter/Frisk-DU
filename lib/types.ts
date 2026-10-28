@@ -47,6 +47,43 @@ export type Action = {
   realiseeLe: string; // AAAA-MM-JJ
   efficacite: Efficacite;
   commentaire: string; // constat de la vérification d'efficacité
+  evenementId?: string; // accident ou presque-accident à l'origine de l'action
+};
+
+export type TypeEvenement = "accident-travail" | "accident-trajet" | "presque-accident" | "situation-dangereuse";
+
+export type Soins = "aucun" | "premiers-soins" | "soins-medicaux" | "arret";
+
+export type Declaration = "a-faire" | "faite" | "registre" | "non-requise";
+
+export type FacteurAnalyse = "individu" | "tache" | "materiel" | "milieu";
+
+// Accident, presque-accident ou situation dangereuse, avec l'analyse de ses causes.
+export type Evenement = {
+  id: string;
+  type: TypeEvenement;
+  date: string; // AAAA-MM-JJ
+  heure: string; // HH:MM
+  lieu: string;
+  unite: string; // unité de travail du DUERP
+  salarieId: string; // "" : personne, "externe" : intérimaire, prestataire… (nom dans `victime`)
+  victime: string;
+  temoins: string;
+  description: string; // circonstances
+  lesions: string; // nature et siège des lésions
+  soins: Soins;
+  joursArret: number;
+  secouriste: string; // qui a donné les premiers soins (registre des accidents bénins)
+  declaration: Declaration;
+  declareeLe: string; // AAAA-MM-JJ
+  gravitePotentielle: number; // 1 à 4 : ce qui aurait pu arriver ; 0 si non évaluée
+  pourquoi: string[]; // méthode des 5 pourquoi
+  facteurs: Record<FacteurAnalyse, string>;
+  enseignements: string;
+  analyseeLe: string; // AAAA-MM-JJ
+  analysePar: string;
+  risqueId: string; // risque du DUERP concerné
+  reevalueLe: string; // date de la revue de la cotation du risque après l'événement
 };
 
 export type Salarie = {
@@ -96,6 +133,7 @@ export type FicheEntreprise = {
   activite: string;
   effectif: string;
   responsable: string; // employeur ou personne qui établit le document
+  heures?: string; // heures travaillées sur 12 mois, pour les taux de fréquence et de gravité
 };
 
 export type Donnees = {
@@ -106,6 +144,7 @@ export type Donnees = {
   unites: string[];
   duerp: LigneDuerp[];
   actions: Action[];
+  evenements: Evenement[];
   salaries: Salarie[];
   articles: Article[];
   mouvements: Mouvement[];

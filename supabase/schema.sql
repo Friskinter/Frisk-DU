@@ -622,3 +622,23 @@ $$;
 
 revoke all on function public.appliquer_operations(uuid, jsonb, text) from public, anon;
 grant execute on function public.appliquer_operations(uuid, jsonb, text) to authenticated;
+
+-- ---------------------------------------------------------------
+-- Registre des accidents (migration 005)
+
+create or replace function public.frisk_version()
+returns integer
+language sql
+immutable
+set search_path = ''
+as $$ select 5; $$;
+grant execute on function public.frisk_version() to authenticated, anon;
+
+-- Nouvelle liste « evenements », modifiable par le responsable (le contributeur reste limité
+-- aux mouvements d'EPI et aux signatures, voir appliquer_operations).
+create or replace function public.collections_frisk()
+returns text[]
+language sql
+immutable
+set search_path = ''
+as $$ select array['duerp', 'actions', 'evenements', 'salaries', 'articles', 'mouvements']; $$;

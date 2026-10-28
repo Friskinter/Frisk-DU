@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { BibliothequeRisques } from "@/components/bibliotheque-risques";
 import { actionEnRetard, actionsDuRisque, nouvelleAction } from "@/lib/actions";
+import { nouvelleLigne } from "@/lib/donnees";
 import { BoutonDocumentUnique } from "@/components/bouton-document-unique";
 import { GuideCotation } from "@/components/guide-cotation";
 import { VersionsDuerp } from "@/components/versions-duerp";
@@ -59,22 +60,6 @@ const colonnes: { titre: string; aide: string; largeur: number }[] = [
   { titre: "Actions de prévention", aide: "Mesures prévues ou réalisées pour ce risque : elles se gèrent dans le plan d'actions.", largeur: 280 },
 ];
 
-function ligneVide(unite: string): LigneDuerp {
-  return {
-    id: nouvelId(),
-    unite,
-    activite: "",
-    danger: "",
-    risque: "",
-    effectif: 1,
-    gravite: 1,
-    frequence: 1,
-    mesures: "",
-    maitrise: "insuffisante",
-    penibilite: "",
-    seuilPenibilite: "non",
-  };
-}
 
 function mettreAJour(id: string, champs: Partial<LigneDuerp>) {
   modifier((d) => ({
@@ -119,7 +104,7 @@ export default function PageDuerp() {
     modifier((d) => {
       const nouvelle = apres
         ? { ...apres, id: nouvelId() }
-        : ligneVide(unite || unitesConnues[0] || "");
+        : nouvelleLigne(unite || unitesConnues[0] || "");
       const index = apres ? d.duerp.findIndex((l) => l.id === apres.id) + 1 : d.duerp.length;
       const duerp = [...d.duerp];
       duerp.splice(index, 0, nouvelle);
@@ -128,15 +113,21 @@ export default function PageDuerp() {
 
   const supprimer = (l: LigneDuerp) => {
     const nbActions = actionsDuRisque(donnees.actions, l).length;
-    const avertissement = nbActions ? ` Ses ${nbActions} action(s) de prévention seront aussi supprimées.` : "";
+    const nbEvenements = donnees.evenements.filter((e) => e.risqueId === l.id).length;
+    const avertissement =
+      (nbActions ? ` Ses ${nbActions} action(s) de prévention seront aussi supprimées.` : "") +
+      (nbEvenements ? ` ${nbEvenements} accident(s) ou presque-accident(s) devront être rattachés à un autre risque.` : "");
     if (confirm(`Supprimer la ligne « ${l.danger || l.activite || "sans titre"} » ?${avertissement}`)) {
       modifier((d) => ({
         ...d,
         duerp: d.duerp.filter((x) => x.id !== l.id),
         actions: d.actions.filter((a) => a.risqueId !== l.id),
+        evenements: d.evenements.map((e) => (e.risqueId === l.id ? { ...e, risqueId: "", reevalueLe: "" } : e)),
       }));
     }
   };
+
+  const evenementsLigne = (l: LigneDuerp) => donnees.evenements.filter((e) => e.risqueId === l.id).length;
 
   const ajouterAction = (l: LigneDuerp) => {
     modifier((d) => ({ ...d, actions: [...d.actions, nouvelleAction(l.id)] }));
@@ -434,6 +425,11 @@ export default function PageDuerp() {
                         {actionsLigne.length > 0 && (
                           <Link href={`/actions?risque=${l.id}`} className="text-ardoise underline">
                             Gérer ({actionsLigne.length})
+                          </Link>
+                        )}
+                        {evenementsLigne(l) > 0 && (
+                          <Link href={`/accidents?risque=${l.id}`} className="text-[#b42318] underline" title="Accidents et presque-accidents rattachés à ce risque">
+                            ⚑ {evenementsLigne(l)}
                           </Link>
                         )}
                       </span>

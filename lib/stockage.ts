@@ -6,7 +6,7 @@
 // en direct et sont fusionnées avec celles qui n'ont pas encore été envoyées.
 
 import { useSyncExternalStore } from "react";
-import { avecActions } from "./actions";
+import { normaliser } from "./donnees";
 import { donneesVides } from "./demo";
 import { rechargerVers } from "./navigation";
 import { appliquerOperations, calculerOperations, operationAutorisee, type Operation, type Role } from "./operations";
@@ -18,7 +18,7 @@ const DELAI_ENREGISTREMENT = 800;
 const DELAI_NOUVEL_ESSAI = 5000;
 const OPERATIONS_PAR_ENVOI = 200;
 // Version de la base attendue par cette version de Frisk DU (fonction frisk_version, migrations).
-export const VERSION_BASE = 4;
+export const VERSION_BASE = 5;
 
 export type Statut =
   | "chargement"
@@ -156,7 +156,7 @@ async function charger() {
     admin: estAdmin,
     role,
     entrepriseId,
-    donnees: contenu ? avecActions(contenu) : { ...donneesVides(), entreprise: entreprise.nom },
+    donnees: contenu ? normaliser(contenu) : { ...donneesVides(), entreprise: entreprise.nom },
   });
   ecouterCollegues(entrepriseId);
 }
@@ -174,7 +174,7 @@ async function lireContenu(entrepriseId: string): Promise<Donnees | null | undef
 
 // Réapplique nos opérations non confirmées sur la dernière version enregistrée par un collègue.
 function fusionner(contenu: Donnees) {
-  publier({ donnees: appliquerOperations(appliquerOperations(avecActions(contenu), enCours), enAttente) });
+  publier({ donnees: appliquerOperations(appliquerOperations(normaliser(contenu), enCours), enAttente) });
 }
 
 function ecouterCollegues(entrepriseId: string) {
@@ -223,7 +223,7 @@ async function envoyer() {
     enAttente = [];
     publier({ enregistrement: "refuse" });
     const contenu = await lireContenu(session.entrepriseId);
-    if (contenu) publier({ donnees: avecActions(contenu) });
+    if (contenu) publier({ donnees: normaliser(contenu) });
     return;
   }
   if (error) {

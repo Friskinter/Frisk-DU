@@ -23,6 +23,7 @@ const champsFiche: { cle: keyof FicheEntreprise; libelle: string; exemple: strin
   { cle: "adresse", libelle: "Adresse", exemple: "12 rue des Lilas, 69000 Lyon" },
   { cle: "activite", libelle: "Activité (et code NAF)", exemple: "Entreposage et stockage (52.10B)" },
   { cle: "effectif", libelle: "Effectif", exemple: "14 salariés" },
+  { cle: "heures", libelle: "Heures travaillées sur 12 mois", exemple: "22 500 (taux de fréquence et de gravité ; sinon estimées)" },
   { cle: "responsable", libelle: "Responsable du document", exemple: "Nom et fonction de l'employeur" },
 ];
 

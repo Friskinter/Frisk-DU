@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { donneesDemo } from "@/lib/demo";
 import { DocumentUnique } from "@/lib/pdf/document-unique";
 import { FicheEpi } from "@/lib/pdf/fiche-epi";
+import { RegistreBenins } from "@/lib/pdf/registre-benins";
 
 const logo = `${process.cwd()}/public/logo-frisk.png`;
 const d = donneesDemo("2026-10-28");
@@ -51,6 +52,12 @@ describe("PDF des versions figées", () => {
       duerp: [{ ...d.duerp[0], action: "Garde-corps", responsable: "Direction", echeance: "2025-06-01", statut: "fait" as const }],
     };
     const pdf = await renderToBuffer(<DocumentUnique donnees={ancienne} aujourdhui="2025-01-10" logo={logo} numero={1} />);
+    expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
+  }, 30_000);
+
+  it("registre des accidents bénins", async () => {
+    expect(d.evenements.some((e) => e.declaration === "registre")).toBe(true);
+    const pdf = await renderToBuffer(<RegistreBenins donnees={d} aujourdhui="2026-10-28" logo={logo} />);
     expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
   }, 30_000);
 });

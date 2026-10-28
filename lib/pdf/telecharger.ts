@@ -62,3 +62,12 @@ export async function telechargerFicheEpi(donnees: Donnees, salarieId: string) {
     `Fiche EPI - ${nom} - ${aujourdhui}.pdf`,
   );
 }
+
+export async function telechargerRegistreBenins(donnees: Donnees) {
+  const { RegistreBenins } = await import("./registre-benins");
+  const aujourdhui = dateDuJour();
+  await enregistrerPdf(
+    createElement(RegistreBenins, { donnees, aujourdhui, logo: logo() }),
+    `Registre des accidents benins - ${donnees.entreprise} - ${aujourdhui}.pdf`,
+  );
+}

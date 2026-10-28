@@ -1,8 +1,9 @@
 // Jeu de données de démonstration : une PME fictive de logistique.
 
 import { nouvelleAction } from "./actions";
+import { nouvelEvenement } from "./evenements";
 import { cle, decalerJours, nouvelId } from "./calculs";
-import type { Action, Article, Donnees, LigneDuerp, Mouvement, PrincipePrevention, Salarie } from "./types";
+import type { Action, Article, Donnees, Evenement, LigneDuerp, Mouvement, PrincipePrevention, Salarie } from "./types";
 
 // Générateur pseudo-aléatoire déterministe pour des démos reproductibles.
 function aleatoire(graine: number) {
@@ -24,6 +25,7 @@ export function donneesVides(): Donnees {
     articles: [],
     mouvements: [],
     actions: [],
+    evenements: [],
   };
 }
 
@@ -245,6 +247,53 @@ export function donneesDemo(aujourdhui: string): Donnees {
 
   mouvements.sort((x, y) => (x.date < y.date ? 1 : -1));
 
+  // Registre des événements : un accident analysé et clos, un accident à analyser, un presque-accident.
+  const risque = (danger: string) => duerp.find((l) => l.danger === danger)?.id ?? "";
+  const salarie = (nom: string) => salaries.find((s) => s.nom === nom)?.id ?? "";
+  const evenements: Evenement[] = [
+    nouvelEvenement({
+      type: "accident-travail", date: decalerJours(aujourdhui, -150), heure: "07:40", lieu: "Quai 2",
+      unite: "Quai de réception", salarieId: salarie("Durand C."), temoins: "Moreau J.",
+      description: "En déchargeant un carton de 25 kg au sol, douleur vive dans le bas du dos.",
+      lesions: "Lombalgie aiguë", soins: "arret", joursArret: 12, declaration: "faite",
+      declareeLe: decalerJours(aujourdhui, -149), gravitePotentielle: 3,
+      pourquoi: [
+        "Le salarié a soulevé seul un carton de 25 kg posé au sol.",
+        "Le transpalette électrique était en panne.",
+        "Aucune solution de remplacement n'était prévue.",
+      ],
+      facteurs: {
+        individu: "Salarié expérimenté, formé aux gestes et postures en 2024.",
+        tache: "Camion en retard, déchargement dans l'urgence.",
+        materiel: "Transpalette électrique en panne depuis 3 jours.",
+        milieu: "",
+      },
+      enseignements: "Les pannes de matériel de manutention doivent être signalées et réparées sous 24 h.",
+      analyseeLe: decalerJours(aujourdhui, -140), analysePar: "Gérante, chef d'équipe, salarié concerné",
+      risqueId: risque("Manutention manuelle"), reevalueLe: decalerJours(aujourdhui, -140),
+    }),
+    nouvelEvenement({
+      type: "accident-travail", date: decalerJours(aujourdhui, -6), heure: "14:15", lieu: "Atelier, poste de meulage",
+      unite: "Atelier maintenance", salarieId: salarie("Laurent P."),
+      description: "Projection d'une particule métallique dans l'œil gauche pendant le meulage.",
+      lesions: "Corps étranger dans l'œil gauche", soins: "premiers-soins", secouriste: "Simon T. (SST)",
+      declaration: "registre", gravitePotentielle: 3,
+    }),
+    nouvelEvenement({
+      type: "presque-accident", date: decalerJours(aujourdhui, -20), heure: "10:05", lieu: "Allée C",
+      unite: "Zone de stockage", description: "Un chariot élévateur a frôlé un préparateur à l'angle de l'allée C.",
+      gravitePotentielle: 4, risqueId: risque("Circulation interne (chariots, piétons)"),
+    }),
+  ];
+  const premier = evenements[0];
+  actions.push(
+    nouvelleAction(premier.risqueId, {
+      intitule: "Contrat de maintenance des transpalettes (intervention sous 24 h)",
+      principe: "organisation", responsable: "Responsable entrepôt", echeance: decalerJours(aujourdhui, -120),
+      statut: "fait", realiseeLe: decalerJours(aujourdhui, -125), cout: 900, evenementId: premier.id,
+    }),
+  );
+
   return {
     version: 1,
     entreprise: "Logistique Démo SAS",
@@ -259,6 +308,7 @@ export function donneesDemo(aujourdhui: string): Donnees {
     unites,
     duerp,
     actions,
+    evenements,
     salaries,
     articles,
     mouvements,
