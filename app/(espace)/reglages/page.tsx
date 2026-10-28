@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import {
   Carte,
@@ -188,9 +189,16 @@ export default function PageReglages() {
               </tbody>
             </table>
           </div>
-          <button type="button" className={`${classeBoutonSecondaire} mt-3`} onClick={ajouterSalarie}>
-            + Ajouter un salarié
-          </button>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button type="button" className={classeBoutonSecondaire} onClick={ajouterSalarie}>
+              + Ajouter un salarié
+            </button>
+            {modifiable && (
+              <Link href="/import?type=salaries" className="text-sm text-bronze underline">
+                Importer une liste depuis Excel
+              </Link>
+            )}
+          </div>
         </Carte>
 
       </fieldset>
