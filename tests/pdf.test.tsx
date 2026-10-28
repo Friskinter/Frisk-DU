@@ -5,6 +5,7 @@ import { DocumentUnique } from "@/lib/pdf/document-unique";
 import { FicheEpi } from "@/lib/pdf/fiche-epi";
 import { EtatFormations } from "@/lib/pdf/etat-formations";
 import { RegistreBenins } from "@/lib/pdf/registre-benins";
+import { RegistreSecurite } from "@/lib/pdf/registre-securite";
 
 const logo = `${process.cwd()}/public/logo-frisk.png`;
 const d = donneesDemo("2026-10-28");
@@ -64,6 +65,11 @@ describe("PDF des versions figées", () => {
 
   it("état des formations et habilitations", async () => {
     const pdf = await renderToBuffer(<EtatFormations donnees={d} aujourdhui="2026-10-28" logo={logo} />);
+    expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
+  }, 30_000);
+
+  it("registre de sécurité (vérifications périodiques)", async () => {
+    const pdf = await renderToBuffer(<RegistreSecurite donnees={d} aujourdhui="2026-10-28" logo={logo} />);
     expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
   }, 30_000);
 });

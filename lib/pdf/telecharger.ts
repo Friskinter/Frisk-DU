@@ -80,3 +80,12 @@ export async function telechargerEtatFormations(donnees: Donnees) {
     `Formations et habilitations - ${donnees.entreprise} - ${aujourdhui}.pdf`,
   );
 }
+
+export async function telechargerRegistreSecurite(donnees: Donnees) {
+  const { RegistreSecurite } = await import("./registre-securite");
+  const aujourdhui = dateDuJour();
+  await enregistrerPdf(
+    createElement(RegistreSecurite, { donnees, aujourdhui, logo: logo() }),
+    `Registre de securite - ${donnees.entreprise} - ${aujourdhui}.pdf`,
+  );
+}

@@ -3,6 +3,7 @@
 import { nouvelleAction } from "./actions";
 import { nouvelEvenement } from "./evenements";
 import { ajouterMois, nouvelleExigence, nouvelleFormation } from "./formations";
+import { nouvelEquipement, nouvelleObservation, nouvelleVerification } from "./verifications";
 import { cle, decalerJours, nouvelId } from "./calculs";
 import type { Action, Article, Donnees, Evenement, Formation, LigneDuerp, Mouvement, PrincipePrevention, Salarie } from "./types";
 
@@ -29,6 +30,8 @@ export function donneesVides(): Donnees {
     evenements: [],
     formations: [],
     exigences: [],
+    equipements: [],
+    verifications: [],
   };
 }
 
@@ -310,6 +313,32 @@ export function donneesDemo(aujourdhui: string): Donnees {
     nouvelleExigence("Chef d'équipe", "sst"),
   ];
 
+  // Vérifications périodiques : un chariot en retard, une observation à lever, des rayonnages jamais vérifiés.
+  const extincteurs = nouvelEquipement({ type: "extincteurs", nom: "Parc d'extincteurs (18)", localisation: "Tout le site", prestataire: "Sécurité Incendie Rhône" });
+  const electricite = nouvelEquipement({ type: "installations-electriques", nom: "Installation électrique du site", localisation: "Entrepôt, atelier, bureaux", prestataire: "Bureau de contrôle Alpes" });
+  const chariot1 = nouvelEquipement({ type: "chariots", nom: "Chariot élévateur n° 1", reference: "Linde H25 – SN 4471", localisation: "Zone de stockage", prestataire: "Bureau de contrôle Alpes" });
+  const chariot2 = nouvelEquipement({ type: "chariots", nom: "Chariot élévateur n° 2", reference: "Linde H25 – SN 5129", localisation: "Quai de réception", prestataire: "Bureau de contrôle Alpes" });
+  const portes = nouvelEquipement({ type: "portes-automatiques", nom: "Portes sectionnelles des quais (3)", localisation: "Quai de réception", prestataire: "Hörmann Services" });
+  const racks = nouvelEquipement({ type: "rayonnages", nom: "Racks de la zone de stockage", localisation: "Zone de stockage" });
+  const equipements = [extincteurs, electricite, chariot1, chariot2, portes, racks];
+  const verifie = (e: typeof extincteurs, joursEcoules: number, champs: Parameters<typeof nouvelleVerification>[1] = {}) =>
+    nouvelleVerification(e, { date: decalerJours(aujourdhui, -joursEcoules), ...champs });
+  const priseQuai = nouvelleObservation("Prise extérieure du quai 2 sans protection différentielle 30 mA");
+  const verifications = [
+    verifie(extincteurs, 665),
+    verifie(extincteurs, 300, { observations: [{ ...nouvelleObservation("2 extincteurs à recharger (atelier)"), leveeLe: decalerJours(aujourdhui, -290) }], resultat: "observations" }),
+    verifie(electricite, 340, {
+      resultat: "observations",
+      observations: [
+        priseQuai,
+        { ...nouvelleObservation("Armoire de l'atelier : obturateurs manquants"), leveeLe: decalerJours(aujourdhui, -320) },
+      ],
+    }),
+    verifie(chariot1, 215),
+    verifie(chariot2, 60),
+    verifie(portes, 120),
+  ];
+
   const premier = evenements[0];
   actions.push(
     nouvelleAction(premier.risqueId, {
@@ -336,6 +365,8 @@ export function donneesDemo(aujourdhui: string): Donnees {
     evenements,
     formations,
     exigences,
+    equipements,
+    verifications,
     salaries,
     articles,
     mouvements,

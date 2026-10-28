@@ -106,6 +106,38 @@ export type Exigence = {
   type: string;
 };
 
+// Équipement soumis à vérification périodique (extincteurs, installation électrique, chariots…).
+export type Equipement = {
+  id: string;
+  type: string; // code du référentiel (lib/verifications.ts), "autre" pour un équipement libre
+  nom: string; // désignation : « Chariot Linde n° 3 », « Parc d'extincteurs (18) »…
+  localisation: string;
+  reference: string; // numéro de série ou d'inventaire
+  periodicite: number; // en mois
+  prestataire: string; // organisme ou entreprise qui vérifie habituellement
+};
+
+export type ResultatVerification = "conforme" | "observations" | "non-conforme";
+
+// Observation d'un rapport de vérification, suivie jusqu'à sa levée.
+export type Observation = {
+  id: string;
+  texte: string;
+  leveeLe: string; // AAAA-MM-JJ, "" tant qu'elle n'est pas levée
+  actionId?: string; // action du plan de prévention créée pour la lever
+};
+
+export type Verification = {
+  id: string;
+  equipementId: string;
+  date: string; // AAAA-MM-JJ
+  prestataire: string;
+  resultat: ResultatVerification;
+  prochaine: string; // AAAA-MM-JJ, date de la prochaine vérification
+  observations: Observation[];
+  rapport?: { chemin: string; nom: string }; // fichier dans le stockage Supabase
+};
+
 export type Salarie = {
   id: string;
   nom: string;
@@ -167,6 +199,8 @@ export type Donnees = {
   evenements: Evenement[];
   formations: Formation[];
   exigences: Exigence[];
+  equipements: Equipement[];
+  verifications: Verification[];
   salaries: Salarie[];
   articles: Article[];
   mouvements: Mouvement[];

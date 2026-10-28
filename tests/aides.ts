@@ -28,3 +28,4 @@ export { nouvelleExigence as exigence, nouvelleFormation as formation } from "@/
 export function salarie(champs: Partial<import("@/lib/types").Salarie> = {}): import("@/lib/types").Salarie {
   return { id: nouvelId(), nom: "Salarié", service: "", poste: "", tailles: {}, ...champs };
 }
+export { nouvelEquipement as equipement, nouvelleObservation as observation, nouvelleVerification as verification } from "@/lib/verifications";

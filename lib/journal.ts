@@ -2,6 +2,7 @@
 
 import { formaterDate } from "./calculs";
 import { libelleFormation, typesFormation } from "./formations";
+import { resultats, typesEquipement } from "./verifications";
 import {
   declarations,
   efficacites,
@@ -35,6 +36,8 @@ export const zones: Record<string, string> = {
   evenements: "Accidents",
   formations: "Formations",
   exigences: "Formations exigées",
+  equipements: "Équipements",
+  verifications: "Vérifications",
   salaries: "Salariés",
   articles: "Catalogue EPI",
   mouvements: "Mouvements d'EPI",
@@ -102,6 +105,14 @@ const champsFormations: Record<string, string> = {
   organisme: "Organisme",
   attestation: "Attestation",
   actionId: "Action du plan",
+  localisation: "Localisation",
+  reference: "Référence",
+  periodicite: "Périodicité",
+  prestataire: "Vérificateur",
+  resultat: "Résultat",
+  prochaine: "Prochaine vérification",
+  observations: "Observations",
+  rapport: "Rapport",
 };
 
 const champsAutres: Record<string, string> = {
@@ -156,10 +167,23 @@ export function valeurLisible(champ: string, valeur: unknown): string {
       return (
         typesEvenement.find((t) => t.valeur === valeur)?.libelle ??
         typesFormation.find((t) => t.code === valeur)?.libelle ??
+        typesEquipement.find((t) => t.code === valeur)?.libelle ??
         String(valeur)
       );
     case "attestation":
+    case "rapport":
       return (valeur as { nom?: string }).nom ?? "fichier joint";
+    case "resultat":
+      return resultats.find((r) => r.valeur === valeur)?.libelle ?? String(valeur);
+    case "periodicite":
+      return `${valeur} mois`;
+    case "observations":
+      return (
+        (valeur as { texte: string; leveeLe: string }[])
+          .filter((o) => o.texte)
+          .map((o) => `${o.texte}${o.leveeLe ? ` (levée le ${formaterDate(o.leveeLe)})` : ""}`)
+          .join(" · ") || "(aucune)"
+      );
     case "actionId":
       return "liée";
     case "soins":
@@ -185,6 +209,7 @@ export function valeurLisible(champ: string, valeur: unknown): string {
     case "realiseeLe":
     case "obtenueLe":
     case "expireLe":
+    case "prochaine":
     case "declareeLe":
     case "analyseeLe":
     case "reevalueLe":
@@ -232,6 +257,13 @@ export function libelleElement(e: EntreeJournal, donnees: Donnees): string {
     case "exigences": {
       const x = { ...source, ...(donnees.exigences?.find((y) => y.id === e.element_id) ?? {}) } as Record<string, unknown>;
       return `${x.poste ?? "Poste"} : ${libelleFormation({ type: String(x.type ?? "autre"), intitule: "" })}`;
+    }
+    case "equipements":
+      return String(donnees.equipements?.find((x) => x.id === e.element_id)?.nom || source.nom || "Équipement");
+    case "verifications": {
+      const v = { ...source, ...(donnees.verifications?.find((x) => x.id === e.element_id) ?? {}) } as Record<string, unknown>;
+      const equipement = donnees.equipements?.find((x) => x.id === v.equipementId)?.nom || "équipement";
+      return `Vérification ${v.date ? `du ${formaterDate(String(v.date))} ` : ""}: ${equipement}`;
     }
     case "salaries":
       return String(donnees.salaries.find((s) => s.id === e.element_id)?.nom ?? source.nom ?? "Salarié");

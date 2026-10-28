@@ -13,6 +13,7 @@ const liens = [
   { href: "/actions", label: "Plan d'actions", icone: "✓" },
   { href: "/accidents", label: "Accidents", icone: "⚑" },
   { href: "/formations", label: "Formations", icone: "◆" },
+  { href: "/verifications", label: "Vérifications", icone: "◎" },
   { href: "/penibilite", label: "Pénibilité", icone: "⚠" },
   { href: "/epi", label: "EPI & stocks", icone: "⛑" },
   { href: "/bilans", label: "Bilans", icone: "▤" },

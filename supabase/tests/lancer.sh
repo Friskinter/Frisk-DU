@@ -14,3 +14,4 @@ psql -At -f tests/01_roles_journal.test.sql | grep -v '^$' | tail -1
 psql -At -f tests/02_plan_actions.test.sql | grep -v '^$' | tail -1
 psql -At -f tests/03_accidents.test.sql | grep -v '^$' | tail -1
 psql -At -f tests/04_formations.test.sql | grep -v '^$' | tail -1
+psql -At -f tests/05_verifications.test.sql | grep -v '^$' | tail -1

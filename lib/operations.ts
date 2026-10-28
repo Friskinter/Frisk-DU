@@ -4,7 +4,7 @@
 
 import type { Donnees, Signature } from "./types";
 
-export const collections = ["duerp", "actions", "evenements", "formations", "exigences", "salaries", "articles", "mouvements"] as const;
+export const collections = ["duerp", "actions", "evenements", "formations", "exigences", "equipements", "verifications", "salaries", "articles", "mouvements"] as const;
 export type Collection = (typeof collections)[number];
 
 export const clesRacine = ["entreprise", "fiche", "services", "unites", "preferences"] as const;
@@ -102,7 +102,7 @@ export function operationAutorisee(role: Role, op: Operation) {
 }
 
 export const libellesRoles: Record<Exclude<Role, "admin">, { libelle: string; description: string }> = {
-  responsable: { libelle: "Responsable", description: "Modifie tout : DUERP, actions, accidents, formations, salariés, catalogue, réglages, versions." },
+  responsable: { libelle: "Responsable", description: "Modifie tout : DUERP, actions, accidents, formations, vérifications, salariés, catalogue, réglages, versions." },
   contributeur: { libelle: "Contributeur", description: "Saisit les remises et réceptions d'EPI et fait signer les salariés." },
   lecteur: { libelle: "Lecteur", description: "Consulte seulement (par exemple un membre du CSE)." },
 };
