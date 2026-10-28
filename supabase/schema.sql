@@ -696,3 +696,22 @@ create policy "attestations_ajout" on storage.objects for insert to authenticate
 drop policy if exists "attestations_suppression" on storage.objects;
 create policy "attestations_suppression" on storage.objects for delete to authenticated
   using (bucket_id = 'attestations' and public.role_dans(public.entreprise_du_fichier(name)) in ('admin', 'responsable'));
+
+-- ---------------------------------------------------------------
+-- Vérifications périodiques (migration 007)
+
+create or replace function public.frisk_version()
+returns integer
+language sql
+immutable
+set search_path = ''
+as $$ select 7; $$;
+grant execute on function public.frisk_version() to authenticated, anon;
+
+-- Nouvelles listes « equipements » et « verifications », modifiables par le responsable.
+create or replace function public.collections_frisk()
+returns text[]
+language sql
+immutable
+set search_path = ''
+as $$ select array['duerp', 'actions', 'evenements', 'formations', 'exigences', 'equipements', 'verifications', 'salaries', 'articles', 'mouvements']; $$;

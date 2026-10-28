@@ -6,12 +6,13 @@ import { calculerStocks, decalerJours, formaterDate, niveauDe, risqueResiduel } 
 import { analyseFaite, declarationEnRetard, echeanceDeclaration, estAccident } from "./evenements";
 import { etatFormation, formationsEnVigueur, formationsManquantes, libelleFormation, typeFormation } from "./formations";
 import { typesEvenement } from "./referentiel";
+import { derniereVerification, etatEquipement, observationsOuvertes } from "./verifications";
 import type { Donnees } from "./types";
 
 export type Alerte = {
   id: string;
   gravite: "critique" | "importante" | "info";
-  categorie: "DUERP" | "Accidents" | "Formations" | "EPI" | "Pénibilité";
+  categorie: "DUERP" | "Accidents" | "Formations" | "Vérifications" | "EPI" | "Pénibilité";
   titre: string;
   detail: string;
   lien: string; // page de l'application où traiter l'alerte
@@ -182,6 +183,56 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
       id: "formations-90j", gravite: "info", categorie: "Formations", lien: "/formations",
       titre: `${pluriel(aPlanifier.length, "recyclage")} à planifier dans les 3 mois`,
       detail: liste(aPlanifier.map(nomFormation)),
+    });
+  }
+
+  // Vérifications périodiques
+  const equipements = donnees.equipements ?? [];
+  const verifications = donnees.verifications ?? [];
+  const nomEquipement = (e: (typeof equipements)[number]) => e.nom || "Équipement sans nom";
+  const nonConformes = equipements.filter((e) => derniereVerification(verifications, e.id)?.resultat === "non-conforme");
+  if (nonConformes.length) {
+    alertes.push({
+      id: "verifications-non-conformes", gravite: "critique", categorie: "Vérifications", lien: "/verifications",
+      titre: `${pluriel(nonConformes.length, "équipement")} non conforme${nonConformes.length > 1 ? "s" : ""} lors de la dernière vérification`,
+      detail: `Remettre en conformité ou retirer du service : ${liste(nonConformes.map(nomEquipement))}.`,
+    });
+  }
+  const enRetardVerif = equipements.filter((e) => etatEquipement(verifications, e, aujourdhui) === "en-retard");
+  if (enRetardVerif.length) {
+    alertes.push({
+      id: "verifications-retard", gravite: "critique", categorie: "Vérifications", lien: "/verifications",
+      titre: `${pluriel(enRetardVerif.length, "vérification")} périodique${enRetardVerif.length > 1 ? "s" : ""} en retard`,
+      detail: liste(enRetardVerif.map((e) => `${nomEquipement(e)} (${formaterDate(derniereVerification(verifications, e.id)!.prochaine)})`)),
+    });
+  }
+  const jamais = equipements.filter((e) => etatEquipement(verifications, e, aujourdhui) === "jamais");
+  if (jamais.length) {
+    alertes.push({
+      id: "verifications-jamais", gravite: "importante", categorie: "Vérifications", lien: "/verifications",
+      titre: `${pluriel(jamais.length, "équipement")} sans vérification enregistrée`,
+      detail: `Saisissez la dernière vérification (date et rapport) : ${liste(jamais.map(nomEquipement))}.`,
+    });
+  }
+  const bientotVerif = equipements.filter((e) => {
+    const prochaine = derniereVerification(verifications, e.id)?.prochaine;
+    return prochaine && prochaine >= aujourdhui && prochaine <= decalerJours(aujourdhui, 30);
+  });
+  if (bientotVerif.length) {
+    alertes.push({
+      id: "verifications-bientot", gravite: "importante", categorie: "Vérifications", lien: "/verifications",
+      titre: `${pluriel(bientotVerif.length, "vérification")} à faire dans les 30 jours`,
+      detail: liste(bientotVerif.map((e) => `${nomEquipement(e)} (${formaterDate(derniereVerification(verifications, e.id)!.prochaine)})`)),
+    });
+  }
+  const ouvertes = observationsOuvertes(equipements, verifications, donnees.actions ?? []).filter(
+    (o) => o.verification.date <= decalerJours(aujourdhui, -30),
+  );
+  if (ouvertes.length) {
+    alertes.push({
+      id: "observations-a-lever", gravite: "importante", categorie: "Vérifications", lien: "/verifications",
+      titre: `${pluriel(ouvertes.length, "observation")} de vérification non levée${ouvertes.length > 1 ? "s" : ""} depuis plus d'un mois`,
+      detail: liste(ouvertes.map((o) => `${nomEquipement(o.equipement)} : ${o.observation.texte}`)),
     });
   }
 

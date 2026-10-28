@@ -10,7 +10,7 @@ reset role;
 delete from storage.objects where bucket_id = 'attestations';
 
 do $$ begin
-  assert public.frisk_version() = 6, 'version de la base';
+  assert public.frisk_version() >= 6, 'version de la base';
   assert (select not public from storage.buckets where id = 'attestations'), 'attestations privées';
   assert public.entreprise_du_fichier('pas-un-uuid/x.pdf') is null, 'chemin invalide';
 end $$;
