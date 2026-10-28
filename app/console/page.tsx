@@ -16,7 +16,8 @@ import { champsManquants } from "@/lib/legal";
 import { deconnecter, ouvrirEntreprise } from "@/lib/stockage";
 import { libellesRoles } from "@/lib/operations";
 import { supabaseNavigateur } from "@/lib/supabase/client";
-import { ajouterUtilisateur, creerClient, reinitialiserDoubleAuth, reinitialiserMotDePasse, type Resultat } from "./actions";
+import { ajouterUtilisateur, creerClient, exporterClient, reinitialiserDoubleAuth, reinitialiserMotDePasse, supprimerClient, type Resultat } from "./actions";
+import { telecharger } from "@/lib/calculs";
 import { CodeDoubleAuth } from "@/components/code-double-auth";
 import { DoubleAuthentification } from "@/components/double-authentification";
 import { codeRequis } from "@/lib/double-auth";
@@ -166,6 +167,14 @@ export default function Console() {
       },
     });
     await recharger();
+  };
+
+  const exporter = async (client: Client) => {
+    setRetour({ resultat: { ok: true, message: `Export de « ${client.nom} » en cours…` } });
+    const resultat = await exporterClient(client.id);
+    if (!resultat.ok) return setRetour({ resultat });
+    telecharger(resultat.nom, resultat.contenu, "application/json");
+    setRetour({ resultat: { ok: true, message: `Export de « ${client.nom} » téléchargé (données, versions, journal et liens vers les fichiers valables 7 jours).` } });
   };
 
   if (etat === "chargement") return <Chargement />;
@@ -323,6 +332,9 @@ export default function Console() {
                     <button type="button" className={classeBoutonSecondaire} onClick={() => changerStatut(c)}>
                       {c.actif ? "Suspendre" : "Réactiver"}
                     </button>
+                    <button type="button" className={classeBoutonSecondaire} onClick={() => exporter(c)} title="Toutes les données du client au format JSON">
+                      Exporter les données
+                    </button>
                   </div>
                 </div>
 
@@ -401,10 +413,57 @@ export default function Console() {
                     onAjouter={(email, role) => afficher(ajouterUtilisateur(c.id, email, role), email.trim().toLowerCase())}
                   />
                 </div>
+                <SuppressionClient client={c} onSupprimer={(nom) => afficher(supprimerClient(c.id, nom))} />
               </li>
             ))}
           </ul>
         )}
+      </div>
+    </div>
+  );
+}
+
+function SuppressionClient({ client, onSupprimer }: { client: { nom: string }; onSupprimer: (nom: string) => Promise<void> }) {
+  const [ouvert, setOuvert] = useState(false);
+  const [nom, setNom] = useState("");
+  const [envoi, setEnvoi] = useState(false);
+  if (!ouvert) {
+    return (
+      <div className="mt-4 border-t border-pierre/60 pt-3 text-right">
+        <button type="button" className="text-xs text-gris underline hover:text-[#b42318]" onClick={() => setOuvert(true)}>
+          Supprimer définitivement ce client…
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div className="mt-4 rounded-sm border border-[#d03b3b] bg-[#d03b3b]/5 p-4 text-sm">
+      <p className="font-medium text-[#b42318]">Suppression définitive de « {client.nom} »</p>
+      <p className="mt-1 text-ardoise">
+        Données, versions figées du document unique, journal, fichiers joints et accès seront effacés sans retour possible ; les comptes
+        qui n&apos;ont accès à aucune autre entreprise seront supprimés. Exportez d&apos;abord les données et transmettez-les au client : il
+        doit conserver ses versions du document unique pendant 40 ans.
+      </p>
+      <label className="mt-3 block text-xs text-ardoise">
+        Pour confirmer, tapez le nom exact de l&apos;entreprise :
+        <input value={nom} onChange={(e) => setNom(e.target.value)} className={`${classeChamp} mt-1 max-w-sm`} />
+      </label>
+      <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          disabled={nom.trim() !== client.nom || envoi}
+          onClick={async () => {
+            setEnvoi(true);
+            await onSupprimer(nom);
+            setEnvoi(false);
+          }}
+          className="rounded-sm bg-[#d03b3b] px-3.5 py-2 text-sm font-medium text-white disabled:opacity-40"
+        >
+          {envoi ? "Suppression…" : "Supprimer définitivement"}
+        </button>
+        <button type="button" className={classeBoutonSecondaire} onClick={() => { setOuvert(false); setNom(""); }}>
+          Annuler
+        </button>
       </div>
     </div>
   );
