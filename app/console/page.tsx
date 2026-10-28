@@ -38,6 +38,7 @@ export default function Console() {
   const [etat, setEtat] = useState<"chargement" | "refuse" | "pret">("chargement");
   const [clients, setClients] = useState<Client[]>([]);
   const [groupes, setGroupes] = useState<Groupe[]>([]);
+  const [emailAdmin, setEmailAdmin] = useState("");
   const [recherche, setRecherche] = useState("");
   const [retour, setRetour] = useState<{ resultat: Resultat; identifiants?: Identifiants } | null>(null);
 
@@ -50,6 +51,7 @@ export default function Console() {
       .select("user_id")
       .eq("user_id", utilisateur.user.id)
       .maybeSingle();
+    setEmailAdmin(utilisateur.user.email ?? "");
     if (!admin) return setEtat("refuse");
     const [{ data }, { data: listeGroupes }] = await Promise.all([
       supabase
@@ -126,6 +128,16 @@ export default function Console() {
     await recharger();
   };
 
+  const renommerGroupe = async (client: Client) => {
+    const actuel = groupes.find((g) => g.id === client.groupe_id);
+    if (!actuel) return;
+    const nom = prompt("Nouveau nom du groupe :", actuel.nom)?.trim();
+    if (!nom || nom === actuel.nom) return;
+    const { error } = await supabaseNavigateur().from("groupes").update({ nom }).eq("id", actuel.id);
+    setRetour({ resultat: error ? { ok: false, message: "Le groupe n'a pas pu être renommé." } : { ok: true, message: `Groupe renommé « ${nom} ».` } });
+    await recharger();
+  };
+
   // Nouvel établissement : même groupe (créé si besoin), mêmes utilisateurs si demandé.
   const creerEtablissement = async (client: Client, nom: string, memesUtilisateurs: boolean) => {
     const supabase = supabaseNavigateur();
@@ -156,7 +168,16 @@ export default function Console() {
       <div className="mx-auto mt-24 max-w-md text-center">
         <h1 className="font-serif text-2xl">Accès réservé</h1>
         <p className="mt-3 text-sm text-ardoise">La console est réservée aux administrateurs Frisk.</p>
-        <Link href="/" className={`${classeBouton} mt-6`}>Retour à mon espace</Link>
+        {emailAdmin && (
+          <p className="mt-2 text-sm text-ardoise">
+            Vous êtes connecté avec <strong>{emailAdmin}</strong>, qui n&apos;est pas un compte administrateur.
+            Déconnectez-vous puis reconnectez-vous avec votre compte Frisk.
+          </p>
+        )}
+        <div className="mt-6 flex justify-center gap-3">
+          <Link href="/" className={classeBouton}>Retour à mon espace</Link>
+          <button type="button" onClick={deconnecter} className={classeBoutonSecondaire}>Se déconnecter</button>
+        </div>
       </div>
     );
   }
@@ -185,9 +206,15 @@ export default function Console() {
               <span className="ml-3 text-xs tracking-[0.25em] text-gris">CONSOLE</span>
             </p>
           </div>
-          <button type="button" onClick={deconnecter} className="text-sm underline hover:text-marbre">
-            Se déconnecter
-          </button>
+          <div className="flex flex-wrap items-center gap-4 text-sm">
+            <span className="text-xs text-gris">
+              Connecté : <span className="text-pierre">{emailAdmin}</span>{" "}
+              <span className="ml-1 rounded-full bg-bronze px-2 py-0.5 text-[10px] font-medium text-encre">Administrateur Frisk</span>
+            </span>
+            <button type="button" onClick={deconnecter} className="underline hover:text-marbre">
+              Se déconnecter
+            </button>
+          </div>
         </div>
       </header>
 
@@ -282,6 +309,11 @@ export default function Console() {
                       <option value="nouveau">+ Nouveau groupe…</option>
                     </select>
                   </label>
+                  {c.groupe_id && (
+                    <button type="button" className="pb-1.5 text-xs text-ardoise underline" onClick={() => renommerGroupe(c)}>
+                      Renommer le groupe
+                    </button>
+                  )}
                   <NouvelEtablissement onCreer={(nom, memes) => creerEtablissement(c, nom, memes)} />
                 </div>
 
@@ -341,7 +373,12 @@ function NouvelEtablissement({ onCreer }: { onCreer: (nom: string, memesUtilisat
   const [memes, setMemes] = useState(true);
   if (!ouvert) {
     return (
-      <button type="button" className="text-xs text-bronze underline" onClick={() => setOuvert(true)}>
+      <button
+        type="button"
+        className={`${classeBoutonSecondaire} border-bronze py-1.5 text-xs`}
+        onClick={() => setOuvert(true)}
+        title="Créer un autre site de ce client, avec son propre document unique"
+      >
         + Ajouter un établissement
       </button>
     );
