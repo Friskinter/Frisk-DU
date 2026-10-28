@@ -55,6 +55,14 @@ export type Mouvement = {
   salarieId: string; // "" pour une entrée
   service: string;
   motif: string;
+  signatureId?: string; // signature du salarié reconnaissant la remise (voir Donnees.signatures)
+};
+
+// Une signature peut couvrir plusieurs remises : l'image n'est stockée qu'une fois.
+export type Signature = {
+  image: string; // PNG en data URL
+  date: string; // AAAA-MM-JJ
+  salarieId: string;
 };
 
 // Informations reprises sur la page de garde du document unique.
@@ -76,4 +84,5 @@ export type Donnees = {
   salaries: Salarie[];
   articles: Article[];
   mouvements: Mouvement[];
+  signatures?: Record<string, Signature>;
 };
