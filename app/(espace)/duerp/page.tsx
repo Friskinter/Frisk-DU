@@ -4,6 +4,7 @@ import { useState } from "react";
 import { BibliothequeRisques } from "@/components/bibliotheque-risques";
 import { BoutonDocumentUnique } from "@/components/bouton-document-unique";
 import { GuideCotation } from "@/components/guide-cotation";
+import { VersionsDuerp } from "@/components/versions-duerp";
 import {
   Chargement,
   EnTetePage,
@@ -95,6 +96,7 @@ export default function PageDuerp() {
   const [tri, setTri] = useState(false);
   const [guide, setGuide] = useState(false);
   const [bibliotheque, setBibliotheque] = useState(false);
+  const [versions, setVersions] = useState(false);
   const [ajoutes, setAjoutes] = useState(0);
 
   if (!donnees) return <Chargement />;
@@ -160,6 +162,9 @@ export default function PageDuerp() {
               Exporter (Excel)
             </button>
             <BoutonDocumentUnique donnees={donnees} />
+            <button type="button" className={classeBoutonSecondaire} onClick={() => setVersions(true)}>
+              🗄 Versions
+            </button>
             <button type="button" className={classeBoutonSecondaire} onClick={() => setBibliotheque(true)}>
               📚 Bibliothèque de risques
             </button>
@@ -169,6 +174,8 @@ export default function PageDuerp() {
           </>
         }
       />
+
+      {versions && <VersionsDuerp donnees={donnees} onFermer={() => setVersions(false)} />}
 
       {bibliotheque && (
         <BibliothequeRisques

@@ -3,12 +3,13 @@
 import { createElement, type ReactElement } from "react";
 import { dateDuJour } from "@/lib/calculs";
 import type { Donnees } from "@/lib/types";
+import type { LigneHistorique } from "./document-unique";
 
 // Sans accents ni caractères interdits : certains navigateurs ignorent sinon le nom proposé.
 function nomDeFichier(nom: string) {
   return nom
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[\\/:*?"<>|]/g, "-");
 }
 
@@ -31,12 +32,24 @@ async function enregistrerPdf(document: ReactElement, nom: string) {
 
 const logo = () => `${window.location.origin}/logo-frisk.png`;
 
-export async function telechargerDocumentUnique(donnees: Donnees) {
+// Sans version : document de travail à la date du jour. Avec version : la version figée, telle qu'enregistrée.
+export async function telechargerDocumentUnique(
+  donnees: Pick<Donnees, "entreprise" | "fiche" | "duerp">,
+  version?: { numero: number; date: string; historique: LigneHistorique[] },
+) {
   const { DocumentUnique } = await import("./document-unique");
-  const aujourdhui = dateDuJour();
+  const date = version?.date ?? dateDuJour();
   await enregistrerPdf(
-    createElement(DocumentUnique, { donnees, aujourdhui, logo: logo() }),
-    `Document unique - ${donnees.entreprise} - ${aujourdhui}.pdf`,
+    createElement(DocumentUnique, {
+      donnees,
+      aujourdhui: date,
+      logo: logo(),
+      numero: version?.numero,
+      historique: version?.historique,
+    }),
+    version
+      ? `Document unique - ${donnees.entreprise} - version ${version.numero} du ${date}.pdf`
+      : `Document unique - ${donnees.entreprise} - ${date}.pdf`,
   );
 }
 
