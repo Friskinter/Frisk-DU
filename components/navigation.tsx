@@ -3,6 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { calculerAlertes } from "@/lib/alertes";
+import { dateDuJour } from "@/lib/calculs";
 import { deconnecter, useSession, type Enregistrement } from "@/lib/stockage";
 
 const liens = [
@@ -25,6 +27,9 @@ export function Navigation() {
   const chemin = usePathname();
   const session = useSession();
   const enregistrement = etatsEnregistrement[session.enregistrement];
+  const urgentes = session.donnees
+    ? calculerAlertes(session.donnees, dateDuJour()).filter((a) => a.gravite === "critique").length
+    : 0;
 
   return (
     <aside className="print:hidden border-b border-white/10 bg-encre text-pierre lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:shrink-0 lg:flex-col lg:border-r lg:border-b-0">
@@ -52,6 +57,14 @@ export function Navigation() {
                 {lien.icone}
               </span>
               {lien.label}
+              {lien.href === "/" && urgentes > 0 && (
+                <span
+                  className="ml-auto rounded-full bg-[#d03b3b] px-1.5 text-xs font-semibold text-white"
+                  title={`${urgentes} point(s) urgent(s) à traiter`}
+                >
+                  {urgentes}
+                </span>
+              )}
             </Link>
           );
         })}

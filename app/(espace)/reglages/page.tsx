@@ -94,6 +94,24 @@ export default function PageReglages() {
         </div>
       </Carte>
 
+      <Carte titre="Alertes par e-mail">
+        <label className="flex items-start gap-3 text-sm">
+          <input
+            type="checkbox"
+            className="mt-1 accent-bronze"
+            checked={donnees.preferences?.alertesEmail !== false}
+            onChange={(e) => modifier((d) => ({ ...d, preferences: { ...d.preferences, alertesEmail: e.target.checked } }))}
+          />
+          <span>
+            Envoyer chaque lundi un récapitulatif des points à traiter à tous les utilisateurs de l&apos;entreprise
+            <span className="block text-xs text-gris">
+              Actions en retard ou proches de l&apos;échéance, stocks en rupture ou sous le stock tampon, mise à jour annuelle
+              du DUERP, remises d&apos;EPI non signées. Aucun e-mail n&apos;est envoyé s&apos;il n&apos;y a rien à signaler.
+            </span>
+          </span>
+        </label>
+      </Carte>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Liste
           titre="Services"

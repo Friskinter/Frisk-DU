@@ -85,4 +85,5 @@ export type Donnees = {
   articles: Article[];
   mouvements: Mouvement[];
   signatures?: Record<string, Signature>;
+  preferences?: { alertesEmail?: boolean }; // récapitulatif hebdomadaire par e-mail (activé par défaut)
 };
