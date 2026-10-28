@@ -166,6 +166,11 @@ export default function PageDuerp() {
             <button type="button" className={classeBoutonSecondaire} onClick={exporter}>
               Exporter (Excel)
             </button>
+            {modifiable && (
+              <Link href="/import?type=duerp" className={classeBoutonSecondaire}>
+                Importer (Excel)
+              </Link>
+            )}
             <BoutonDocumentUnique donnees={donnees} />
             <button type="button" className={classeBoutonSecondaire} onClick={() => setVersions(true)}>
               🗄 Versions
