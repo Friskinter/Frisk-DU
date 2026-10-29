@@ -18,8 +18,8 @@ export default function LayoutLegal({ children }: { children: ReactNode }) {
           <Link href="/" className="text-sm underline hover:text-marbre">Retour à Frisk DU</Link>
         </div>
       </header>
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-        <nav className="mb-6 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+        <nav aria-label="Documents légaux" className="mb-6 flex flex-wrap gap-x-4 gap-y-2 text-sm">
           {documentsLegaux.map((d) => (
             <Link key={d.href} href={d.href} className="text-ardoise underline decoration-pierre hover:decoration-bronze">
               {d.titre}
@@ -30,7 +30,7 @@ export default function LayoutLegal({ children }: { children: ReactNode }) {
           {children}
           <p className="mt-10 border-t border-pierre/60 pt-4 text-xs text-gris">Version en vigueur au {DATE_CONDITIONS}.</p>
         </article>
-      </div>
+      </main>
     </div>
   );
 }

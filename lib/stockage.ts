@@ -8,7 +8,9 @@
 import { useSyncExternalStore } from "react";
 import { normaliser } from "./donnees";
 import { VERSION_CONDITIONS } from "./legal";
-import { donneesVides } from "./demo";
+import { CLE_DONNEES_TEST, CLE_ROLE_TEST, MODE_TEST } from "./mode-test";
+import { dateDuJour } from "./calculs";
+import { donneesDemo, donneesVides } from "./demo";
 import { rechargerVers } from "./navigation";
 import { appliquerOperations, calculerOperations, operationAutorisee, type Operation, type Role } from "./operations";
 import { supabaseNavigateur } from "./supabase/client";
@@ -103,6 +105,15 @@ export function peutModifier(role: Role, zone: "tout" | "epi") {
 async function charger() {
   // randomUUID n'existe qu'en connexion sécurisée (https ou localhost).
   client = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
+  if (MODE_TEST) {
+    const role = (localStorage.getItem(CLE_ROLE_TEST) ?? "responsable") as Role;
+    const donnees = localStorage.getItem(CLE_DONNEES_TEST);
+    publier({
+      statut: "pret", email: "test@frisk.fr", admin: false, role, entrepriseId: "00000000-0000-0000-0000-000000000000",
+      donnees: donnees ? normaliser(JSON.parse(donnees)) : donneesDemo(dateDuJour()),
+    });
+    return;
+  }
   const supabase = supabaseNavigateur();
   const { data: utilisateur } = await supabase.auth.getUser();
   const user = utilisateur.user;
@@ -261,6 +272,11 @@ function planifierEnvoi(delai = DELAI_ENREGISTREMENT) {
 async function envoyer() {
   minuteur = null;
   if (enCours.length || !enAttente.length || !session.entrepriseId) return;
+  if (MODE_TEST) {
+    enAttente = [];
+    publier({ enregistrement: "enregistre" });
+    return;
+  }
   enCours = enAttente.slice(0, OPERATIONS_PAR_ENVOI);
   enAttente = enAttente.slice(OPERATIONS_PAR_ENVOI);
 

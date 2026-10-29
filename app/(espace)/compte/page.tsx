@@ -22,7 +22,7 @@ export default function PageCompte() {
           <dd>{session.admin ? "Administrateur Frisk" : session.role !== "admin" ? libellesRoles[session.role].libelle : ""}</dd>
           <dt className="text-gris">Mot de passe</dt>
           <dd>
-            <Link href="/mot-de-passe" className="text-bronze underline">Changer de mot de passe</Link>
+            <Link href="/mot-de-passe" className="text-bronze-fonce underline">Changer de mot de passe</Link>
           </dd>
         </dl>
       </Carte>

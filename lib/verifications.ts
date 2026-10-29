@@ -53,7 +53,7 @@ export function typeEquipement(code: string): TypeEquipement {
 }
 
 export const resultats: { valeur: Verification["resultat"]; libelle: string; couleur: string; texte: string }[] = [
-  { valeur: "conforme", libelle: "Conforme", couleur: "#0ca30c", texte: "#ffffff" },
+  { valeur: "conforme", libelle: "Conforme", couleur: "#0ca30c", texte: "#0b0b0b" },
   { valeur: "observations", libelle: "Avec observations", couleur: "#fab219", texte: "#0b0b0b" },
   { valeur: "non-conforme", libelle: "Non conforme", couleur: "#d03b3b", texte: "#ffffff" },
 ];
@@ -109,7 +109,7 @@ export const etatsEquipement: Record<EtatEquipement, { libelle: string; couleur:
   jamais: { libelle: "Jamais vérifié", couleur: "#ec835a", texte: "#0b0b0b" },
   "en-retard": { libelle: "En retard", couleur: "#d03b3b", texte: "#ffffff" },
   "a-prevoir": { libelle: "À prévoir", couleur: "#fab219", texte: "#0b0b0b" },
-  "a-jour": { libelle: "À jour", couleur: "#0ca30c", texte: "#ffffff" },
+  "a-jour": { libelle: "À jour", couleur: "#0ca30c", texte: "#0b0b0b" },
 };
 
 export function echeance(verifications: Verification[], equipement: Equipement) {

@@ -10,7 +10,8 @@
   --color-ivoire: #f7f4ef;
   --color-bronze: #b08d57;
   --color-bronze-clair: #c9a978;
-  --color-gris: #8a837a;
+  --color-bronze-fonce: #7f6235; /* bronze lisible en texte sur fond clair (contraste AA) */
+  --color-gris: #6b645b;
 
   --font-sans: var(--font-inter);
   --font-serif: var(--font-cinzel);

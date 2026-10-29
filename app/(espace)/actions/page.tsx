@@ -163,25 +163,25 @@ function PlanActions() {
             Un seul risque ✕
           </Link>
         )}
-        <select value={statut} onChange={(e) => setStatut(e.target.value)} className={`${classeChamp} max-w-40`}>
+        <select aria-label="Filtrer par statut" value={statut} onChange={(e) => setStatut(e.target.value)} className={`${classeChamp} max-w-40`}>
           <option value="">Tous les statuts</option>
           {statutsAction.map((s) => (
             <option key={s.valeur} value={s.valeur}>{s.libelle}</option>
           ))}
         </select>
-        <select value={principe} onChange={(e) => setPrincipe(e.target.value)} className={`${classeChamp} max-w-56`}>
+        <select aria-label="Filtrer par type de mesure" value={principe} onChange={(e) => setPrincipe(e.target.value)} className={`${classeChamp} max-w-56`}>
           <option value="">Tous les types de mesure</option>
           {principesPrevention.map((p) => (
             <option key={p.valeur} value={p.valeur}>{p.libelle}</option>
           ))}
         </select>
-        <select value={responsable} onChange={(e) => setResponsable(e.target.value)} className={`${classeChamp} max-w-52`}>
+        <select aria-label="Filtrer par responsable" value={responsable} onChange={(e) => setResponsable(e.target.value)} className={`${classeChamp} max-w-52`}>
           <option value="">Tous les responsables</option>
           {responsables.map((r) => (
             <option key={r}>{r}</option>
           ))}
         </select>
-        <select value={annee} onChange={(e) => setAnnee(e.target.value)} className={`${classeChamp} max-w-36`}>
+        <select aria-label="Filtrer par année" value={annee} onChange={(e) => setAnnee(e.target.value)} className={`${classeChamp} max-w-36`}>
           <option value="">Toutes les années</option>
           {annees.map((a) => (
             <option key={a}>{a}</option>
@@ -273,7 +273,7 @@ function GroupeRisque({
             {seulementEpi && (
               <span className="text-xs text-[#b42318]">⚠ Uniquement des EPI : prévoir une mesure collective ou d&apos;organisation</span>
             )}
-            <button type="button" onClick={onAjouter} className="text-xs text-bronze underline disabled:hidden">
+            <button type="button" onClick={onAjouter} className="text-xs text-bronze-fonce underline disabled:hidden">
               + Ajouter une action
             </button>
           </div>
@@ -323,7 +323,7 @@ function GroupeRisque({
               )}
             </td>
             <td className={cellule}>
-              <select
+              <select aria-label="Type de mesure"
                 value={a.principe}
                 title={principesPrevention.find((p) => p.valeur === a.principe)?.definition}
                 onChange={(e) => mettreAJour(a.id, { principe: e.target.value as Action["principe"] })}
@@ -336,10 +336,10 @@ function GroupeRisque({
               </select>
             </td>
             <td className={cellule}>
-              <input list="liste-responsables" value={a.responsable} onChange={(e) => mettreAJour(a.id, { responsable: e.target.value })} className={champ} />
+              <input aria-label="Responsable" list="liste-responsables" value={a.responsable} onChange={(e) => mettreAJour(a.id, { responsable: e.target.value })} className={champ} />
             </td>
             <td className={cellule}>
-              <input
+              <input aria-label="Échéance"
                 type="date"
                 value={a.echeance}
                 onChange={(e) => mettreAJour(a.id, { echeance: e.target.value })}
@@ -348,7 +348,7 @@ function GroupeRisque({
               {retard && <p className="px-1.5 text-xs text-[#b42318]">⚠ En retard</p>}
             </td>
             <td className={cellule}>
-              <input
+              <input aria-label="Coût estimé en euros"
                 type="number"
                 min={0}
                 step={10}
@@ -359,7 +359,7 @@ function GroupeRisque({
               />
             </td>
             <td className={cellule}>
-              <select value={a.statut} onChange={(e) => onStatut(a, e.target.value as Action["statut"])} className={champ}>
+              <select aria-label="Statut" value={a.statut} onChange={(e) => onStatut(a, e.target.value as Action["statut"])} className={champ}>
                 {statutsAction.map((s) => (
                   <option key={s.valeur} value={s.valeur}>{s.libelle}</option>
                 ))}
@@ -368,14 +368,14 @@ function GroupeRisque({
             <td className={cellule}>
               {fait ? (
                 <>
-                  <input
+                  <input aria-label="Date de réalisation"
                     type="date"
                     value={a.realiseeLe}
                     title="Date de réalisation"
                     onChange={(e) => mettreAJour(a.id, { realiseeLe: e.target.value })}
                     className={`${champ} text-xs`}
                   />
-                  <select
+                  <select aria-label="Efficacité"
                     value={a.efficacite}
                     onChange={(e) => mettreAJour(a.id, { efficacite: e.target.value as Action["efficacite"] })}
                     className={`${champ} text-xs`}

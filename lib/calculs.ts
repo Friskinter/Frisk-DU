@@ -137,7 +137,7 @@ export const etatsStock: Record<
   rupture: { libelle: "Rupture", couleur: "#d03b3b", texte: "#ffffff", icone: "✕" },
   "sous-tampon": { libelle: "Sous le tampon", couleur: "#ec835a", texte: "#0b0b0b", icone: "!" },
   "a-surveiller": { libelle: "À surveiller", couleur: "#fab219", texte: "#0b0b0b", icone: "~" },
-  ok: { libelle: "Suffisant", couleur: "#0ca30c", texte: "#ffffff", icone: "✓" },
+  ok: { libelle: "Suffisant", couleur: "#0ca30c", texte: "#0b0b0b", icone: "✓" },
 };
 
 // ---------- Export ----------

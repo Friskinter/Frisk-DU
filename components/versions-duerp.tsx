@@ -53,7 +53,7 @@ export function VersionsDuerp({ donnees, onFermer }: { donnees: Donnees; onFerme
       <div className="w-full max-w-3xl rounded-sm bg-ivoire shadow-xl">
         <div className="flex items-start justify-between gap-4 border-b border-pierre/70 p-5">
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-bronze">Historique</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-bronze-fonce">Historique</p>
             <h2 className="mt-1 font-serif text-2xl">Versions du document unique</h2>
             <p className="mt-1 text-sm text-ardoise">
               Chaque mise à jour du DUERP doit être conservée au moins 40 ans. Figer une version l&apos;enregistre telle

@@ -16,7 +16,7 @@ function TableEchelons({ titre, question, echelons }: { titre: string; question:
         <tbody>
           {echelons.map((e) => (
             <tr key={e.valeur} className="border-t border-pierre/60 align-top">
-              <td className="w-10 py-2 pr-2 text-xl font-semibold text-bronze tabular-nums">{e.valeur}</td>
+              <td className="w-10 py-2 pr-2 text-xl font-semibold text-bronze-fonce tabular-nums">{e.valeur}</td>
               <td className="py-2">
                 <p className="font-medium">{e.libelle}</p>
                 <p className="text-ardoise">{e.definition}</p>
@@ -61,7 +61,7 @@ export function GuideCotation() {
         </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <TableEchelons
           titre="Gravité (G)"
           question="Quelles seraient les conséquences les plus probables pour le salarié si le risque se réalisait ?"
@@ -74,7 +74,7 @@ export function GuideCotation() {
         />
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <div>
           <h3 className="font-serif text-lg">Maîtrise du risque</h3>
           <p className="mt-1 text-sm text-ardoise">
@@ -84,7 +84,7 @@ export function GuideCotation() {
             <tbody>
               {grilleMaitrise.map((m) => (
                 <tr key={m.valeur} className="border-t border-pierre/60 align-top">
-                  <td className="w-14 py-2 pr-2 font-semibold text-bronze tabular-nums">× {m.coefficient}</td>
+                  <td className="w-14 py-2 pr-2 font-semibold text-bronze-fonce tabular-nums">× {m.coefficient}</td>
                   <td className="py-2">
                     <p className="font-medium">{m.libelle}</p>
                     <p className="text-ardoise">{m.definition}</p>

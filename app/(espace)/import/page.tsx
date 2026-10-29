@@ -243,7 +243,7 @@ function Import() {
             {type === "duerp"
               ? "Relisez les cotations, surtout celles signalées, et complétez le type de chaque action dans le plan d'actions."
               : "Complétez si besoin les tailles d'EPI de chaque salarié."}{" "}
-            <Link href={type === "duerp" ? "/duerp" : "/reglages"} className="text-bronze underline">
+            <Link href={type === "duerp" ? "/duerp" : "/reglages"} className="text-bronze-fonce underline">
               {type === "duerp" ? "Ouvrir le DUERP" : "Voir les salariés"}
             </Link>
           </p>

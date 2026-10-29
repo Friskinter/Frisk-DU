@@ -89,7 +89,7 @@ export function BibliothequeRisques({
       <div className="w-full max-w-4xl rounded-sm bg-ivoire shadow-xl">
         <div className="flex items-start justify-between gap-4 border-b border-pierre/70 p-5">
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-bronze">Bibliothèque de risques</p>
+            <p className="text-xs uppercase tracking-[0.25em] text-bronze-fonce">Bibliothèque de risques</p>
             <h2 className="mt-1 font-serif text-2xl">{metier ? metier.nom : "Choisissez un métier"}</h2>
             <p className="mt-1 text-sm text-ardoise">
               {metier
@@ -113,7 +113,7 @@ export function BibliothequeRisques({
               >
                 <p className="font-medium">{m.nom}</p>
                 <p className="mt-1 text-xs text-ardoise">{m.description}</p>
-                <p className="mt-2 text-xs text-bronze">{m.risques.length} situations</p>
+                <p className="mt-2 text-xs text-bronze-fonce">{m.risques.length} situations</p>
               </button>
             ))}
           </div>
@@ -142,7 +142,7 @@ export function BibliothequeRisques({
                       </label>
                       <button
                         type="button"
-                        className="ml-auto text-xs text-bronze underline"
+                        className="ml-auto text-xs text-bronze-fonce underline"
                         onClick={() =>
                           setCoches((c) => {
                             const suivant = new Set(c);

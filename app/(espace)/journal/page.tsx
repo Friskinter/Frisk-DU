@@ -12,9 +12,9 @@ import { supabaseNavigateur } from "@/lib/supabase/client";
 const PAR_PAGE = 100;
 
 const actions: Record<EntreeJournal["action"], { libelle: string; couleur: string }> = {
-  ajout: { libelle: "Ajout", couleur: "#0ca30c" },
-  modification: { libelle: "Modification", couleur: "#b08d57" },
-  suppression: { libelle: "Suppression", couleur: "#d03b3b" },
+  ajout: { libelle: "Ajout", couleur: "#0a7a0a" },
+  modification: { libelle: "Modification", couleur: "#7f6235" },
+  suppression: { libelle: "Suppression", couleur: "#b42318" },
 };
 
 const dateHeure = new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short" });
@@ -93,7 +93,7 @@ function Journal() {
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <select value={zone} onChange={(e) => setZone(e.target.value)} className={`${classeChamp} max-w-52`}>
+        <select aria-label="Filtrer par partie de l’application" value={zone} onChange={(e) => setZone(e.target.value)} className={`${classeChamp} max-w-52`}>
           <option value="">Toutes les zones</option>
           {Object.entries(zones).map(([cle, libelle]) => (
             <option key={cle} value={cle}>
@@ -101,7 +101,7 @@ function Journal() {
             </option>
           ))}
         </select>
-        <select value={auteur} onChange={(e) => setAuteur(e.target.value)} className={`${classeChamp} max-w-64`}>
+        <select aria-label="Filtrer par personne" value={auteur} onChange={(e) => setAuteur(e.target.value)} className={`${classeChamp} max-w-64`}>
           <option value="">Toutes les personnes</option>
           {[...new Set([auteur, ...auteurs].filter(Boolean))].map((a) => (
             <option key={a}>{a}</option>

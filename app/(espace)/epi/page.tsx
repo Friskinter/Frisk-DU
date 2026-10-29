@@ -166,7 +166,7 @@ function Stocks({ donnees, catalogue, saisie }: { donnees: Donnees; catalogue: b
       </details>
 
       <div className="flex flex-wrap items-center gap-3">
-        <select value={categorie} onChange={(e) => setCategorie(e.target.value)} className={`${classeChamp} max-w-52`}>
+        <select aria-label="Filtrer par catégorie" value={categorie} onChange={(e) => setCategorie(e.target.value)} className={`${classeChamp} max-w-52`}>
           <option value="">Toutes les catégories</option>
           {[...new Set(donnees.articles.map((a) => a.categorie))].map((c) => (
             <option key={c}>{c}</option>
@@ -219,6 +219,7 @@ function Stocks({ donnees, catalogue, saisie }: { donnees: Donnees; catalogue: b
                       type="number"
                       min={0}
                       value={s.tampon}
+                      aria-label={`Stock tampon ${s.article.nom} ${s.taille}`}
                       disabled={!catalogue}
                       onChange={(ev) => changerTampon(s.article, s.taille, Number(ev.target.value))}
                       className={`${classeChamp} w-20 text-right tabular-nums`}
@@ -236,7 +237,7 @@ function Stocks({ donnees, catalogue, saisie }: { donnees: Donnees; catalogue: b
                     {s.aCommander > 0 && saisie && (
                       <button
                         type="button"
-                        className="whitespace-nowrap text-xs text-bronze underline"
+                        className="whitespace-nowrap text-xs text-bronze-fonce underline"
                         title="Enregistre la réception de la quantité proposée"
                         onClick={() =>
                           ajouterMouvement({
@@ -447,7 +448,7 @@ function Historique({ donnees, saisie }: { donnees: Donnees; saisie: boolean }) 
 
   return (
     <div className="space-y-3">
-      <input type="search" placeholder="Rechercher un salarié, un article, un service…" value={filtre} onChange={(e) => setFiltre(e.target.value)} className={`${classeChamp} max-w-md`} />
+      <input aria-label="Rechercher un salarié, un article ou un service" type="search" placeholder="Rechercher un salarié, un article, un service…" value={filtre} onChange={(e) => setFiltre(e.target.value)} className={`${classeChamp} max-w-md`} />
       <div className="overflow-x-auto rounded-sm border border-pierre/70 bg-white">
         <table className="w-full min-w-[48rem] text-sm">
           <thead className="bg-marbre text-left text-xs uppercase tracking-wide text-ardoise">
@@ -528,18 +529,18 @@ function Catalogue({ donnees }: { donnees: Donnees }) {
           <tbody>
             {donnees.articles.map((a) => (
               <tr key={a.id} className="border-t border-pierre/60">
-                <td className="px-2 py-1.5"><input value={a.nom} onChange={(e) => maj(a.id, { nom: e.target.value })} className={classeChamp} /></td>
+                <td className="px-2 py-1.5"><input aria-label="Nom de l'article" value={a.nom} onChange={(e) => maj(a.id, { nom: e.target.value })} className={classeChamp} /></td>
                 <td className="px-2 py-1.5">
-                  <select value={a.categorie} onChange={(e) => maj(a.id, { categorie: e.target.value })} className={classeChamp}>
+                  <select aria-label="Catégorie" value={a.categorie} onChange={(e) => maj(a.id, { categorie: e.target.value })} className={classeChamp}>
                     {categoriesEpi.map((c) => <option key={c}>{c}</option>)}
                   </select>
                 </td>
                 <td className="px-2 py-1.5">
                   <ChampTailles article={a} onChange={(tailles) => maj(a.id, { tailles })} />
                 </td>
-                <td className="px-2 py-1.5"><input type="number" min={0} step="0.01" value={a.prix} onChange={(e) => maj(a.id, { prix: Number(e.target.value) })} className={`${classeChamp} w-24`} /></td>
-                <td className="px-2 py-1.5"><input type="number" min={0} value={a.delai} onChange={(e) => maj(a.id, { delai: Number(e.target.value) })} className={`${classeChamp} w-20`} /></td>
-                <td className="px-2 py-1.5"><input type="number" min={1} value={a.lot} onChange={(e) => maj(a.id, { lot: Number(e.target.value) })} className={`${classeChamp} w-20`} /></td>
+                <td className="px-2 py-1.5"><input type="number" min={0} step="0.01" aria-label="Prix unitaire" value={a.prix} onChange={(e) => maj(a.id, { prix: Number(e.target.value) })} className={`${classeChamp} w-24`} /></td>
+                <td className="px-2 py-1.5"><input type="number" min={0} aria-label="Délai de livraison en jours" value={a.delai} onChange={(e) => maj(a.id, { delai: Number(e.target.value) })} className={`${classeChamp} w-20`} /></td>
+                <td className="px-2 py-1.5"><input type="number" min={1} aria-label="Conditionnement" value={a.lot} onChange={(e) => maj(a.id, { lot: Number(e.target.value) })} className={`${classeChamp} w-20`} /></td>
                 <td className="px-2 py-1.5 text-right">
                   <button type="button" onClick={() => supprimer(a)} title="Supprimer" className="text-gris hover:text-[#b42318]">✕</button>
                 </td>
@@ -560,6 +561,7 @@ function ChampTailles({ article, onChange }: { article: Article; onChange: (tail
   const [texte, setTexte] = useState(article.tailles.join(", "));
   return (
     <input
+      aria-label="Tailles, séparées par des virgules"
       value={texte}
       onChange={(e) => setTexte(e.target.value)}
       onBlur={() => {

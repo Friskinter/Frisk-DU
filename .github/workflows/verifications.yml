@@ -22,6 +22,26 @@ jobs:
       - name: Build (vérifie aussi les types)
         run: npm run build
 
+  parcours:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Navigateur de test
+        run: npx playwright install --with-deps chromium
+      - name: Parcours, accessibilité et affichage mobile
+        run: npm run test:parcours
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: rapport-parcours
+          path: playwright-report/
+          retention-days: 7
+
   base-de-donnees:
     runs-on: ubuntu-latest
     services:

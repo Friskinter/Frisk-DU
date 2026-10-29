@@ -262,7 +262,7 @@ export default function Console() {
             <p className="font-medium text-encre">Mentions légales à compléter avant la mise en ligne</p>
             <p className="mt-1">
               Renseignez dans <code>lib/legal.ts</code> : {champsManquants().join(", ")}. Ces informations apparaissent sur les{" "}
-              <Link href="/legal/mentions" className="text-bronze underline">pages légales</Link>.
+              <Link href="/legal/mentions" className="text-bronze-fonce underline">pages légales</Link>.
             </p>
           </div>
         )}
@@ -310,13 +310,13 @@ export default function Console() {
                     <div className="flex items-center gap-2">
                       <h2 className="text-lg font-medium">{c.nom}</h2>
                       {c.actif ? (
-                        <Pastille couleur="#0ca30c" texte="#ffffff" icone="✓">Actif</Pastille>
+                        <Pastille couleur="#0ca30c" texte="#0b0b0b" icone="✓">Actif</Pastille>
                       ) : (
                         <Pastille couleur="#d03b3b" texte="#ffffff" icone="✕">Suspendu</Pastille>
                       )}
                     </div>
                     {c.groupe_id && (
-                      <p className="mt-1 text-xs text-bronze">
+                      <p className="mt-1 text-xs text-bronze-fonce">
                         Groupe {nomGroupe(c)} · {clients.filter((x) => x.groupe_id === c.groupe_id).length} établissement(s)
                       </p>
                     )}
@@ -383,7 +383,7 @@ export default function Console() {
                           </select>
                           <button
                             type="button"
-                            className="text-bronze underline"
+                            className="text-bronze-fonce underline"
                             onClick={() =>
                               confirm(`Créer un nouveau mot de passe provisoire pour ${m.email} ?`) &&
                               afficher(reinitialiserMotDePasse(m.user_id), m.email)
@@ -393,7 +393,7 @@ export default function Console() {
                           </button>
                           <button
                             type="button"
-                            className="text-bronze underline"
+                            className="text-bronze-fonce underline"
                             title="Si l'utilisateur a perdu son téléphone"
                             onClick={() =>
                               confirm(`Retirer la double authentification de ${m.email} ? Il pourra se connecter avec son seul mot de passe, puis la réactiver.`) &&

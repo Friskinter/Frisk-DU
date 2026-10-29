@@ -52,7 +52,7 @@ export default function MentionsLegales() {
 
       <Article titre="Données personnelles et cookies">
         <p>
-          Le traitement des données personnelles est décrit dans la <a href="/legal/confidentialite" className="text-bronze underline">politique de confidentialité</a>.
+          Le traitement des données personnelles est décrit dans la <a href="/legal/confidentialite" className="text-bronze-fonce underline">politique de confidentialité</a>.
           Frisk DU n&apos;utilise que des cookies strictement nécessaires à la connexion ; aucun cookie de mesure d&apos;audience ou
           publicitaire n&apos;est déposé.
         </p>
