@@ -375,5 +375,8 @@ export type Donnees = {
   articles: Article[];
   mouvements: Mouvement[];
   signatures?: Record<string, Signature>;
-  preferences?: { alertesEmail?: boolean }; // récapitulatif hebdomadaire par e-mail (activé par défaut)
+  preferences?: {
+    alertesEmail?: boolean; // récapitulatif hebdomadaire par e-mail (activé par défaut)
+    syntheses?: Record<string, string>; // synthèse de l'employeur du rapport annuel, par année
+  };
 };

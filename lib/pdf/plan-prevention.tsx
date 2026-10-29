@@ -39,9 +39,10 @@ export function Champ({ cle, children }: { cle: string; children: ReactNode }) {
   );
 }
 
-export function Section({ titre, children }: { titre: string; children: ReactNode }) {
+// `insecable` : section courte, gardée entière sur une même page.
+export function Section({ titre, children, insecable = false }: { titre: string; children: ReactNode; insecable?: boolean }) {
   return (
-    <View>
+    <View wrap={!insecable}>
       <Text style={s.titreSection} minPresenceAhead={70}>{titre}</Text>
       {children}
     </View>

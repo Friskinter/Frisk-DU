@@ -165,3 +165,14 @@ export async function telechargerEmargement(donnees: Donnees, causerieId: string
     `Causerie - ${causerie.theme || "securite"} - ${causerie.date}.pdf`,
   );
 }
+
+export async function telechargerRapportAnnuel(donnees: Donnees, annee: number) {
+  const { RapportAnnuel } = await import("./rapport-annuel");
+  const { calculerRapport } = await import("@/lib/rapport");
+  const aujourdhui = dateDuJour();
+  const rapport = calculerRapport(donnees, annee, aujourdhui);
+  await enregistrerPdf(
+    createElement(RapportAnnuel, { donnees, rapport, synthese: donnees.preferences?.syntheses?.[annee] ?? "", aujourdhui, logo: logo() }),
+    `Rapport annuel SST ${annee} - ${donnees.entreprise}.pdf`,
+  );
+}
