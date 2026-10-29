@@ -39,6 +39,7 @@ export const zones: Record<string, string> = {
   equipements: "Équipements",
   verifications: "Vérifications",
   produits: "Produits chimiques",
+  interventions: "Entreprises extérieures",
   salaries: "Salariés",
   articles: "Catalogue EPI",
   mouvements: "Mouvements d'EPI",
@@ -278,6 +279,8 @@ export function libelleElement(e: EntreeJournal, donnees: Donnees): string {
     }
     case "produits":
       return String(donnees.produits?.find((x) => x.id === e.element_id)?.nom || source.nom || "Produit");
+    case "interventions":
+      return `Plan de prévention : ${donnees.interventions?.find((x) => x.id === e.element_id)?.entreprise || source.entreprise || "entreprise extérieure"}`;
     case "equipements":
       return String(donnees.equipements?.find((x) => x.id === e.element_id)?.nom || source.nom || "Équipement");
     case "verifications": {
@@ -295,7 +298,7 @@ export function libelleElement(e: EntreeJournal, donnees: Donnees): string {
       return `${m.type === "entree" ? "Réception" : "Remise"} : ${m.quantite ?? "?"} × ${article(m.articleId)} (${m.taille ?? ""})${qui}`;
     }
     case "signatures":
-      return `Signature de ${salarie(source.salarieId) || "salarié"}`;
+      return `Signature de ${salarie(source.salarieId) || source.nom || "salarié"}`;
     case "entreprise":
       return clesRacine[e.element_id] ?? e.element_id;
   }

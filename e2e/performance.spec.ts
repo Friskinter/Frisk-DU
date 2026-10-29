@@ -7,6 +7,9 @@ import { donneesVolumineuses } from "./volume";
 // et réagir à la saisie sans attente perceptible.
 const donnees = JSON.stringify(donneesVolumineuses(dateDuJour()));
 
+// Une mesure à la fois : des pages lourdes ouvertes en parallèle fausseraient les durées.
+test.describe.configure({ mode: "serial" });
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(([cle, valeur]) => localStorage.setItem(cle, valeur), [CLE_DONNEES_TEST, donnees]);
 });
@@ -14,7 +17,8 @@ test.beforeEach(async ({ page }) => {
 for (const { chemin } of pages.filter((p) => !p.chemin.startsWith("/legal") && p.chemin !== "/connexion")) {
   test(`affichage rapide de ${chemin}`, async ({ page }) => {
     const debut = Date.now();
-    await ouvrir(page, chemin);
+    await page.goto(chemin);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
     const duree = Date.now() - debut;
     test.info().annotations.push({ type: "durée", description: `${duree} ms` });
     console.log(`${chemin} : ${duree} ms`);

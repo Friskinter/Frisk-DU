@@ -196,7 +196,52 @@ export type Mouvement = {
 export type Signature = {
   image: string; // PNG en data URL
   date: string; // AAAA-MM-JJ
-  salarieId: string;
+  salarieId: string; // "" pour un signataire qui n'est pas salarié (entreprise extérieure…)
+  nom?: string; // nom et qualité du signataire, quand ce n'est pas un salarié
+};
+
+// Plan de prévention d'une entreprise extérieure (art. R4512-6 et suivants du Code du travail).
+export type RisqueIntervention = {
+  id: string;
+  phase: string; // phase de travail, zone ou situation d'interférence
+  risque: string;
+  mesures: string;
+  charge: "eu" | "ee" | "commun"; // mesures à la charge de l'entreprise utilisatrice, extérieure, ou des deux
+};
+
+export type SuiviIntervention = {
+  id: string;
+  date: string;
+  type: "inspection" | "reunion";
+  observations: string;
+};
+
+export type Intervention = {
+  id: string;
+  entreprise: string; // entreprise extérieure
+  siret: string;
+  responsable: string; // représentant de l'entreprise extérieure (nom, fonction)
+  telephone: string;
+  email: string;
+  objet: string; // nature des travaux
+  lieux: string; // lieux et unités de travail concernés
+  debut: string;
+  fin: string;
+  effectif: number; // nombre prévisible de travailleurs de l'entreprise extérieure
+  heures: number; // durée prévisible des travaux, en heures, sur 12 mois
+  sousTraitants: string;
+  travauxDangereux: string[]; // codes de la liste de l'arrêté du 19 mars 1993
+  coordinateur: string; // représentant de l'entreprise utilisatrice
+  inspectionLe: string; // inspection commune préalable
+  inspectionPar: string;
+  risques: RisqueIntervention[];
+  consignes: string; // instructions données aux travailleurs : accès, circulation, zones interdites
+  materiels: string; // matériels et installations mis à disposition, adaptations
+  secours: string; // premiers secours, moyens d'alerte, numéros d'urgence
+  suivi: SuiviIntervention[];
+  signatureEu?: string; // identifiants dans Donnees.signatures
+  signatureEe?: string;
+  notes: string;
 };
 
 // Informations reprises sur la page de garde du document unique.
@@ -223,6 +268,7 @@ export type Donnees = {
   equipements: Equipement[];
   verifications: Verification[];
   produits: Produit[];
+  interventions: Intervention[];
   salaries: Salarie[];
   articles: Article[];
   mouvements: Mouvement[];

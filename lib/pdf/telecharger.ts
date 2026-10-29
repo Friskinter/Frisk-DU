@@ -107,3 +107,14 @@ export async function telechargerNoticesDePoste(donnees: Donnees) {
     `Notices de poste - ${donnees.entreprise} - ${aujourdhui}.pdf`,
   );
 }
+
+export async function telechargerPlanPrevention(donnees: Donnees, interventionId: string) {
+  const { PlanPrevention } = await import("./plan-prevention");
+  const intervention = donnees.interventions.find((i) => i.id === interventionId);
+  if (!intervention) return;
+  const aujourdhui = dateDuJour();
+  await enregistrerPdf(
+    createElement(PlanPrevention, { donnees, intervention, aujourdhui, logo: logo() }),
+    `Plan de prevention - ${intervention.entreprise || "entreprise exterieure"} - ${aujourdhui}.pdf`,
+  );
+}

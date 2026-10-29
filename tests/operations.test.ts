@@ -53,7 +53,11 @@ describe("calcul des opérations", () => {
 
   it("remplacement complet (restauration d'une sauvegarde)", () => {
     allerRetour(donnees(), donneesDemo("2026-10-28"));
-    allerRetour(donneesDemo("2026-10-28"), donnees());
+    // Les signatures ne sont jamais supprimées : elles survivent à la restauration.
+    const demo = donneesDemo("2026-10-28");
+    const restaure = appliquerOperations(demo, calculerOperations(demo, donnees()));
+    expect(json({ ...restaure, signatures: undefined })).toEqual(json(donnees()));
+    expect(restaure.signatures).toEqual(demo.signatures);
   });
 });
 

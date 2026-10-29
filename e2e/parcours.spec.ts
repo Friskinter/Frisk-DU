@@ -43,6 +43,33 @@ test("enregistrer une formation", async ({ page }) => {
   await verifierAccessibilite(page);
 });
 
+test("préparer et signer un plan de prévention", async ({ page }) => {
+  await ouvrir(page, "/entreprises-exterieures");
+  await page.getByRole("button", { name: "+ Intervention" }).click();
+  await page.getByLabel("Raison sociale").fill("Toitures Lyonnaises");
+  await page.getByLabel("Nature des travaux").fill("Réfection de la toiture de l'atelier");
+  await page.getByLabel(/chute de hauteur de plus de 3 mètres/).check();
+  await expect(page.getByText(/Plan de prévention écrit obligatoire : 1 travail dangereux/)).toBeVisible();
+  await expect(page.getByText("Risque 3")).toBeVisible();
+  await verifierAccessibilite(page);
+
+  // Signature au doigt ou à la souris.
+  const pave = page.getByLabel("Zone de signature").first();
+  await pave.scrollIntoViewIfNeeded();
+  const zone = (await pave.boundingBox())!;
+  await page.mouse.move(zone.x + 20, zone.y + 40);
+  await page.mouse.down();
+  await page.mouse.move(zone.x + 120, zone.y + 80, { steps: 5 });
+  await page.mouse.move(zone.x + 200, zone.y + 30, { steps: 5 });
+  await page.mouse.up();
+  await page.getByRole("button", { name: "Valider la signature" }).first().click();
+  await expect(page.getByText(/^Signé le /).first()).toBeVisible();
+
+  const telechargement = page.waitForEvent("download");
+  await page.getByRole("button", { name: /Plan de prévention \(PDF\)/ }).click();
+  expect((await telechargement).suggestedFilename()).toMatch(/^Plan de prevention - Toitures Lyonnaises - .+\.pdf$/);
+});
+
 test.describe("compte en lecture seule", () => {
   test.use({ role: "lecteur" });
 
