@@ -129,6 +129,19 @@ export default function PageReglages() {
           </label>
         </Carte>
 
+        {donnees.preferences?.assistantMasque && (
+          <Carte titre="Assistant de démarrage">
+            <p className="mb-3 text-sm text-ardoise">L&apos;assistant « Bien démarrer avec Frisk DU » est masqué sur le tableau de bord.</p>
+            <button
+              type="button"
+              className={classeBoutonSecondaire}
+              onClick={() => modifier((d) => ({ ...d, preferences: { ...d.preferences, assistantMasque: false } }))}
+            >
+              Réafficher l&apos;assistant
+            </button>
+          </Carte>
+        )}
+
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Liste
             titre="Services"
