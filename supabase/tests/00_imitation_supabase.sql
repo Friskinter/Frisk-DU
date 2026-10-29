@@ -6,6 +6,7 @@
 do $$ begin
   if not exists (select 1 from pg_roles where rolname = 'anon') then create role anon nologin; end if;
   if not exists (select 1 from pg_roles where rolname = 'authenticated') then create role authenticated nologin; end if;
+  if not exists (select 1 from pg_roles where rolname = 'service_role') then create role service_role nologin bypassrls; end if;
 end $$;
 
 create schema if not exists auth;
@@ -20,10 +21,10 @@ create or replace function auth.uid() returns uuid language sql stable as $$
   select nullif(auth.jwt() ->> 'sub', '')::uuid;
 $$;
 
-grant usage on schema public, auth to anon, authenticated;
+grant usage on schema public, auth to anon, authenticated, service_role;
 grant execute on function auth.uid(), auth.jwt() to anon, authenticated;
 -- Comme Supabase : les tables créées ensuite sont accessibles aux rôles, sous réserve des règles RLS.
-alter default privileges in schema public grant all on tables to anon, authenticated;
+alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
 alter default privileges in schema public grant all on sequences to anon, authenticated;
 
 -- Stockage de fichiers : seulement ce qu'utilisent les migrations et les tests.

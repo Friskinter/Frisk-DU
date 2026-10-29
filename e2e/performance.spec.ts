@@ -14,7 +14,7 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(([cle, valeur]) => localStorage.setItem(cle, valeur), [CLE_DONNEES_TEST, donnees]);
 });
 
-for (const { chemin } of pages.filter((p) => !p.chemin.startsWith("/legal") && p.chemin !== "/connexion")) {
+for (const { chemin } of pages.filter((p) => !p.chemin.startsWith("/legal") && !p.chemin.startsWith("/signaler") && p.chemin !== "/connexion")) {
   test(`affichage rapide de ${chemin}`, async ({ page }) => {
     const debut = Date.now();
     await page.goto(chemin);

@@ -172,7 +172,7 @@ describe("alertes liées aux accidents", () => {
 
   it("démonstration : un accident bénin récent attend son analyse et son report", () => {
     const d = donneesDemo(aujourdhui);
-    expect(d.evenements).toHaveLength(3);
+    expect(d.evenements).toHaveLength(4);
     expect(ids(d)).not.toContain("accidents-a-declarer");
   });
 });

@@ -50,3 +50,19 @@ export function emailAlertes(entreprise: string, alertes: Alerte[], aujourdhui: 
 
   return { sujet, html, texte };
 }
+
+// E-mail aux responsables quand un salarié signale un événement depuis le terrain. Il ne contient
+// ni la description ni les lésions (données de santé) : seulement le type et le lien.
+export function emailSignalement(entreprise: string, type: string, accident: boolean, lien: string) {
+  const sujet = `Frisk DU · ${entreprise} : nouveau signalement (${type.toLowerCase()})`;
+  const consigne = accident
+    ? "S'il y a eu un arrêt ou des soins médicaux, l'accident doit être déclaré à la CPAM dans les 48 heures."
+    : "Analysez-le rapidement : un presque-accident traité, c'est un accident évité.";
+  const html = `<div style="font-family:Arial,sans-serif;color:#0c0b0a;max-width:560px">
+    <p style="font-size:16px"><strong>${echapper(type)}</strong> signalé depuis le terrain chez ${echapper(entreprise)}.</p>
+    <p>${echapper(consigne)}</p>
+    <p><a href="${echapper(lien)}" style="color:#7f6235">Ouvrir le signalement dans Frisk DU →</a></p>
+  </div>`;
+  const texte = `${type} signalé depuis le terrain chez ${entreprise}.\n\n${consigne}\n\n${lien}`;
+  return { sujet, html, texte };
+}

@@ -22,7 +22,8 @@ export default function Confidentialite() {
             </>,
             <>
               <strong>Le client est responsable de traitement</strong> pour les données de ses salariés et intervenants qu&apos;il saisit
-              dans son espace (noms, postes, tailles d&apos;EPI, signatures, formations, accidents, expositions). Frisk agit alors comme
+              dans son espace (noms, postes, tailles d&apos;EPI, signatures, formations, accidents, expositions), ainsi que pour les signalements
+              envoyés par ses salariés depuis le lien de signalement de l&apos;entreprise (description, photos, nom facultatif). Frisk agit alors comme
               sous-traitant, selon l&apos;<a href="/legal/traitement" className="text-bronze-fonce underline">accord de traitement des données</a>.
             </>,
           ]}
@@ -75,7 +76,8 @@ export default function Confidentialite() {
           Le registre des accidents peut contenir des données de santé (nature des lésions, arrêts de travail) et la liste des salariés
           exposés à des produits CMR sert au suivi médical renforcé. Ces données sont traitées pour le compte de l&apos;employeur, au titre
           de ses obligations en matière de santé et de sécurité au travail (article 9.2.b du RGPD). Elles ne sont accessibles qu&apos;aux
-          utilisateurs de l&apos;espace concerné et ne figurent jamais dans les e-mails d&apos;alerte.
+          utilisateurs de l&apos;espace concerné et ne figurent jamais dans les e-mails d&apos;alerte. Les signalements envoyés par les salariés
+          rejoignent ce registre ; l&apos;e-mail qui prévient les responsables n&apos;indique que le type d&apos;événement, sans description ni lésions.
         </p>
       </Article>
 

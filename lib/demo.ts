@@ -259,7 +259,8 @@ export function donneesDemo(aujourdhui: string): Donnees {
 
   mouvements.sort((x, y) => (x.date < y.date ? 1 : -1));
 
-  // Registre des événements : un accident analysé et clos, un accident à analyser, un presque-accident.
+  // Registre des événements : un accident analysé et clos, un accident à analyser, un presque-accident,
+  // une situation dangereuse signalée depuis le terrain.
   const risque = (danger: string) => duerp.find((l) => l.danger === danger)?.id ?? "";
   const salarie = (nom: string) => salaries.find((s) => s.nom === nom)?.id ?? "";
   const evenements: Evenement[] = [
@@ -295,6 +296,12 @@ export function donneesDemo(aujourdhui: string): Donnees {
       type: "presque-accident", date: decalerJours(aujourdhui, -20), heure: "10:05", lieu: "Allée C",
       unite: "Zone de stockage", description: "Un chariot élévateur a frôlé un préparateur à l'angle de l'allée C.",
       gravitePotentielle: 4, risqueId: risque("Circulation interne (chariots, piétons)"),
+    }),
+    // Signalé hier par un salarié, avec le QR code de l'atelier : à analyser.
+    nouvelEvenement({
+      type: "situation-dangereuse", date: decalerJours(aujourdhui, -1), heure: "14:20", lieu: "Allée B, au-dessus du rack 12",
+      unite: "Zone de stockage", description: "Un luminaire pend au bout de son câble au-dessus de l'allée B, à hauteur du passage des chariots.",
+      signalement: { par: "Karim, préparateur", recuLe: `${decalerJours(aujourdhui, -1)}T12:24:00.000Z` },
     }),
   ];
   // Formations et habilitations : une à renouveler, une manquante, un recyclage déjà fait.

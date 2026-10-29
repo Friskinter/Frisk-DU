@@ -21,8 +21,9 @@ export async function supabaseServeur() {
   });
 }
 
-// Client administrateur : contourne les règles d'accès. Uniquement côté serveur,
-// et seulement après avoir vérifié que l'appelant est un administrateur Frisk.
+// Client administrateur : contourne les règles d'accès. Uniquement côté serveur, et seulement
+// après avoir vérifié que l'appelant est un administrateur Frisk (ou, pour le signalement terrain,
+// que le lien de signalement est valide).
 export function supabaseAdmin() {
   const cle = process.env.SUPABASE_SECRET_KEY;
   if (!cle) return null;

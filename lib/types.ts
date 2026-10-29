@@ -84,6 +84,8 @@ export type Evenement = {
   analysePar: string;
   risqueId: string; // risque du DUERP concerné
   reevalueLe: string; // date de la revue de la cotation du risque après l'événement
+  photos?: { chemin: string; nom: string }[]; // fichiers dans le stockage Supabase (bucket « attestations »)
+  signalement?: { par: string; recuLe: string }; // signalé par un salarié depuis le lien de signalement (date et heure ISO)
 };
 
 // Formation ou habilitation obtenue par un salarié (une ligne par session suivie).
