@@ -23,6 +23,7 @@ const liens = [
   { href: "/penibilite", label: "Pénibilité", icone: "⚠" },
   { href: "/epi", label: "EPI & stocks", icone: "⛑" },
   { href: "/bilans", label: "Bilans", icone: "▤" },
+  { href: "/rapport", label: "Rapport annuel", icone: "▥" },
   { href: "/journal", label: "Journal", icone: "◷" },
   { href: "/reglages", label: "Salariés & réglages", icone: "⚙" },
 ];

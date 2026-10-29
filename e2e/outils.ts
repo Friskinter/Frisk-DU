@@ -15,6 +15,7 @@ export const pages = [
   { chemin: "/produits", titre: "Produits chimiques" },
   { chemin: "/visites", titre: "Visites et audits" },
   { chemin: "/accueil", titre: "Accueil et causeries" },
+  { chemin: "/rapport", titre: "Rapport annuel" },
   { chemin: "/entreprises-exterieures", titre: "Entreprises extérieures" },
   { chemin: "/epi", titre: null },
   { chemin: "/penibilite", titre: null },
