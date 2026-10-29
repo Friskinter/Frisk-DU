@@ -9,7 +9,7 @@ import { BandeauCouleur, CouleurTitres, LogoDocument, MentionFrisk } from "./mar
 export function AfficheSignalement({ entreprise, lien, qr, marque }: { entreprise: string; lien: string; qr: string; marque: Marque }) {
   const etapes = ["Scannez le QR code avec l'appareil photo de votre téléphone.", "Dites ce qui s'est passé, où et quand.", "Ajoutez une photo si vous le pouvez, puis envoyez."];
   return (
-    <Document title={`Signalement - ${entreprise}`} author={entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+    <Document title={`Signalement - ${entreprise}`} author={entreprise} creator="Frisk Plateforme" producer="Frisk Plateforme" language="fr">
       <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" style={{ padding: 48, fontFamily: "Helvetica", color: c.encre, alignItems: "center" }}>
         <Text style={{ fontSize: 10, letterSpacing: 3, color: marque.accent, textTransform: "uppercase" }}>{entreprise}</Text>

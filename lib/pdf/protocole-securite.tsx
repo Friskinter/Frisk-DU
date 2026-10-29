@@ -13,7 +13,7 @@ export function ProtocoleSecurite({ donnees, protocole: p, aujourdhui, marque }:
   const fiche = donnees.fiche;
   const operation = operations.find((o) => o.valeur === p.operation)?.libelle ?? "";
   return (
-    <Document title={`Protocole de sécurité - ${p.transporteur}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+    <Document title={`Protocole de sécurité - ${p.transporteur}`} author={donnees.entreprise} creator="Frisk Plateforme" producer="Frisk Plateforme" language="fr">
       <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>

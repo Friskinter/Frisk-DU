@@ -173,7 +173,7 @@ export function IdentiteVisuelle({ entreprise, identite }: { entreprise: string;
               />
             </div>
             {couleur && (p.accent !== couleur || p.fonce !== couleur) && (
-              <p className="mt-1 text-xs text-gris">Frisk DU ajuste les nuances de votre couleur pour que les textes restent bien lisibles.</p>
+              <p className="mt-1 text-xs text-gris">Frisk Plateforme ajuste les nuances de votre couleur pour que les textes restent bien lisibles.</p>
             )}
           </div>
 
@@ -213,7 +213,7 @@ function Apercu({ entreprise, identite }: { entreprise: string; identite: Identi
         <p className="px-3 py-1.5 text-sm">▤ Document unique</p>
         <p className="mt-2 flex items-center gap-1.5 text-[10px] text-pierre/70">
           <Image src="/logo-frisk.png" alt="" width={12} height={12} className="h-3 w-3 rounded-[2px]" />
-          Réalisé avec Frisk DU
+          Réalisé avec Frisk Plateforme
         </p>
       </div>
       <div className="rounded-sm border border-pierre bg-white p-3">

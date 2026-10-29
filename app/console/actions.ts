@@ -192,7 +192,7 @@ export async function exporterClient(entrepriseId: string): Promise<Export> {
     // Liens de téléchargement des fichiers joints, valables 7 jours.
     const { data: liens } = fichiers.length ? await admin.storage.from(BUCKET).createSignedUrls(fichiers, 7 * 24 * 3600) : { data: [] };
     const contenu = {
-      format: "Frisk DU – export complet",
+      format: "Frisk Plateforme – export complet",
       exporteLe: new Date().toISOString(),
       entreprise,
       utilisateurs: membres ?? [],
@@ -202,7 +202,7 @@ export async function exporterClient(entrepriseId: string): Promise<Export> {
       journalDesModifications: journal,
       fichiers: (liens ?? []).map((l) => ({ chemin: l.path, lienValable7Jours: l.signedUrl })),
     };
-    return { ok: true, nom: `Frisk DU - export complet - ${entreprise.nom} - ${new Date().toISOString().slice(0, 10)}.json`, contenu: JSON.stringify(contenu, null, 2) };
+    return { ok: true, nom: `Frisk Plateforme - export complet - ${entreprise.nom} - ${new Date().toISOString().slice(0, 10)}.json`, contenu: JSON.stringify(contenu, null, 2) };
   } catch {
     return { ok: false, message: "L'export n'a pas pu être réalisé. Réessayez dans un instant." };
   }

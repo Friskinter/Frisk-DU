@@ -1,4 +1,4 @@
-// Modèle de données de Frisk DU (DUERP, pénibilité, EPI).
+// Modèle de données de Frisk Plateforme (DUERP, pénibilité, EPI).
 
 export type NiveauMaitrise = "insuffisante" | "partielle" | "bonne" | "tres-bonne";
 

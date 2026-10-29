@@ -16,7 +16,7 @@ export function RapportVisite({ donnees, visite: v, aujourdhui, marque }: { donn
   const action = (id?: string) => (id ? donnees.actions.find((a) => a.id === id) : undefined);
   const nonConformes = v.reponses.filter((r) => r.resultat === "non-conforme");
   return (
-    <Document title={`Visite - ${v.grille} - ${v.date}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+    <Document title={`Visite - ${v.grille} - ${v.date}`} author={donnees.entreprise} creator="Frisk Plateforme" producer="Frisk Plateforme" language="fr">
       <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>

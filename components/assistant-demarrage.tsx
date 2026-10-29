@@ -10,7 +10,7 @@ import { supabaseNavigateur } from "@/lib/supabase/client";
 import type { Donnees } from "@/lib/types";
 import { useVersions } from "@/lib/versions";
 
-// « Bien démarrer avec Frisk DU » : visible du responsable tant que la mise en place n'est pas finie.
+// « Bien démarrer avec Frisk Plateforme » : visible du responsable tant que la mise en place n'est pas finie.
 export function AssistantDemarrage({ donnees }: { donnees: Donnees }) {
   const session = useSession();
   const { versions, chargement, erreur } = useVersions(session.entrepriseId);
@@ -45,7 +45,7 @@ export function AssistantDemarrage({ donnees }: { donnees: Donnees }) {
     <section className="mb-6 rounded-sm border border-bronze/60 bg-white" aria-labelledby="titre-demarrage">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-pierre/60 px-4 py-3">
         <div>
-          <h2 id="titre-demarrage" className="font-serif text-xl">Bien démarrer avec Frisk DU</h2>
+          <h2 id="titre-demarrage" className="font-serif text-xl">Bien démarrer avec Frisk Plateforme</h2>
           <p className="text-sm text-ardoise">
             {faites} étape{faites > 1 ? "s" : ""} sur {etapes.length}. Chaque étape se coche d&apos;elle-même une fois faite.
           </p>

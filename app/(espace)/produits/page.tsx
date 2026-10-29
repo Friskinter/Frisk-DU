@@ -84,7 +84,7 @@ export default function PageProduits() {
     <div>
       <EnTetePage
         titre="Produits chimiques"
-        description="Inventaire des produits utilisés, avec leur fiche de données de sécurité (FDS). Frisk DU déduit les pictogrammes des mentions de danger, repère les produits cancérogènes, mutagènes ou toxiques pour la reproduction (CMR) et prépare les notices de poste."
+        description="Inventaire des produits utilisés, avec leur fiche de données de sécurité (FDS). Frisk Plateforme déduit les pictogrammes des mentions de danger, repère les produits cancérogènes, mutagènes ou toxiques pour la reproduction (CMR) et prépare les notices de poste."
         actions={
           <>
             <button type="button" className={classeBoutonSecondaire} onClick={() => telechargerInventaireProduits(donnees)}>

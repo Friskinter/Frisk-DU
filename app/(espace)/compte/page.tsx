@@ -13,7 +13,7 @@ export default function PageCompte() {
 
   return (
     <div className="space-y-4">
-      <EnTetePage titre="Mon compte" description="Identifiants et sécurité de votre compte Frisk DU." />
+      <EnTetePage titre="Mon compte" description="Identifiants et sécurité de votre compte Frisk Plateforme." />
 
       <Carte titre="Identifiants">
         <dl className="grid gap-3 text-sm sm:grid-cols-[10rem_1fr]">

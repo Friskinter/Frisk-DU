@@ -54,7 +54,7 @@ export function RapportAnnuel({ donnees, rapport: r, synthese, aujourdhui, marqu
   const a = r.accidents;
   const enCours = r.reference < `${r.annee}-12-31`;
   return (
-    <Document title={`Rapport annuel SST ${r.annee} - ${donnees.entreprise}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+    <Document title={`Rapport annuel SST ${r.annee} - ${donnees.entreprise}`} author={donnees.entreprise} creator="Frisk Plateforme" producer="Frisk Plateforme" language="fr">
       <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -85,7 +85,7 @@ export function RapportAnnuel({ donnees, rapport: r, synthese, aujourdhui, marqu
             ]}
           />
           <View style={{ marginTop: 6 }}>
-            <Champ cle="Effectif">{[r.entreprise.effectif, `${r.entreprise.salaries} salarié(s) suivi(s) dans Frisk DU`].filter(Boolean).join(" · ")}</Champ>
+            <Champ cle="Effectif">{[r.entreprise.effectif, `${r.entreprise.salaries} salarié(s) suivi(s) dans Frisk Plateforme`].filter(Boolean).join(" · ")}</Champ>
             <Champ cle="Heures travaillées">
               {r.entreprise.heures ? `${nombre(r.entreprise.heures.heures)}${r.entreprise.heures.estimation ? " (estimées d'après l'effectif)" : ""}` : "à renseigner"}
             </Champ>

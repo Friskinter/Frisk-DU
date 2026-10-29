@@ -78,7 +78,7 @@ export default function Inscription() {
   }
 
   return (
-    <EcranAuth titre="Essai gratuit" sousTitre={`${DUREE_ESSAI_JOURS} jours pour découvrir Frisk DU, sans carte bancaire.`}>
+    <EcranAuth titre="Essai gratuit" sousTitre={`${DUREE_ESSAI_JOURS} jours pour découvrir Frisk Plateforme, sans carte bancaire.`}>
       <form onSubmit={inscrire} className="space-y-4">
         <label className="block text-sm">
           Nom de l&apos;entreprise

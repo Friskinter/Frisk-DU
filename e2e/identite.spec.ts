@@ -24,7 +24,7 @@ test("le responsable dépose son logo : l'espace passe à ses couleurs", async (
 
   const menu = page.getByRole("complementary");
   await expect(menu.locator('img[src^="data:image/png"]')).toBeVisible();
-  await expect(menu.getByText("Réalisé avec Frisk DU")).toBeVisible();
+  await expect(menu.getByText("Réalisé avec Frisk Plateforme")).toBeVisible();
   expect(await bronze(page)).not.toBe(avant);
   await verifierAccessibilite(page);
 
@@ -81,7 +81,7 @@ test("le formulaire de signalement est aux couleurs de l'entreprise", async ({ p
   await ouvrir(page, `/signaler/${JETON_TEST}`);
   await expect(page.getByRole("banner").locator('img[src^="data:image/png"]')).toBeVisible();
   await expect(page.getByRole("banner").getByText("ACME BTP")).toBeVisible();
-  await expect(page.getByText("Réalisé avec Frisk DU")).toBeVisible();
+  await expect(page.getByText("Réalisé avec Frisk Plateforme")).toBeVisible();
   await verifierAccessibilite(page);
 });
 

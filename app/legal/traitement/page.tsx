@@ -11,7 +11,7 @@ export default function AccordTraitement() {
       <p className="mt-2">
         Accord conclu en application de l&apos;article 28 du RGPD entre le client, <strong>responsable de traitement</strong>, et{" "}
         <Champ valeur={editeur.raisonSociale} nom="raison sociale" />, <strong>sous-traitant</strong>, pour les données personnelles
-        saisies dans Frisk DU. Il fait partie des conditions générales d&apos;utilisation et s&apos;applique pendant toute la durée du contrat.
+        saisies dans Frisk Plateforme. Il fait partie des conditions générales d&apos;utilisation et s&apos;applique pendant toute la durée du contrat.
       </p>
 
       <Article numero="1" titre="Description du traitement">

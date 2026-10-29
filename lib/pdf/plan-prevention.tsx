@@ -76,7 +76,7 @@ export function PlanPrevention({ donnees, intervention: i, aujourdhui, marque }:
   const risques = i.risques.filter((r) => r.phase || r.risque || r.mesures);
   const suivi = [...i.suivi].filter((x) => x.date || x.observations).sort((a, b) => a.date.localeCompare(b.date));
   return (
-    <Document title={`Plan de prévention - ${i.entreprise}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+    <Document title={`Plan de prévention - ${i.entreprise}`} author={donnees.entreprise} creator="Frisk Plateforme" producer="Frisk Plateforme" language="fr">
       <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>

@@ -1,6 +1,6 @@
 // Identité visuelle de l'entreprise cliente : son logo et sa couleur remplacent ceux de Frisk
-// dans l'espace, le formulaire de signalement et les documents PDF. Frisk DU reste mentionné
-// discrètement (« Réalisé avec Frisk DU »).
+// dans l'espace, le formulaire de signalement et les documents PDF. Frisk Plateforme reste mentionnée
+// discrètement (« Réalisé avec Frisk Plateforme »).
 // La couleur choisie est ajustée pour rester lisible (contraste AA des règles d'accessibilité).
 
 import type { Identite } from "./types";

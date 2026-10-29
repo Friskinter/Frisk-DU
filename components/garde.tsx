@@ -74,7 +74,7 @@ export function Garde({ children }: { children: ReactNode }) {
     case "suspendu":
       return (
         <Message titre="Accès suspendu">
-          <p>L&apos;accès de votre entreprise à Frisk DU est suspendu. Contactez Frisk pour le réactiver.</p>
+          <p>L&apos;accès de votre entreprise à Frisk Plateforme est suspendu. Contactez Frisk pour le réactiver.</p>
           <button type="button" onClick={deconnecter} className="text-bronze-fonce underline">Se déconnecter</button>
         </Message>
       );
@@ -83,11 +83,11 @@ export function Garde({ children }: { children: ReactNode }) {
         <Message titre="Mise à jour en cours">
           {session.admin ? (
             <p>
-              La base de données doit être mise à jour pour cette version de Frisk DU : exécutez dans Supabase
+              La base de données doit être mise à jour pour cette version de Frisk Plateforme : exécutez dans Supabase
               (SQL Editor) les migrations de <code>supabase/migrations</code> qui n&apos;ont pas encore été appliquées.
             </p>
           ) : (
-            <p>Frisk DU est en cours de mise à jour. Réessayez dans quelques minutes ; contactez Frisk si cela persiste.</p>
+            <p>Frisk Plateforme est en cours de mise à jour. Réessayez dans quelques minutes ; contactez Frisk si cela persiste.</p>
           )}
           <button type="button" onClick={() => window.location.reload()} className={classeBouton}>Réessayer</button>
         </Message>
@@ -137,7 +137,7 @@ function AcceptationConditions() {
   const [erreur, setErreur] = useState(false);
   return (
     <Message titre="Conditions d'utilisation">
-      <p>Avant d&apos;utiliser Frisk DU, prenez connaissance des documents suivants (ils s&apos;ouvrent dans un nouvel onglet) :</p>
+      <p>Avant d&apos;utiliser Frisk Plateforme, prenez connaissance des documents suivants (ils s&apos;ouvrent dans un nouvel onglet) :</p>
       <ul className="space-y-1 text-left">
         {documentsLegaux.map((d) => (
           <li key={d.href}>

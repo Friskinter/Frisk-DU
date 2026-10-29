@@ -1,4 +1,4 @@
-// Avis des clients sur Frisk DU, déposés depuis « Mon compte » et publiés sur le site vitrine
+// Avis des clients sur Frisk Plateforme, déposés depuis « Mon compte » et publiés sur le site vitrine
 // après relecture par Frisk (migration 018). Les limites reprennent celles de la base.
 
 export type StatutAvis = "en_attente" | "publie" | "refuse";

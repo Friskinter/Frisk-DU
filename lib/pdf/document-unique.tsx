@@ -195,8 +195,8 @@ export function DocumentUnique({
     <Document
       title={`Document unique - ${donnees.entreprise} - ${version}`}
       author={fiche?.responsable || donnees.entreprise}
-      creator="Frisk DU"
-      producer="Frisk DU"
+      creator="Frisk Plateforme"
+      producer="Frisk Plateforme"
       language="fr"
     >
       <CouleurTitres.Provider value={marque.titre}>

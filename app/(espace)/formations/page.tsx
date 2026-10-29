@@ -72,7 +72,7 @@ export default function PageFormations() {
     <div>
       <EnTetePage
         titre="Formations et habilitations"
-        description="CACES, SST, habilitation électrique… Frisk DU calcule les dates d'expiration, vous prévient avant l'échéance et repère les salariés à qui il manque une formation exigée pour leur poste."
+        description="CACES, SST, habilitation électrique… Frisk Plateforme calcule les dates d'expiration, vous prévient avant l'échéance et repère les salariés à qui il manque une formation exigée pour leur poste."
         actions={
           <>
             <button type="button" className={classeBoutonSecondaire} onClick={() => telechargerEtatFormations(donnees)}>
@@ -374,7 +374,7 @@ function Postes({ donnees, modifiable }: { donnees: Donnees; modifiable: boolean
   return (
     <div>
       <p className="mb-4 max-w-3xl text-sm text-ardoise">
-        Indiquez pour chaque poste les formations indispensables. Frisk DU signale alors les salariés à qui il en manque une, ou
+        Indiquez pour chaque poste les formations indispensables. Frisk Plateforme signale alors les salariés à qui il en manque une, ou
         dont la formation a expiré. Les postes sont ceux saisis dans la fiche de chaque salarié.
       </p>
       {postes.length === 0 && (

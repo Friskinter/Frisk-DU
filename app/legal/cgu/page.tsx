@@ -9,7 +9,7 @@ export default function Cgu() {
     <>
       <h1 className="font-serif text-3xl text-encre">Conditions générales d&apos;utilisation</h1>
       <p className="mt-2">
-        Les présentes conditions encadrent l&apos;utilisation du service Frisk DU, édité par{" "}
+        Les présentes conditions encadrent l&apos;utilisation du service Frisk Plateforme, édité par{" "}
         <Champ valeur={editeur.raisonSociale} nom="raison sociale" /> (« Frisk »). Le prix et la durée de l&apos;abonnement sont fixés par les{" "}
         conditions générales de vente (abonnement en ligne) ou par le contrat signé avec Frisk ; en cas de contradiction, le contrat
         prévaut.
@@ -28,12 +28,12 @@ export default function Cgu() {
 
       <Article numero="2" titre="Objet du service">
         <p>
-          Frisk DU est un outil en ligne d&apos;aide à l&apos;évaluation et à la prévention des risques professionnels : document unique
+          Frisk Plateforme est un outil en ligne d&apos;aide à l&apos;évaluation et à la prévention des risques professionnels : document unique
           d&apos;évaluation des risques (DUERP), plan d&apos;actions, suivi des accidents, des formations, des vérifications périodiques, des
           produits chimiques, de la pénibilité et des équipements de protection individuelle.
         </p>
         <p>
-          <strong>Frisk DU est un outil : il ne se substitue pas à l&apos;évaluation des risques que l&apos;employeur doit réaliser.</strong>{" "}
+          <strong>Frisk Plateforme est un outil : il ne se substitue pas à l&apos;évaluation des risques que l&apos;employeur doit réaliser.</strong>{" "}
           L&apos;employeur reste seul responsable du contenu de son document unique, des cotations retenues et des mesures de prévention
           (articles L4121-1 et suivants du Code du travail). Les grilles, bibliothèques de risques, périodicités et rappels
           réglementaires proposés sont indicatifs ; il appartient au client de vérifier qu&apos;ils correspondent à sa situation et aux
@@ -56,8 +56,8 @@ export default function Cgu() {
           elements={[
             "Saisir des informations exactes et licites, et ne les utiliser que pour la prévention des risques professionnels et la gestion de la santé et de la sécurité au travail.",
             "Ne saisir que les données personnelles nécessaires, en particulier pour les données de santé (lésions, suivi médical) : jamais de diagnostic détaillé ni d'information médicale sans lien avec la prévention.",
-            "Informer ses salariés du traitement de leurs données dans Frisk DU, en tant que responsable de ce traitement.",
-            "Conserver lui-même les versions de son document unique pendant la durée légale de 40 ans (article R4121-4 du Code du travail), Frisk DU permettant leur export en PDF.",
+            "Informer ses salariés du traitement de leurs données dans Frisk Plateforme, en tant que responsable de ce traitement.",
+            "Conserver lui-même les versions de son document unique pendant la durée légale de 40 ans (article R4121-4 du Code du travail), Frisk Plateforme permettant leur export en PDF.",
             "Ne pas tenter d'accéder aux données d'autres clients, de contourner les mesures de sécurité ou de perturber le service.",
           ]}
         />

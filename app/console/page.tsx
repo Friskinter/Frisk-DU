@@ -241,7 +241,7 @@ export default function Console() {
           <div className="flex items-center gap-3">
             <Image src="/logo-frisk.png" alt="" width={36} height={36} className="h-9 w-9 rounded-sm" />
             <p className="font-serif text-lg tracking-[0.2em] text-marbre">
-              FRISK <span className="text-bronze-clair">DU</span>
+              FRISK <span className="text-bronze-clair">PLATEFORME</span>
               <span className="ml-3 text-xs tracking-[0.25em] text-gris">CONSOLE</span>
             </p>
           </div>
@@ -778,7 +778,7 @@ function BlocIdentifiants({ identifiants }: { identifiants: Identifiants }) {
   const [copie, setCopie] = useState(false);
   const texte = `Bonjour,
 
-Votre accès à Frisk DU est prêt.
+Votre accès à Frisk Plateforme est prêt.
 
 Adresse : ${window.location.origin}/connexion
 E-mail : ${identifiants.email}

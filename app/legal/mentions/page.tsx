@@ -10,7 +10,7 @@ export default function MentionsLegales() {
       <h1 className="font-serif text-3xl text-encre">Mentions légales</h1>
       <p className="mt-2">
         Informations prévues par l&apos;article 6 de la loi n° 2004-575 du 21 juin 2004 pour la confiance dans l&apos;économie
-        numérique, concernant le service en ligne Frisk DU.
+        numérique, concernant le service en ligne Frisk Plateforme.
       </p>
 
       <Article titre="Éditeur">
@@ -44,7 +44,7 @@ export default function MentionsLegales() {
 
       <Article titre="Propriété intellectuelle">
         <p>
-          Le service Frisk DU, son code, ses textes, ses grilles de cotation, ses référentiels et ses éléments graphiques sont la
+          Le service Frisk Plateforme, son code, ses textes, ses grilles de cotation, ses référentiels et ses éléments graphiques sont la
           propriété de {editeur.nomCommercial}. Toute reproduction ou réutilisation sans autorisation écrite est interdite. Les données
           saisies par les clients restent leur propriété.
         </p>
@@ -53,7 +53,7 @@ export default function MentionsLegales() {
       <Article titre="Données personnelles et cookies">
         <p>
           Le traitement des données personnelles est décrit dans la <a href="/legal/confidentialite" className="text-bronze-fonce underline">politique de confidentialité</a>.
-          Frisk DU n&apos;utilise que des cookies strictement nécessaires à la connexion ; aucun cookie de mesure d&apos;audience ou
+          Frisk Plateforme n&apos;utilise que des cookies strictement nécessaires à la connexion ; aucun cookie de mesure d&apos;audience ou
           publicitaire n&apos;est déposé.
         </p>
       </Article>

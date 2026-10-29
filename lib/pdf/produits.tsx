@@ -53,7 +53,7 @@ export function InventaireProduits({ donnees, aujourdhui, marque }: { donnees: D
   const produits = donnees.produits.filter((p) => p.actif).sort((a, b) => a.unite.localeCompare(b.unite, "fr") || a.nom.localeCompare(b.nom, "fr"));
   const nom = (id: string) => donnees.salaries.find((x) => x.id === id)?.nom ?? "";
   return (
-    <Document title={`Inventaire des produits chimiques - ${donnees.entreprise}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+    <Document title={`Inventaire des produits chimiques - ${donnees.entreprise}`} author={donnees.entreprise} creator="Frisk Plateforme" producer="Frisk Plateforme" language="fr">
       <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" orientation="landscape" style={s.page}>
         <EnTete
@@ -107,7 +107,7 @@ export function NoticesDePoste({ donnees, aujourdhui, marque }: { donnees: Donne
   const produits = donnees.produits.filter((p) => p.actif);
   const unites = [...new Set(produits.map((p) => p.unite || "Unité non précisée"))].sort((a, b) => a.localeCompare(b, "fr"));
   return (
-    <Document title={`Notices de poste - ${donnees.entreprise}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+    <Document title={`Notices de poste - ${donnees.entreprise}`} author={donnees.entreprise} creator="Frisk Plateforme" producer="Frisk Plateforme" language="fr">
       <CouleurTitres.Provider value={marque.titre}>
       {unites.map((unite) => (
         <Page key={unite} size="A4" style={s.page}>

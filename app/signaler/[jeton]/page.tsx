@@ -160,7 +160,7 @@ function Signalement() {
               "entreprise" in etat && <p className="truncate text-sm text-marbre">{etat.entreprise}</p>
             ) : (
               <>
-                <p className="font-serif text-sm tracking-[0.2em] text-marbre">FRISK <span className="text-bronze-clair">DU</span></p>
+                <p className="font-serif text-sm tracking-[0.2em] text-marbre">FRISK <span className="text-bronze-clair">PLATEFORME</span></p>
                 {"entreprise" in etat && <p className="truncate text-xs text-pierre/80">{etat.entreprise}</p>}
               </>
             )}
@@ -337,7 +337,7 @@ function Signalement() {
         {identite?.logo && (
           <p className="mt-8 flex items-center justify-center gap-1.5 text-[11px] text-gris">
             <Image src="/logo-frisk.png" alt="" width={14} height={14} className="h-3.5 w-3.5 rounded-[2px]" />
-            Réalisé avec Frisk DU
+            Réalisé avec Frisk Plateforme
           </p>
         )}
       </main>

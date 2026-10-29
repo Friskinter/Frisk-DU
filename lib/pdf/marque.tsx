@@ -1,4 +1,4 @@
-// Logo de l'entreprise et mention de Frisk DU, communs à tous les documents PDF.
+// Logo de l'entreprise et mention de Frisk Plateforme, communs à tous les documents PDF.
 
 import { Image, Text, View } from "@react-pdf/renderer";
 import { createContext } from "react";
@@ -15,7 +15,7 @@ export function LogoDocument({ marque, hauteur = 40, style }: { marque: Marque; 
   );
 }
 
-// « Réalisé avec Frisk DU », discret, en bas de chaque page ; pendant l'essai, mention « Version d'essai ».
+// « Réalisé avec Frisk Plateforme », discret, en bas de chaque page ; pendant l'essai, mention « Version d'essai ».
 export function MentionFrisk({ marque }: { marque: Marque }) {
   return (
     <>
@@ -30,7 +30,7 @@ export function MentionFrisk({ marque }: { marque: Marque }) {
         {/* eslint-disable-next-line jsx-a11y/alt-text -- composant PDF, sans attribut alt */}
         <Image src={marque.frisk} style={{ width: 7, height: 7, marginRight: 3 }} />
         <Text style={{ fontSize: 6, color: "#8a837a" }}>
-          {marque.essai ? "Version d'essai, sans valeur de document officiel · Réalisé avec Frisk DU" : "Réalisé avec Frisk DU"}
+          {marque.essai ? "Version d'essai, sans valeur de document officiel · Réalisé avec Frisk Plateforme" : "Réalisé avec Frisk Plateforme"}
         </Text>
       </View>
     </>

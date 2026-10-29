@@ -104,7 +104,7 @@ function Abonnement() {
 
   return (
     <div className="space-y-6">
-      <EnTetePage titre="Abonnement" description="Tout Frisk DU pour votre entreprise, sans engagement de durée." />
+      <EnTetePage titre="Abonnement" description="Tout Frisk Plateforme pour votre entreprise, sans engagement de durée." />
 
       {retourPaiement && (
         <div role="status" className="rounded-sm border border-[#0ca30c]/60 bg-[#0ca30c]/10 p-3 text-sm">
