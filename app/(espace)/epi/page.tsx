@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { FichesSalaries } from "@/components/fiches-epi";
 import { PaveSignature } from "@/components/signature";
@@ -83,7 +84,7 @@ export default function PageEpi() {
       {onglet === "stocks" && <Stocks donnees={donnees} catalogue={catalogue} saisie={saisie} />}
       {onglet === "saisie" && (
         <fieldset disabled={!saisie} className="min-w-0">
-          <Saisie donnees={donnees} />
+          <Saisie donnees={donnees} ouvrirCatalogue={catalogue ? () => setOnglet("catalogue") : undefined} />
         </fieldset>
       )}
       {onglet === "fiches" && <FichesSalaries donnees={donnees} peutSigner={saisie} />}
@@ -262,7 +263,7 @@ function Stocks({ donnees, catalogue, saisie }: { donnees: Donnees; catalogue: b
 
 // ---------- Saisie façon formulaire Power Apps ----------
 
-function Saisie({ donnees }: { donnees: Donnees }) {
+function Saisie({ donnees, ouvrirCatalogue }: { donnees: Donnees; ouvrirCatalogue?: () => void }) {
   const [type, setType] = useState<Mouvement["type"]>("sortie");
   const [salarieId, setSalarieId] = useState("");
   const [articleId, setArticleId] = useState(donnees.articles[0]?.id ?? "");
@@ -274,7 +275,8 @@ function Saisie({ donnees }: { donnees: Donnees }) {
   const [signature, setSignature] = useState<string | null>(null);
   const [pave, setPave] = useState(0); // change la clé du pavé pour l'effacer après chaque remise
 
-  const article = donnees.articles.find((a) => a.id === articleId);
+  // Article choisi, ou le premier du catalogue (celui qu'affiche la liste) s'il a été supprimé entre-temps.
+  const article = donnees.articles.find((a) => a.id === articleId) ?? donnees.articles[0];
   const salarie = donnees.salaries.find((s) => s.id === salarieId);
   // Taille proposée : celle du salarié pour cette catégorie d'EPI, sinon la première.
   const tailleProposee =
@@ -305,6 +307,27 @@ function Saisie({ donnees }: { donnees: Donnees }) {
     setSignature(null);
     setPave((n) => n + 1);
   };
+
+  // Sans article au catalogue, il n'y a rien à remettre ni à recevoir : on l'explique au lieu d'un
+  // formulaire aux listes vides dont le bouton ne ferait rien.
+  if (!donnees.articles.length) {
+    return (
+      <Carte className="max-w-2xl">
+        <h2 className="font-medium">Votre catalogue d&apos;équipements est vide</h2>
+        <p className="mt-2 text-sm text-ardoise">
+          Ajoutez d&apos;abord vos EPI (chaussures de sécurité, gants, casques…) et leurs tailles dans le catalogue. Ils apparaîtront
+          ensuite ici pour enregistrer les remises aux salariés et les réceptions de commandes.
+        </p>
+        {ouvrirCatalogue ? (
+          <button type="button" onClick={ouvrirCatalogue} className={`${classeBouton} mt-4`}>
+            Ouvrir le catalogue d&apos;articles
+          </button>
+        ) : (
+          <p className="mt-3 text-sm text-gris">Demandez à un responsable de votre entreprise de les ajouter.</p>
+        )}
+      </Carte>
+    );
+  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,36rem)_1fr]">
@@ -340,12 +363,18 @@ function Saisie({ donnees }: { donnees: Donnees }) {
                 ))}
               </select>
               {salarie && <span className="mt-1 block text-xs text-gris">Service : {salarie.service} · {salarie.poste}</span>}
+              {!donnees.salaries.length && (
+                <span className="mt-1 block text-xs text-[#b42318]">
+                  Aucun salarié enregistré : ajoutez-les dans{" "}
+                  <Link href="/reglages" className="underline">Salariés &amp; réglages</Link>.
+                </span>
+              )}
             </label>
           )}
 
           <label className="block text-sm">
             Article
-            <select value={articleId} onChange={(e) => { setArticleId(e.target.value); setTaille(""); }} className={`${classeChamp} mt-1`}>
+            <select value={article?.id ?? ""} onChange={(e) => { setArticleId(e.target.value); setTaille(""); }} className={`${classeChamp} mt-1`}>
               {donnees.articles.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.nom}

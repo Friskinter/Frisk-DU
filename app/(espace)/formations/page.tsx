@@ -427,7 +427,7 @@ function Postes({ donnees, modifiable }: { donnees: Donnees; modifiable: boolean
             setNouveau("");
           }}
         >
-          <input value={nouveau} onChange={(e) => setNouveau(e.target.value)} placeholder="Nouveau poste (ex. Cariste)" className={classeChamp} />
+          <input required value={nouveau} onChange={(e) => setNouveau(e.target.value)} placeholder="Nouveau poste (ex. Cariste)" className={classeChamp} />
           <button type="submit" className={classeBoutonSecondaire}>Ajouter</button>
         </form>
       )}
