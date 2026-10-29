@@ -181,6 +181,12 @@ function FicheProtocole({
   const aujourdhui = dateDuJour();
   const manquants = elementsManquants(p, donnees.signatures);
   const signe = estSigne(p, donnees.signatures);
+  // Dès la première signature, le contenu ne change plus sans nouvelles signatures.
+  const verrouille = !!(p.signatureAccueil || p.signatureTransporteur);
+  const deverrouiller = () => {
+    if (!confirm("Modifier le protocole ? Les signatures actuelles seront retirées : il devra être signé à nouveau par les deux parties.")) return;
+    maj(p.id, { signatureAccueil: undefined, signatureTransporteur: undefined });
+  };
   const renouvele = dejaRenouvele(p, donnees.protocoles);
 
   const changerDebut = (debut: string) => maj(p.id, p.permanent ? { debut } : { debut, fin: debut });
@@ -225,7 +231,21 @@ function FicheProtocole({
         </p>
       )}
 
+      {verrouille && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-pierre/70 bg-white p-3 text-sm">
+          <span className="text-ardoise">
+            Protocole {signe ? "signé" : "en cours de signature"} : son contenu est verrouillé pour rester conforme à ce qui a été signé.
+          </span>
+          {modifiable && (
+            <button type="button" className={classeBoutonSecondaire} onClick={deverrouiller}>
+              Modifier le protocole
+            </button>
+          )}
+        </div>
+      )}
+
       <fieldset disabled={!modifiable} className="min-w-0 space-y-3">
+        <fieldset disabled={verrouille} className="min-w-0 space-y-3">
         <div className="grid gap-3 lg:grid-cols-2">
           <Carte titre="1. Transporteur">
             <div className="grid gap-3 sm:grid-cols-2">
@@ -314,10 +334,12 @@ function FicheProtocole({
           </div>
         </Carte>
 
+        </fieldset>
+
         <Carte titre="5. Signatures">
           <p className="mb-3 text-xs text-gris">
             {signe
-              ? "Protocole signé. Si le lieu, les véhicules ou les marchandises changent, créez un nouveau protocole et faites-le signer."
+              ? "Protocole signé. Si le lieu, les véhicules ou les marchandises changent, cliquez sur « Modifier le protocole » : il devra être signé à nouveau."
               : "Le protocole est établi lors d'un échange entre vous et le transporteur, puis signé par les deux. Une signature ne peut plus être modifiée."}
           </p>
           <div className="grid gap-4 lg:grid-cols-2">

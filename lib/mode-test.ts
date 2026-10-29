@@ -6,5 +6,6 @@ export const MODE_TEST = process.env.NEXT_PUBLIC_FRISK_E2E === "1";
 // Rôle simulé, choisi par le test avant le chargement de la page.
 export const CLE_ROLE_TEST = "frisk-e2e-role";
 
-// Données de remplacement (JSON), déposées par le test : sert aux essais avec un gros volume.
-export const CLE_DONNEES_TEST = "frisk-e2e-donnees";
+// Données de remplacement (JSON), déposées par le test dans une variable globale (le stockage local
+// du navigateur est limité à 5 Mo) : sert aux essais avec un gros volume.
+export const CLE_DONNEES_TEST = "__friskDonneesTest";

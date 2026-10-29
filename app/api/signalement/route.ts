@@ -10,6 +10,7 @@ import type { Donnees } from "@/lib/types";
 // POST : enregistre le signalement et ses photos, puis prévient les responsables par e-mail.
 
 const BUCKET = "attestations";
+const LIMITE_PAR_HEURE = 30; // identique à la fonction signaler_evenement (migration 013)
 const refus = (erreur: string, status: number) => Response.json({ erreur }, { status });
 
 async function entrepriseDuJeton(jeton: unknown) {
@@ -20,7 +21,8 @@ async function entrepriseDuJeton(jeton: unknown) {
   const { data: espace } = await admin.from("espaces").select("contenu").eq("entreprise_id", data.id).maybeSingle();
   const contenu = espace?.contenu as Donnees | undefined;
   const unites = [...new Set([...(contenu?.unites ?? []), ...(contenu?.duerp ?? []).map((l) => l.unite)].filter(Boolean))];
-  return { admin, id: data.id as string, nom: data.nom as string, unites };
+  const evenements = new Set((contenu?.evenements ?? []).map((e) => e.id));
+  return { admin, id: data.id as string, nom: data.nom as string, unites, evenements };
 }
 
 export async function GET(requete: Request) {
@@ -46,7 +48,19 @@ export async function POST(requete: Request) {
   const lecture = lireFormulaire(Object.fromEntries([...donnees.entries()].filter(([, v]) => typeof v === "string")), aujourdhui);
   if (!lecture.ok) return refus(lecture.erreur, 400);
   const id = String(donnees.get("id") ?? "");
-  if (!/^[0-9a-f-]{36}$/.test(id)) return refus("Envoi incomplet. Réessayez.", 400);
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)) return refus("Envoi incomplet. Réessayez.", 400);
+  // Envoi répété (double appui, réseau instable) : déjà enregistré, rien à déposer ni à prévenir.
+  if (entreprise.evenements.has(id)) return Response.json({ ok: true });
+
+  const { admin } = entreprise;
+  // Limite vérifiée avant tout dépôt de photo (la base la contrôle aussi à l'enregistrement).
+  const { count } = await admin
+    .from("journal")
+    .select("id", { count: "exact", head: true })
+    .eq("entreprise_id", entreprise.id)
+    .eq("auteur", "Signalement terrain")
+    .gt("created_at", new Date(Date.now() - 3600_000).toISOString());
+  if ((count ?? 0) >= LIMITE_PAR_HEURE) return refus("Trop de signalements en une heure. Prévenez directement votre responsable.", 429);
 
   // Photos : nombre, taille et type réel vérifiés avant tout dépôt.
   const fichiers = donnees.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
@@ -60,7 +74,6 @@ export async function POST(requete: Request) {
     images.push({ octets, type });
   }
 
-  const { admin } = entreprise;
   const photos: { chemin: string; nom: string }[] = [];
   for (const [n, image] of images.entries()) {
     const nom = `photo-${n + 1}.${extensions[image.type]}`;

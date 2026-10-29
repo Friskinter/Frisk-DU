@@ -3,7 +3,8 @@ import { CLE_DONNEES_TEST } from "../lib/mode-test";
 import { expect, ouvrir, pages, test } from "./outils";
 import { donneesVolumineuses } from "./volume";
 
-// Gros client : 500 risques, 200 salariés, 8 000 mouvements d'EPI… Chaque page doit s'afficher
+// Gros client : 500 risques, 200 salariés, 8 000 mouvements d'EPI, 60 causeries signées (900 signatures),
+// 120 visites, 150 accueils… Chaque page doit s'afficher
 // et réagir à la saisie sans attente perceptible.
 const donnees = JSON.stringify(donneesVolumineuses(dateDuJour()));
 
@@ -11,7 +12,7 @@ const donnees = JSON.stringify(donneesVolumineuses(dateDuJour()));
 test.describe.configure({ mode: "serial" });
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(([cle, valeur]) => localStorage.setItem(cle, valeur), [CLE_DONNEES_TEST, donnees]);
+  await page.addInitScript(([cle, valeur]) => ((window as unknown as Record<string, string>)[cle] = valeur), [CLE_DONNEES_TEST, donnees]);
 });
 
 for (const { chemin } of pages.filter((p) => !p.chemin.startsWith("/legal") && !p.chemin.startsWith("/signaler") && p.chemin !== "/connexion")) {

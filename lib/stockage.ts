@@ -107,7 +107,7 @@ async function charger() {
   client = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
   if (MODE_TEST) {
     const role = (localStorage.getItem(CLE_ROLE_TEST) ?? "responsable") as Role;
-    const donnees = localStorage.getItem(CLE_DONNEES_TEST);
+    const donnees = (window as unknown as Record<string, string | undefined>)[CLE_DONNEES_TEST];
     publier({
       statut: "pret", email: "test@frisk.fr", admin: false, role, entrepriseId: "00000000-0000-0000-0000-000000000000",
       donnees: donnees ? normaliser(JSON.parse(donnees)) : donneesDemo(dateDuJour()),
