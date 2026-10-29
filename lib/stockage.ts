@@ -8,7 +8,8 @@
 import { useSyncExternalStore } from "react";
 import { normaliser } from "./donnees";
 import { VERSION_CONDITIONS } from "./legal";
-import { CLE_DONNEES_TEST, CLE_ROLE_TEST, MODE_TEST } from "./mode-test";
+import { accesEntreprise, operationPermiseEssai, type Acces, type Periodicite, type StatutAbonnement } from "./abonnement";
+import { CLE_ABONNEMENT_TEST, CLE_DONNEES_TEST, CLE_ROLE_TEST, MODE_TEST } from "./mode-test";
 import { dateDuJour } from "./calculs";
 import { donneesDemo, donneesVides } from "./demo";
 import { rechargerVers } from "./navigation";
@@ -37,11 +38,26 @@ export type Statut =
 
 export type Enregistrement = "enregistre" | "en-cours" | "erreur" | "refuse";
 
+export type Abonnement = {
+  statut: StatutAbonnement;
+  acces: Acces;
+  essaiFin: string | null;
+  offre: string | null;
+  periodicite: Periodicite | null;
+  fin: string | null; // fin de la période payée
+  stripe: boolean; // abonnement payé en ligne (gérable depuis le portail Stripe)
+};
+
+const abonnementComplet: Abonnement = { statut: "actif", acces: "complet", essaiFin: null, offre: null, periodicite: null, fin: null, stripe: false };
+
 export type Session = {
   statut: Statut;
   email: string;
   admin: boolean;
+  // Rôle appliqué : « lecteur » quand l'espace est en lecture seule (essai terminé, abonnement arrêté).
   role: Role;
+  roleCompte: Role; // rôle de l'utilisateur dans l'entreprise, pour l'affichage
+  abonnement: Abonnement;
   entrepriseId: string;
   enregistrement: Enregistrement;
   donnees: Donnees | null;
@@ -55,6 +71,8 @@ let session: Session = {
   email: "",
   admin: false,
   role: "lecteur",
+  roleCompte: "lecteur",
+  abonnement: abonnementComplet,
   entrepriseId: "",
   enregistrement: "enregistre",
   donnees: null,
@@ -91,6 +109,11 @@ export function useSession(): Session {
   return useSyncExternalStore(sabonner, () => session, () => sessionServeur);
 }
 
+// Accès de l'entreprise ouverte (hors composants React : génération des PDF).
+export function accesActuel() {
+  return session.abonnement.acces;
+}
+
 export function useDonnees(): Donnees | null {
   const s = useSession();
   return s.statut === "pret" ? s.donnees : null;
@@ -106,10 +129,13 @@ async function charger() {
   // randomUUID n'existe qu'en connexion sécurisée (https ou localhost).
   client = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
   if (MODE_TEST) {
-    const role = (localStorage.getItem(CLE_ROLE_TEST) ?? "responsable") as Role;
+    const roleCompte = (localStorage.getItem(CLE_ROLE_TEST) ?? "responsable") as Role;
     const donnees = (window as unknown as Record<string, string | undefined>)[CLE_DONNEES_TEST];
+    const essai = JSON.parse(localStorage.getItem(CLE_ABONNEMENT_TEST) ?? "null") as Pick<Abonnement, "statut" | "essaiFin"> | null;
+    const abonnement = essai ? { ...abonnementComplet, ...essai, acces: accesEntreprise({ abonnement: essai.statut, essaiFin: essai.essaiFin }) } : abonnementComplet;
     publier({
-      statut: "pret", email: "test@frisk.fr", admin: false, role, entrepriseId: "00000000-0000-0000-0000-000000000000",
+      statut: "pret", email: "test@frisk.fr", admin: false, role: abonnement.acces === "lecture" ? "lecteur" : roleCompte, roleCompte, abonnement,
+      entrepriseId: "00000000-0000-0000-0000-000000000000",
       donnees: donnees ? normaliser(JSON.parse(donnees)) : donneesDemo(dateDuJour()),
     });
     return;
@@ -161,6 +187,15 @@ async function charger() {
   const role: Role = estAdmin ? "admin" : autorisees.find((a) => a.entreprise_id === entrepriseId)?.role ?? "lecteur";
 
   if (!entrepriseId) {
+    // Inscription libre : l'entreprise saisie à l'inscription est créée, en essai gratuit.
+    const inscription = user.user_metadata?.inscription as { entreprise?: string; effectif?: string } | undefined;
+    if (!estAdmin && inscription?.entreprise) {
+      const { error: erreurCreation } = await supabase.rpc("creer_mon_espace", { p_nom: inscription.entreprise, p_effectif: inscription.effectif ?? "" });
+      if (!erreurCreation) {
+        rechargerVers("/");
+        return;
+      }
+    }
     publier({ statut: "aucun-espace", email, admin: estAdmin });
     return;
   }
@@ -174,7 +209,7 @@ async function charger() {
 
   const { data: entreprise } = await supabase
     .from("entreprises")
-    .select("nom, actif, groupe_id, groupes(nom)")
+    .select("nom, actif, groupe_id, groupes(nom), abonnement, essai_fin, offre, periodicite, abonnement_fin, stripe_abonnement")
     .eq("id", entrepriseId)
     .maybeSingle();
   if (!entreprise || (!entreprise.actif && !estAdmin)) {
@@ -204,11 +239,24 @@ async function charger() {
     return;
   }
 
+  const statutAbonnement = (entreprise.abonnement as StatutAbonnement | null) ?? "actif";
+  const abonnement: Abonnement = {
+    statut: statutAbonnement,
+    acces: estAdmin ? "complet" : accesEntreprise({ abonnement: statutAbonnement, essaiFin: entreprise.essai_fin as string | null }),
+    essaiFin: (entreprise.essai_fin as string | null) ?? null,
+    offre: (entreprise.offre as string | null) ?? null,
+    periodicite: (entreprise.periodicite as Periodicite | null) ?? null,
+    fin: (entreprise.abonnement_fin as string | null) ?? null,
+    stripe: !!entreprise.stripe_abonnement,
+  };
+
   publier({
     statut: "pret",
     email,
     admin: estAdmin,
-    role,
+    role: abonnement.acces === "lecture" ? "lecteur" : role,
+    roleCompte: role,
+    abonnement,
     entrepriseId,
     groupe,
     espaces,
@@ -316,7 +364,8 @@ export function modifier(transformation: (d: Donnees) => Donnees) {
   const suivant = transformation(session.donnees);
   const ops = calculerOperations(session.donnees, suivant);
   if (!ops.length) return;
-  if (!ops.every((op) => operationAutorisee(session.role, op))) {
+  const essai = session.abonnement.acces === "essai";
+  if (!ops.every((op) => operationAutorisee(session.role, op) && (!essai || operationPermiseEssai(op)))) {
     publier({ enregistrement: "refuse" });
     return;
   }

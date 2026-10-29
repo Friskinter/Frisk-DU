@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { Logo } from "@/components/identite-visuelle";
+import { moduleAbonne } from "@/lib/abonnement";
 import { calculerAlertes } from "@/lib/alertes";
 import { variablesCouleur, variablesTheme } from "@/lib/identite";
 import { documentsLegaux } from "@/lib/legal";
@@ -29,6 +30,7 @@ const liens = [
   { href: "/rapport", label: "Rapport annuel", icone: "▥" },
   { href: "/journal", label: "Journal", icone: "◷" },
   { href: "/reglages", label: "Salariés & réglages", icone: "⚙" },
+  { href: "/abonnement", label: "Abonnement", icone: "€" },
 ];
 
 // Couleur de l'entreprise : remplace les couleurs de Frisk dans toute la page (voir app/globals.css).
@@ -53,6 +55,7 @@ export function Navigation() {
   const session = useSession();
   const enregistrement = etatsEnregistrement[session.enregistrement];
   const identite = session.donnees?.identite;
+  const essai = session.abonnement.acces === "essai";
   useCouleurEntreprise(identite?.couleur);
   const urgentes = session.donnees
     ? calculerAlertes(session.donnees, dateDuJour()).filter((a) => a.gravite === "critique").length
@@ -103,7 +106,7 @@ export function Navigation() {
             Vue d&apos;ensemble
           </Link>
         )}
-        {liens.map((lien) => {
+        {liens.filter((l) => l.href !== "/abonnement" || session.roleCompte === "responsable" || session.admin).map((lien) => {
           const actif = chemin === lien.href;
           return (
             <Link
@@ -117,6 +120,9 @@ export function Navigation() {
                 {lien.icone}
               </span>
               {lien.label}
+              {essai && moduleAbonne(lien.href) && (
+                <span className="ml-auto text-xs" title="Inclus dans l'abonnement" aria-label="inclus dans l'abonnement">🔒</span>
+              )}
               {lien.href === "/" && urgentes > 0 && (
                 <span
                   className="ml-auto rounded-full bg-[#d03b3b] px-1.5 text-xs font-semibold text-white"
@@ -153,7 +159,7 @@ export function Navigation() {
               session.admin ? "bg-bronze text-encre" : "bg-white/10 text-pierre"
             }`}
           >
-            {session.admin ? "Administrateur Frisk" : session.role !== "admin" ? libellesRoles[session.role].libelle : ""}
+            {session.admin ? "Administrateur Frisk" : session.roleCompte !== "admin" ? libellesRoles[session.roleCompte].libelle : ""}
           </span>
           )}
         </div>
@@ -167,7 +173,7 @@ export function Navigation() {
           </p>
         )}
         <p className="hidden flex-wrap gap-x-2 text-[10px] text-pierre/70 lg:mt-3 lg:flex">
-          {documentsLegaux.slice(0, 3).map((d) => (
+          {documentsLegaux.filter((d) => ["/legal/mentions", "/legal/cgu", "/legal/confidentialite"].includes(d.href)).map((d) => (
             <Link key={d.href} href={d.href} className="hover:text-pierre hover:underline">{d.court}</Link>
           ))}
         </p>

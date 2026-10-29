@@ -32,7 +32,7 @@ describe("documents légaux", () => {
 
   it("liste des informations manquantes et liens", () => {
     expect(champsManquants().length).toBeGreaterThan(0);
-    expect(documentsLegaux.map((d) => d.href)).toEqual(["/legal/mentions", "/legal/cgu", "/legal/confidentialite", "/legal/traitement"]);
+    expect(documentsLegaux.map((d) => d.href)).toEqual(["/legal/mentions", "/legal/cgu", "/legal/cgv", "/legal/confidentialite", "/legal/traitement"]);
     expect(VERSION_CONDITIONS).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 });

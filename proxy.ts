@@ -6,7 +6,9 @@ import { supabaseClePublique, supabaseUrl } from "@/lib/supabase/config";
 // /api/alertes est appelée par le planificateur, sans session : elle vérifie son propre secret.
 // Les pages /legal/ (mentions légales, CGU, confidentialité) sont lisibles sans compte.
 // /signaler/ et /api/signalement : formulaire de signalement des salariés, protégé par le jeton du lien.
-const pagesPubliques = ["/connexion", "/auth/", "/api/alertes", "/legal/", "/signaler/", "/api/signalement"];
+// /inscription : création d'un compte d'essai. /api/stripe/webhook : notifications de Stripe, signées.
+// /api/erreurs : erreurs rencontrées dans le navigateur, y compris avant la connexion.
+const pagesPubliques = ["/connexion", "/inscription", "/auth/", "/api/alertes", "/legal/", "/signaler/", "/api/signalement", "/api/stripe/webhook", "/api/erreurs"];
 
 // Rafraîchit la session Supabase et renvoie vers la connexion les visiteurs non connectés.
 export async function proxy(requete: NextRequest) {

@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
+import { BandeauAbonnement, Vitrine } from "@/components/abonnement";
 import { CodeDoubleAuth } from "@/components/code-double-auth";
 import { classeBouton } from "@/components/ui";
+import { moduleAbonne } from "@/lib/abonnement";
 import { rechargerVers } from "@/lib/navigation";
 import { documentsLegaux } from "@/lib/legal";
 import { accepterConditions, deconnecter, enregistrementEnAttente, useSession } from "@/lib/stockage";
@@ -22,6 +24,7 @@ function Message({ titre, children }: { titre: string; children: ReactNode }) {
 export function Garde({ children }: { children: ReactNode }) {
   const session = useSession();
   const router = useRouter();
+  const chemin = usePathname();
 
   useEffect(() => {
     if (session.statut === "mot-de-passe-provisoire") router.replace("/mot-de-passe");
@@ -59,7 +62,10 @@ export function Garde({ children }: { children: ReactNode }) {
             </>
           ) : (
             <>
-              <p>Votre compte n&apos;est rattaché à aucune entreprise. Contactez Frisk pour activer votre accès.</p>
+              <p>
+                Votre compte n&apos;est rattaché à aucune entreprise. Si vous venez de vous inscrire, rechargez la page ; sinon,
+                contactez Frisk pour activer votre accès.
+              </p>
               <button type="button" onClick={deconnecter} className="text-bronze-fonce underline">Se déconnecter</button>
             </>
           )}
@@ -93,10 +99,13 @@ export function Garde({ children }: { children: ReactNode }) {
           <button type="button" onClick={() => window.location.reload()} className={classeBouton}>Réessayer</button>
         </Message>
       );
-    case "pret":
+    case "pret": {
+      // Pendant l'essai, les modules réservés aux abonnés sont présentés en aperçu.
+      const vitrine = session.abonnement.acces === "essai" ? moduleAbonne(chemin) : undefined;
       return (
         <>
-          {session.role === "lecteur" && (
+          <BandeauAbonnement />
+          {session.role === "lecteur" && session.abonnement.acces !== "lecture" && (
             <div className="mb-4 rounded-sm border border-pierre/70 bg-marbre/60 p-3 text-sm text-ardoise print:hidden">
               👁 Accès en <strong>lecture seule</strong> : vous pouvez consulter et télécharger les documents, sans les modifier.
             </div>
@@ -109,13 +118,16 @@ export function Garde({ children }: { children: ReactNode }) {
           )}
           {session.enregistrement === "refuse" && (
             <div className="mb-4 rounded-sm border border-[#d03b3b] bg-[#d03b3b]/10 p-3 text-sm print:hidden">
-              <strong>⚠ Modification refusée.</strong> Votre rôle ne permet pas cette modification ; elle n&apos;a pas été
-              enregistrée. Demandez à un responsable de votre entreprise si besoin.
+              <strong>⚠ Modification refusée.</strong>{" "}
+              {session.abonnement.acces === "complet"
+                ? "Votre rôle ne permet pas cette modification ; elle n'a pas été enregistrée. Demandez à un responsable de votre entreprise si besoin."
+                : "Cette fonction est réservée aux abonnés ; la modification n'a pas été enregistrée."}
             </div>
           )}
-          {children}
+          {vitrine ? <Vitrine module={vitrine} /> : children}
         </>
       );
+    }
   }
 }
 

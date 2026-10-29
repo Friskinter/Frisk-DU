@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { CodeDoubleAuth } from "@/components/code-double-auth";
 import { EcranAuth } from "@/components/ecran-auth";
@@ -95,6 +96,12 @@ export default function Connexion() {
         >
           {oubli ? "Retour à la connexion" : "Mot de passe oublié ?"}
         </button>
+        {!oubli && (
+          <p className="border-t border-pierre/70 pt-4 text-center text-sm text-ardoise">
+            Pas encore de compte ?{" "}
+            <Link href="/inscription" className="font-medium text-bronze-fonce underline">Essai gratuit de 7 jours</Link>
+          </p>
+        )}
       </form>
     </EcranAuth>
   );

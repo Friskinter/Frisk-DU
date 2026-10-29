@@ -115,4 +115,11 @@ describe("PDF des versions figées", () => {
     ];
     for (const pdf of pdfs) expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
   }, 30_000);
+
+  it("document unique de l'essai gratuit, marqué « Version d'essai »", async () => {
+    const essai = marqueDocuments(undefined, `${process.cwd()}/public/logo-frisk.png`, true);
+    expect(essai.essai).toBe(true);
+    const pdf = await renderToBuffer(<DocumentUnique donnees={d} aujourdhui="2026-10-28" marque={essai} />);
+    expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
+  }, 30_000);
 });

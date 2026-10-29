@@ -10,8 +10,9 @@ export default function Cgu() {
       <h1 className="font-serif text-3xl text-encre">Conditions générales d&apos;utilisation</h1>
       <p className="mt-2">
         Les présentes conditions encadrent l&apos;utilisation du service Frisk DU, édité par{" "}
-        <Champ valeur={editeur.raisonSociale} nom="raison sociale" /> (« Frisk »). Elles complètent le contrat ou le devis signé par le
-        client, qui fixe notamment le prix et la durée de l&apos;abonnement ; en cas de contradiction, le contrat prévaut.
+        <Champ valeur={editeur.raisonSociale} nom="raison sociale" /> (« Frisk »). Le prix et la durée de l&apos;abonnement sont fixés par les{" "}
+        conditions générales de vente (abonnement en ligne) ou par le contrat signé avec Frisk ; en cas de contradiction, le contrat
+        prévaut.
       </p>
 
       <Article numero="1" titre="Définitions">
@@ -113,7 +114,7 @@ export default function Cgu() {
         <p>
           Frisk peut suspendre un accès en cas d&apos;usage contraire aux présentes conditions, de risque pour la sécurité du service ou
           de défaut de paiement, après mise en demeure restée sans effet pendant 15 jours (sauf urgence de sécurité). Les conditions
-          de résiliation de l&apos;abonnement sont fixées au contrat.
+          de résiliation de l&apos;abonnement sont fixées par les conditions générales de vente ou par le contrat.
         </p>
       </Article>
 
