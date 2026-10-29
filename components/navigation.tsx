@@ -3,7 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { Logo } from "@/components/identite-visuelle";
 import { calculerAlertes } from "@/lib/alertes";
+import { variablesCouleur } from "@/lib/identite";
 import { documentsLegaux } from "@/lib/legal";
 import { libellesRoles } from "@/lib/operations";
 import { dateDuJour } from "@/lib/calculs";
@@ -28,6 +31,18 @@ const liens = [
   { href: "/reglages", label: "Salariés & réglages", icone: "⚙" },
 ];
 
+const variables = ["--color-bronze", "--color-bronze-clair", "--color-bronze-fonce"];
+
+// Couleur de l'entreprise : remplace le bronze de Frisk dans toute la page (voir app/globals.css).
+function useCouleurEntreprise(couleur: string | undefined) {
+  useEffect(() => {
+    const style = document.documentElement.style;
+    const valeurs = variablesCouleur({ couleur });
+    variables.forEach((v) => (valeurs ? style.setProperty(v, valeurs[v]) : style.removeProperty(v)));
+    return () => variables.forEach((v) => style.removeProperty(v));
+  }, [couleur]);
+}
+
 const etatsEnregistrement: Record<Enregistrement, { texte: string; classe: string }> = {
   enregistre: { texte: "✓ Enregistré", classe: "text-pierre/70" },
   "en-cours": { texte: "Enregistrement…", classe: "text-bronze-clair" },
@@ -39,18 +54,28 @@ export function Navigation() {
   const chemin = usePathname();
   const session = useSession();
   const enregistrement = etatsEnregistrement[session.enregistrement];
+  const identite = session.donnees?.identite;
+  useCouleurEntreprise(identite?.couleur);
   const urgentes = session.donnees
     ? calculerAlertes(session.donnees, dateDuJour()).filter((a) => a.gravite === "critique").length
     : 0;
 
   return (
     <aside className="print:hidden border-b border-white/10 bg-encre text-pierre lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:shrink-0 lg:flex-col lg:border-r lg:border-b-0">
-      <div className="flex items-center gap-3 px-4 py-3 lg:px-5 lg:pt-6 lg:pb-5">
-        <Image src="/logo-frisk.png" alt="" width={36} height={36} className="h-9 w-9 rounded-sm" priority />
+      <div className={`flex gap-3 px-4 py-3 lg:px-5 lg:pt-6 lg:pb-5 ${identite?.logo ? "items-center lg:flex-col lg:items-start lg:gap-2" : "items-center"}`}>
+        {identite?.logo ? (
+          <Logo identite={identite} />
+        ) : (
+          <Image src="/logo-frisk.png" alt="" width={36} height={36} className="h-9 w-9 rounded-sm" priority />
+        )}
         <div className="min-w-0">
-          <p className="font-serif text-lg leading-none tracking-[0.2em] text-marbre">
-            FRISK <span className="text-bronze-clair">DU</span>
-          </p>
+          {identite?.logo ? (
+            <p className="sr-only">Frisk DU</p>
+          ) : (
+            <p className="font-serif text-lg leading-none tracking-[0.2em] text-marbre">
+              FRISK <span className="text-bronze-clair">DU</span>
+            </p>
+          )}
           {session.espaces.length > 1 ? (
             // Plusieurs établissements ou plusieurs clients : on passe de l'un à l'autre.
             <select
@@ -64,7 +89,7 @@ export function Navigation() {
               ))}
             </select>
           ) : (
-            <p className="mt-1 truncate text-xs text-pierre/70">{session.donnees?.entreprise ?? "…"}</p>
+            <p className={identite?.logo ? "truncate text-sm text-marbre lg:whitespace-normal" : "mt-1 truncate text-xs text-pierre/70"}>{session.donnees?.entreprise ?? "…"}</p>
           )}
         </div>
       </div>
@@ -137,6 +162,12 @@ export function Navigation() {
         <button type="button" onClick={deconnecter} className="text-pierre underline hover:text-marbre lg:mt-2">
           Se déconnecter
         </button>
+        {identite?.logo && (
+          <p className="hidden items-center gap-1.5 text-[10px] text-pierre/70 lg:mt-3 lg:flex">
+            <Image src="/logo-frisk.png" alt="" width={14} height={14} className="h-3.5 w-3.5 rounded-[2px]" />
+            Réalisé avec Frisk DU
+          </p>
+        )}
         <p className="hidden flex-wrap gap-x-2 text-[10px] text-pierre/70 lg:mt-3 lg:flex">
           {documentsLegaux.slice(0, 3).map((d) => (
             <Link key={d.href} href={d.href} className="hover:text-pierre hover:underline">{d.court}</Link>

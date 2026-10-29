@@ -1,9 +1,11 @@
 // Registre des accidents bénins (articles L441-4 et R441-3 du Code de la sécurité sociale), au format PDF.
 
-import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { formaterDate } from "@/lib/calculs";
 import { nomVictime } from "@/lib/evenements";
 import type { Donnees } from "@/lib/types";
+import type { Marque } from "@/lib/identite";
+import { LogoDocument, MentionFrisk } from "./marque";
 
 const c = { encre: "#0c0b0a", ardoise: "#3a3530", gris: "#8a837a", bronze: "#b08d57", marbre: "#ece6dc", pierre: "#d9cfc1", ivoire: "#f7f4ef" };
 
@@ -28,7 +30,7 @@ const colonnes = [
   { titre: "Signatures (soins, victime)", largeur: "14%" },
 ];
 
-export function RegistreBenins({ donnees, aujourdhui, logo }: { donnees: Donnees; aujourdhui: string; logo: string }) {
+export function RegistreBenins({ donnees, aujourdhui, marque }: { donnees: Donnees; aujourdhui: string; marque: Marque }) {
   const benins = donnees.evenements
     .filter((e) => e.declaration === "registre")
     .sort((a, b) => `${a.date} ${a.heure}`.localeCompare(`${b.date} ${b.heure}`));
@@ -38,14 +40,13 @@ export function RegistreBenins({ donnees, aujourdhui, logo }: { donnees: Donnees
       <Page size="A4" orientation="landscape" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View>
-            <Text style={{ fontSize: 8, letterSpacing: 2, color: c.bronze, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
+            <Text style={{ fontSize: 8, letterSpacing: 2, color: marque.accent, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
             <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4 }}>Registre des accidents bénins</Text>
             <Text style={{ fontSize: 8, color: c.ardoise, marginTop: 4, lineHeight: 1.35 }}>
               {[donnees.fiche?.siret && `SIRET ${donnees.fiche.siret}`, donnees.fiche?.adresse].filter(Boolean).join(" · ")}
             </Text>
           </View>
-          {/* eslint-disable-next-line jsx-a11y/alt-text -- composant PDF, sans attribut alt */}
-          <Image src={logo} style={{ width: 40, height: 40, marginLeft: 16 }} />
+          <LogoDocument marque={marque} style={{ marginLeft: 16 }} />
         </View>
 
         <Text style={{ fontSize: 7.5, color: c.gris, marginTop: 10, marginBottom: 10, lineHeight: 1.35 }}>
@@ -77,6 +78,7 @@ export function RegistreBenins({ donnees, aujourdhui, logo }: { donnees: Donnees
           <Text>{donnees.entreprise} · Registre des accidents bénins · édité le {formaterDate(aujourdhui)}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
         </View>
+        <MentionFrisk marque={marque} />
       </Page>
     </Document>
   );

@@ -8,6 +8,7 @@ const etat = vi.hoisted(() => ({
   depots: [] as string[],
   retraits: [] as string[],
   rpc: [] as unknown[],
+  identite: undefined as Record<string, string> | undefined,
 }));
 
 vi.mock("@/lib/supabase/serveur", () => ({
@@ -19,7 +20,7 @@ vi.mock("@/lib/supabase/serveur", () => ({
         gt: () => Promise.resolve({ count: etat.signalementsDerniereHeure }),
         maybeSingle: () =>
           Promise.resolve({
-            data: table === "entreprises" ? etat.entreprise : { contenu: { unites: ["Quai"], duerp: [], evenements: etat.evenements } },
+            data: table === "entreprises" ? etat.entreprise : { contenu: { unites: ["Quai"], duerp: [], evenements: etat.evenements, identite: etat.identite } },
           }),
       };
       return requete;
@@ -69,7 +70,14 @@ beforeEach(() => {
 describe("route de signalement", () => {
   it("GET : nom de l'entreprise et unités, seulement avec un lien valide", async () => {
     const ok = await GET(new Request(`https://du.frisk.fr/api/signalement?jeton=${JETON}`));
-    expect(await ok.json()).toEqual({ entreprise: "Entreprise 1", unites: ["Quai"] });
+    expect(await ok.json()).toEqual({ entreprise: "Entreprise 1", unites: ["Quai"], identite: {} });
+    // Logo et couleur de l'entreprise : seulement s'ils sont valides.
+    etat.identite = { logo: "data:image/png;base64,iVBORw0KGgo=", couleur: "#002b5c", site: "https://acme.fr/" };
+    const avecIdentite = await GET(new Request(`https://du.frisk.fr/api/signalement?jeton=${JETON}`));
+    expect((await avecIdentite.json()).identite).toEqual({ logo: "data:image/png;base64,iVBORw0KGgo=", couleur: "#002b5c" });
+    etat.identite = { logo: "javascript:alert(1)", couleur: "rouge" };
+    expect((await (await GET(new Request(`https://du.frisk.fr/api/signalement?jeton=${JETON}`))).json()).identite).toEqual({});
+    etat.identite = undefined;
     expect((await GET(new Request("https://du.frisk.fr/api/signalement?jeton=court"))).status).toBe(404);
     etat.entreprise = { id: "e1", nom: "Entreprise 1", actif: false };
     expect((await GET(new Request(`https://du.frisk.fr/api/signalement?jeton=${JETON}`))).status).toBe(404);

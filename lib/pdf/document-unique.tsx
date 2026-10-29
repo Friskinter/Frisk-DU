@@ -1,7 +1,7 @@
 // Document unique d'évaluation des risques professionnels au format PDF.
 // Polices standard du PDF (Helvetica, Times) : pas de téléchargement de police nécessaire.
 
-import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { ReactNode } from "react";
 import { actionEnRetard, actionsDe, estPapripact } from "@/lib/actions";
 import {
@@ -24,6 +24,8 @@ import {
   statutsAction,
 } from "@/lib/referentiel";
 import type { Action, Donnees, LigneDuerp } from "@/lib/types";
+import type { Marque } from "@/lib/identite";
+import { LogoDocument, MentionFrisk } from "./marque";
 
 const c = {
   encre: "#0c0b0a",
@@ -113,10 +115,10 @@ function Pied({ entreprise, version }: { entreprise: string; version: string }) 
   );
 }
 
-function Titre({ numero, surtitre, titre }: { numero: string; surtitre: string; titre: string }) {
+function Titre({ numero, surtitre, titre, accent }: { numero: string; surtitre: string; titre: string; accent: string }) {
   return (
     <View>
-      <Text style={s.surtitre}>
+      <Text style={[s.surtitre, { color: accent }]}>
         {numero} · {surtitre}
       </Text>
       <Text style={s.h1}>{titre}</Text>
@@ -137,13 +139,13 @@ export type LigneHistorique = { numero: number; date: string; motif: string; aut
 export function DocumentUnique({
   donnees,
   aujourdhui,
-  logo,
+  marque,
   numero,
   historique = [],
 }: {
   donnees: Pick<Donnees, "entreprise" | "fiche" | "duerp"> & { actions?: Action[] };
   aujourdhui: string; // date de la version (AAAA-MM-JJ)
-  logo: string;
+  marque: Marque;
   numero?: number; // numéro de la version figée ; absent pour un document de travail
   historique?: LigneHistorique[]; // versions figées jusqu'à celle-ci incluse
 }) {
@@ -199,9 +201,15 @@ export function DocumentUnique({
       {/* Page de garde */}
       <Page size="A4" style={[s.page, { paddingTop: 0, paddingHorizontal: 0 }]}>
         <View style={{ backgroundColor: c.encre, paddingHorizontal: 42, paddingTop: 60, paddingBottom: 40 }}>
-          {/* eslint-disable-next-line jsx-a11y/alt-text -- composant PDF, sans attribut alt */}
-          <Image src={logo} style={{ width: 54, height: 54 }} />
-          <Text style={{ marginTop: 28, fontSize: 9, letterSpacing: 3, color: c.bronze, textTransform: "uppercase" }}>
+          {/* Le logo d'une entreprise est posé sur un cartouche blanc, lisible sur le fond noir. */}
+          {marque.logoClient ? (
+            <View style={{ alignSelf: "flex-start", backgroundColor: "#ffffff", padding: 6 }}>
+              <LogoDocument marque={marque} hauteur={48} />
+            </View>
+          ) : (
+            <LogoDocument marque={marque} hauteur={54} />
+          )}
+          <Text style={{ marginTop: 28, fontSize: 9, letterSpacing: 3, color: marque.clair, textTransform: "uppercase" }}>
             Document unique
           </Text>
           <Text style={{ marginTop: 8, fontFamily: "Times-Roman", fontSize: 28, color: c.marbre, lineHeight: 1.2 }}>
@@ -249,14 +257,15 @@ export function DocumentUnique({
           </Text>
         </View>
         <View style={[s.pied, { left: 42, right: 42 }]} fixed>
-          <Text>Document établi avec Frisk DU</Text>
+          <Text>{donnees.entreprise}</Text>
           <Text>{version}</Text>
         </View>
+        <MentionFrisk marque={marque} />
       </Page>
 
       {/* Cadre et méthode */}
       <Page size="A4" style={s.page}>
-        <Titre numero="1" surtitre="Cadre" titre="Objet du document et méthode d'évaluation" />
+        <Titre accent={marque.accent} numero="1" surtitre="Cadre" titre="Objet du document et méthode d'évaluation" />
         <Text style={s.h2}>Obligations de l&apos;employeur</Text>
         {[
           "L'employeur évalue les risques pour la santé et la sécurité des travailleurs et transcrit les résultats dans un document unique, qui comporte un inventaire des risques identifiés dans chaque unité de travail.",
@@ -287,7 +296,7 @@ export function DocumentUnique({
               <View style={s.table}>
                 {grille.map((e) => (
                   <View key={e.valeur} style={s.ligne}>
-                    <Text style={[s.td, { width: "12%", fontFamily: "Helvetica-Bold", color: c.bronze, fontSize: 10 }]}>{e.valeur}</Text>
+                    <Text style={[s.td, { width: "12%", fontFamily: "Helvetica-Bold", color: marque.accent, fontSize: 10 }]}>{e.valeur}</Text>
                     <View style={[s.td, { width: "88%" }]}>
                       <Text style={{ fontFamily: "Helvetica-Bold" }}>{e.libelle}</Text>
                       <Text style={{ color: c.ardoise }}>{e.definition}</Text>
@@ -305,7 +314,7 @@ export function DocumentUnique({
             <View style={s.table}>
               {grilleMaitrise.map((m) => (
                 <View key={m.valeur} style={s.ligne}>
-                  <Text style={[s.td, { width: "16%", fontFamily: "Helvetica-Bold", color: c.bronze }]}>x {String(m.coefficient).replace(".", ",")}</Text>
+                  <Text style={[s.td, { width: "16%", fontFamily: "Helvetica-Bold", color: marque.accent }]}>x {String(m.coefficient).replace(".", ",")}</Text>
                   <View style={[s.td, { width: "84%" }]}>
                     <Text style={{ fontFamily: "Helvetica-Bold" }}>{m.libelle}</Text>
                     <Text style={{ color: c.ardoise }}>{m.definition}</Text>
@@ -335,11 +344,12 @@ export function DocumentUnique({
           </View>
         </View>
         <Pied entreprise={donnees.entreprise} version={version} />
+        <MentionFrisk marque={marque} />
       </Page>
 
       {/* Synthèse */}
       <Page size="A4" style={s.page}>
-        <Titre numero="2" surtitre="Synthèse" titre="Vue d'ensemble des risques" />
+        <Titre accent={marque.accent} numero="2" surtitre="Synthèse" titre="Vue d'ensemble des risques" />
         <View style={{ flexDirection: "row", gap: 16 }} wrap={false}>
           <View style={{ flex: 1 }}>
             <Text style={s.h2}>Matrice des risques (criticité brute)</Text>
@@ -410,11 +420,12 @@ export function DocumentUnique({
           })}
         </View>
         <Pied entreprise={donnees.entreprise} version={version} />
+        <MentionFrisk marque={marque} />
       </Page>
 
       {/* Inventaire des risques */}
       <Page size="A4" orientation="landscape" style={s.page}>
-        <Titre numero="3" surtitre="Inventaire" titre="Évaluation des risques par unité de travail" />
+        <Titre accent={marque.accent} numero="3" surtitre="Inventaire" titre="Évaluation des risques par unité de travail" />
         {unites.length === 0 && <Text style={s.texte}>Aucun risque n&apos;a encore été évalué.</Text>}
         {unites.map((u) => {
           const [premiere, ...suite] = risques.filter((l) => (l.unite || "Sans unité") === u);
@@ -439,11 +450,12 @@ export function DocumentUnique({
           );
         })}
         <Pied entreprise={donnees.entreprise} version={version} />
+        <MentionFrisk marque={marque} />
       </Page>
 
       {/* Plan d'actions */}
       <Page size="A4" orientation="landscape" style={s.page}>
-        <Titre
+        <Titre accent={marque.accent}
           numero="4"
           surtitre="Prévention"
           titre={papripact ? "Programme annuel de prévention des risques professionnels" : "Liste des actions de prévention"}
@@ -491,11 +503,12 @@ export function DocumentUnique({
           </View>
         )}
         <Pied entreprise={donnees.entreprise} version={version} />
+        <MentionFrisk marque={marque} />
       </Page>
 
       {/* Pénibilité et validation */}
       <Page size="A4" style={s.page}>
-        <Titre numero="5" surtitre="Pénibilité" titre="Exposition aux facteurs de risques professionnels" />
+        <Titre accent={marque.accent} numero="5" surtitre="Pénibilité" titre="Exposition aux facteurs de risques professionnels" />
         <Text style={s.texte}>
           Situations exposant les salariés à l&apos;un des 10 facteurs de risques professionnels (article L4161-1
           du Code du travail), appréciées après prise en compte des protections collectives et individuelles.
@@ -560,6 +573,7 @@ export function DocumentUnique({
           </View>
         </View>
         <Pied entreprise={donnees.entreprise} version={version} />
+        <MentionFrisk marque={marque} />
       </Page>
     </Document>
   );

@@ -1,11 +1,13 @@
 // Rapport annuel santé, sécurité et conditions de travail, au format PDF, à présenter au CSE.
 
-import { Document, Image, Page, Text, View } from "@react-pdf/renderer";
+import { Document, Page, Text, View } from "@react-pdf/renderer";
 import type { ReactNode } from "react";
 import { formatNombre, formaterDate } from "@/lib/calculs";
 import { actionLibelle, evolution, type Rapport } from "@/lib/rapport";
 import type { Donnees } from "@/lib/types";
 import { Champ, Section, c, s } from "./plan-prevention";
+import type { Marque } from "@/lib/identite";
+import { LogoDocument, MentionFrisk } from "./marque";
 
 // Les polices standard du PDF n'ont pas l'espace insécable fine des nombres français (« 4 900 € »).
 const espaces = (t: string) => t.replace(/[\u202f\u00a0]/g, " ");
@@ -48,7 +50,7 @@ function Tableau({ colonnes, lignes, vide }: { colonnes: { titre: string; largeu
   );
 }
 
-export function RapportAnnuel({ donnees, rapport: r, synthese, aujourdhui, logo }: { donnees: Donnees; rapport: Rapport; synthese: string; aujourdhui: string; logo: string }) {
+export function RapportAnnuel({ donnees, rapport: r, synthese, aujourdhui, marque }: { donnees: Donnees; rapport: Rapport; synthese: string; aujourdhui: string; marque: Marque }) {
   const a = r.accidents;
   const enCours = r.reference < `${r.annee}-12-31`;
   return (
@@ -56,7 +58,7 @@ export function RapportAnnuel({ donnees, rapport: r, synthese, aujourdhui, logo 
       <Page size="A4" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 8, letterSpacing: 2, color: c.bronze, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
+            <Text style={{ fontSize: 8, letterSpacing: 2, color: marque.accent, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
             <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4 }}>Rapport annuel santé, sécurité et conditions de travail</Text>
             <Text style={{ fontSize: 12, marginTop: 2 }}>Année {r.annee}{enCours ? ` (situation au ${formaterDate(r.reference)})` : ""}</Text>
             <Text style={{ fontSize: 8, color: c.ardoise, marginTop: 4 }}>
@@ -65,8 +67,7 @@ export function RapportAnnuel({ donnees, rapport: r, synthese, aujourdhui, logo 
                 : "Bilan de l'année en santé et sécurité au travail, à partager avec le comité social et économique et les salariés."}
             </Text>
           </View>
-          {/* eslint-disable-next-line jsx-a11y/alt-text -- composant PDF, sans attribut alt */}
-          <Image src={logo} style={{ width: 40, height: 40, marginLeft: 16 }} />
+          <LogoDocument marque={marque} style={{ marginLeft: 16 }} />
         </View>
 
         <Section titre="1. Chiffres clés">
@@ -191,6 +192,7 @@ export function RapportAnnuel({ donnees, rapport: r, synthese, aujourdhui, logo 
           <Text>{donnees.entreprise} · Rapport annuel SST {r.annee} · édité le {formaterDate(aujourdhui)}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
         </View>
+        <MentionFrisk marque={marque} />
       </Page>
     </Document>
   );

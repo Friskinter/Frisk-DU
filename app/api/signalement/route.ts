@@ -1,5 +1,6 @@
 import { dateDuJour } from "@/lib/calculs";
 import { emailSignalement } from "@/lib/email-alertes";
+import { couleurValide, logoValide } from "@/lib/identite";
 import { typesEvenement } from "@/lib/referentiel";
 import { evenementSignale, extensions, jetonValide, lireFormulaire, PHOTOS_MAX, TAILLE_ENVOI_MAX, TAILLE_PHOTO_MAX, typeImage } from "@/lib/signalement";
 import { supabaseAdmin } from "@/lib/supabase/serveur";
@@ -22,13 +23,18 @@ async function entrepriseDuJeton(jeton: unknown) {
   const contenu = espace?.contenu as Donnees | undefined;
   const unites = [...new Set([...(contenu?.unites ?? []), ...(contenu?.duerp ?? []).map((l) => l.unite)].filter(Boolean))];
   const evenements = new Set((contenu?.evenements ?? []).map((e) => e.id));
-  return { admin, id: data.id as string, nom: data.nom as string, unites, evenements };
+  // Logo et couleur de l'entreprise, pour que le formulaire soit à ses couleurs.
+  const identite = {
+    ...(logoValide(contenu?.identite?.logo) ? { logo: contenu.identite.logo } : {}),
+    ...(couleurValide(contenu?.identite?.couleur) ? { couleur: contenu.identite.couleur } : {}),
+  };
+  return { admin, id: data.id as string, nom: data.nom as string, unites, evenements, identite };
 }
 
 export async function GET(requete: Request) {
   const entreprise = await entrepriseDuJeton(new URL(requete.url).searchParams.get("jeton"));
   if (!entreprise) return refus("Ce lien de signalement n'est plus valable. Demandez le nouveau lien à votre responsable.", 404);
-  return Response.json({ entreprise: entreprise.nom, unites: entreprise.unites });
+  return Response.json({ entreprise: entreprise.nom, unites: entreprise.unites, identite: entreprise.identite });
 }
 
 export async function POST(requete: Request) {

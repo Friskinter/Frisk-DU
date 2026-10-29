@@ -5,6 +5,8 @@ import type { ReactNode } from "react";
 import { formaterDate } from "@/lib/calculs";
 import { charges, planEcritObligatoire, raisonObligation, travauxDangereux } from "@/lib/interventions";
 import type { Donnees, Intervention, Signature } from "@/lib/types";
+import type { Marque } from "@/lib/identite";
+import { LogoDocument, MentionFrisk } from "./marque";
 
 export const c = { encre: "#0c0b0a", ardoise: "#3a3530", gris: "#6b645b", bronze: "#7f6235", marbre: "#ece6dc", pierre: "#d9cfc1", ivoire: "#f7f4ef", rouge: "#b42318" };
 
@@ -67,7 +69,7 @@ export function CadreSignature({ titre, nom, signature }: { titre: string; nom: 
   );
 }
 
-export function PlanPrevention({ donnees, intervention: i, aujourdhui, logo }: { donnees: Donnees; intervention: Intervention; aujourdhui: string; logo: string }) {
+export function PlanPrevention({ donnees, intervention: i, aujourdhui, marque }: { donnees: Donnees; intervention: Intervention; aujourdhui: string; marque: Marque }) {
   const fiche = donnees.fiche;
   const obligatoire = planEcritObligatoire(i);
   const dangereux = travauxDangereux.filter((t) => i.travauxDangereux.includes(t.code));
@@ -78,15 +80,14 @@ export function PlanPrevention({ donnees, intervention: i, aujourdhui, logo }: {
       <Page size="A4" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 8, letterSpacing: 2, color: c.bronze, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
+            <Text style={{ fontSize: 8, letterSpacing: 2, color: marque.accent, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
             <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4 }}>Plan de prévention</Text>
             <Text style={{ fontSize: 10, marginTop: 2 }}>{i.entreprise || "Entreprise extérieure"}{i.objet ? ` · ${i.objet}` : ""}</Text>
             <Text style={{ fontSize: 8, color: c.ardoise, marginTop: 4 }}>
               Établi en application des articles R4512-6 à R4512-12 du Code du travail. {obligatoire ? `Plan écrit obligatoire : ${raisonObligation(i)}.` : "Plan établi par écrit à l'initiative des entreprises."}
             </Text>
           </View>
-          {/* eslint-disable-next-line jsx-a11y/alt-text -- composant PDF, sans attribut alt */}
-          <Image src={logo} style={{ width: 40, height: 40, marginLeft: 16 }} />
+          <LogoDocument marque={marque} style={{ marginLeft: 16 }} />
         </View>
 
         <Section titre="1. Les entreprises">
@@ -182,6 +183,7 @@ export function PlanPrevention({ donnees, intervention: i, aujourdhui, logo }: {
           <Text>{donnees.entreprise} · Plan de prévention {i.entreprise} · édité le {formaterDate(aujourdhui)}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
         </View>
+        <MentionFrisk marque={marque} />
       </Page>
     </Document>
   );

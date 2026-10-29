@@ -8,6 +8,7 @@ import { nouvelEvenement } from "@/lib/evenements";
 import { appliquerOperations, calculerOperations } from "@/lib/operations";
 import { RapportAnnuel } from "@/lib/pdf/rapport-annuel";
 import { anneesDisponibles, calculerRapport, evolution } from "@/lib/rapport";
+import { marqueDocuments } from "@/lib/identite";
 
 const aujourdhui = "2026-10-28";
 
@@ -87,11 +88,11 @@ describe("rapport annuel", () => {
   });
 
   it("PDF du rapport, y compris pour une entreprise vide", async () => {
-    const logo = `${process.cwd()}/public/logo-frisk.png`;
+    const marque = marqueDocuments(undefined, `${process.cwd()}/public/logo-frisk.png`);
     const d = normaliser(donneesDemo(aujourdhui));
     for (const donnees of [d, { ...d, evenements: [], actions: [], formations: [], visites: [], causeries: [] }]) {
       const rapport = calculerRapport(donnees, 2026, aujourdhui);
-      const pdf = await renderToBuffer(createElement(RapportAnnuel, { donnees, rapport, synthese: "", aujourdhui, logo }) as Parameters<typeof renderToBuffer>[0]);
+      const pdf = await renderToBuffer(createElement(RapportAnnuel, { donnees, rapport, synthese: "", aujourdhui, marque }) as Parameters<typeof renderToBuffer>[0]);
       expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
     }
   }, 30_000);
