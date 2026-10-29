@@ -255,6 +255,12 @@ function FicheIntervention({
   const manquants = elementsManquants(i, donnees.signatures);
   const obligatoire = planEcritObligatoire(i);
   const signe = estSigne(i, donnees.signatures);
+  // Dès la première signature, le contenu ne change plus sans nouvelles signatures.
+  const verrouille = !!(i.signatureEu || i.signatureEe);
+  const deverrouiller = () => {
+    if (!confirm("Modifier le plan ? Les signatures actuelles seront retirées du plan : les deux représentants devront signer à nouveau.")) return;
+    maj(i.id, { signatureEu: undefined, signatureEe: undefined });
+  };
 
   const basculerTravail = (code: string, coche: boolean) => {
     if (!coche) {
@@ -295,7 +301,22 @@ function FicheIntervention({
         </p>
       )}
 
+      {verrouille && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-pierre/70 bg-white p-3 text-sm">
+          <span className="text-ardoise">
+            Plan {signe ? "signé" : "en cours de signature"} : son contenu est verrouillé pour rester conforme à ce qui a été signé. Les inspections et
+            réunions de coordination restent modifiables.
+          </span>
+          {modifiable && (
+            <button type="button" className={classeBoutonSecondaire} onClick={deverrouiller}>
+              Modifier le plan
+            </button>
+          )}
+        </div>
+      )}
+
       <fieldset disabled={!modifiable} className="min-w-0 space-y-3">
+        <fieldset disabled={verrouille} className="min-w-0 space-y-3">
         <div className="grid gap-3 lg:grid-cols-2">
           <Carte titre="1. Entreprise extérieure">
             <div className="grid gap-3 sm:grid-cols-2">
@@ -452,6 +473,8 @@ function FicheIntervention({
           </label>
         </Carte>
 
+        </fieldset>
+
         <Carte titre="7. Inspections et réunions de coordination">
           {i.suivi.length === 0 && <p className="mb-3 text-sm text-gris">Aucune pour l&apos;instant. Pour les travaux longs ou dangereux, prévoyez des points réguliers sur le terrain.</p>}
           <ul className="space-y-2">
@@ -477,7 +500,7 @@ function FicheIntervention({
         <Carte titre="8. Signatures">
           {signe ? (
             <p className="mb-3 text-xs text-gris">
-              Plan signé. Si les travaux ou les risques changent, mettez le plan à jour et faites-le signer à nouveau en créant une nouvelle intervention.
+              Plan signé. Si les travaux ou les risques changent, cliquez sur « Modifier le plan » : les deux représentants devront le signer à nouveau.
             </p>
           ) : (
             <p className="mb-3 text-xs text-gris">

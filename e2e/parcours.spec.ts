@@ -94,6 +94,18 @@ test("une alerte ouvre directement le protocole concerné", async ({ page }) => 
   await expect(page.getByRole("button", { name: "Renouveler pour 12 mois" })).toBeVisible();
 });
 
+test("un plan signé est verrouillé ; le modifier impose de nouvelles signatures", async ({ page }) => {
+  await ouvrir(page, "/entreprises-exterieures");
+  await page.getByRole("button", { name: /Net'Indus Services/ }).click();
+  await expect(page.getByLabel("Raison sociale")).toBeDisabled();
+  // Le suivi reste possible sur un plan signé.
+  await expect(page.getByRole("button", { name: "+ Inspection ou réunion" })).toBeEnabled();
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: "Modifier le plan" }).click();
+  await expect(page.getByLabel("Raison sociale")).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Valider la signature" })).toHaveCount(2);
+});
+
 test.describe("compte en lecture seule", () => {
   test.use({ role: "lecteur" });
 

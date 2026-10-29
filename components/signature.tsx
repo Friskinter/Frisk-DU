@@ -5,6 +5,25 @@ import { classeBouton, classeBoutonSecondaire, classeChamp } from "@/components/
 import { dateDuJour, formaterDate } from "@/lib/calculs";
 import type { Signature } from "@/lib/types";
 
+// Les signatures sont enregistrées avec les données de l'entreprise et rechargées à chaque ouverture :
+// on les réduit (300 × 96 pixels, noir ou transparent, sans dégradé) pour qu'elles pèsent quelques
+// kilo-octets au lieu d'une vingtaine, sans perte de lisibilité à l'écran ni dans les PDF.
+function imageCompacte(source: HTMLCanvasElement) {
+  const reduite = document.createElement("canvas");
+  reduite.width = 300;
+  reduite.height = 96;
+  const ctx = reduite.getContext("2d")!;
+  ctx.drawImage(source, 0, 0, reduite.width, reduite.height);
+  const pixels = ctx.getImageData(0, 0, reduite.width, reduite.height);
+  for (let i = 0; i < pixels.data.length; i += 4) {
+    const trace = pixels.data[i + 3] >= 80;
+    pixels.data[i] = pixels.data[i + 1] = pixels.data[i + 2] = trace ? 12 : 0;
+    pixels.data[i + 3] = trace ? 255 : 0;
+  }
+  ctx.putImageData(pixels, 0, 0);
+  return reduite.toDataURL("image/png");
+}
+
 // Pavé de signature : au doigt sur tablette ou téléphone, à la souris sur ordinateur.
 export function PaveSignature({ onChange }: { onChange: (image: string | null) => void }) {
   const toile = useRef<HTMLCanvasElement>(null);
@@ -41,7 +60,7 @@ export function PaveSignature({ onChange }: { onChange: (image: string | null) =
   const terminer = () => {
     if (!dernier.current) return;
     dernier.current = null;
-    onChange(toile.current!.toDataURL("image/png"));
+    onChange(imageCompacte(toile.current!));
   };
 
   const effacer = () => {
@@ -92,7 +111,9 @@ export function BlocSignature({
   onValider: (signature: Signature) => void;
 }) {
   const [image, setImage] = useState<string | null>(null);
-  const [nom, setNom] = useState(nomPropose);
+  // Le nom proposé suit la fiche tant que l'utilisateur ne l'a pas modifié lui-même.
+  const [nomSaisi, setNom] = useState<string | null>(null);
+  const nom = nomSaisi ?? nomPropose;
 
   if (signature) {
     return (

@@ -156,6 +156,7 @@ const clesRacine: Record<string, string> = {
   services: "Services",
   unites: "Unités de travail",
   preferences: "Préférences",
+  lien_signalement: "Lien de signalement (QR code)",
 };
 
 export function libelleChamp(champ: string) {
