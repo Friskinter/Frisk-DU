@@ -5,11 +5,12 @@ import { nouvelEvenement } from "./evenements";
 import { ajouterMois, nouvelleExigence, nouvelleFormation } from "./formations";
 import { nouveauProduit } from "./produits";
 import { nouveauProtocole } from "./protocoles";
+import { messagesDuTheme, nouvelAccueil, nouvelleCauserie, pointsAccueil } from "./accueils";
 import { actionPourNonConformite, grillesModeles, nouvelleVisite } from "./visites";
 import { nouveauRisqueIntervention, nouveauSuivi, nouvelleIntervention, risqueDuTravail, risquesCourants } from "./interventions";
 import { nouvelEquipement, nouvelleObservation, nouvelleVerification } from "./verifications";
 import { cle, decalerJours, nouvelId } from "./calculs";
-import type { Action, Article, Donnees, Intervention, Protocole, Visite, Evenement, Formation, LigneDuerp, Mouvement, PrincipePrevention, Salarie } from "./types";
+import type { Accueil, Action, Article, Causerie, Donnees, Intervention, Protocole, Visite, Evenement, Formation, LigneDuerp, Mouvement, PrincipePrevention, Salarie } from "./types";
 
 // Générateur pseudo-aléatoire déterministe pour des démos reproductibles.
 function aleatoire(graine: number) {
@@ -41,6 +42,8 @@ export function donneesVides(): Donnees {
     protocoles: [],
     grilles: [],
     visites: [],
+    accueils: [],
+    causeries: [],
   };
 }
 
@@ -466,6 +469,34 @@ export function donneesDemo(aujourdhui: string): Donnees {
   actions.push(actionVisite);
   const visites = [visite];
 
+  // Accueil sécurité : un cariste accueilli et signé, un intérimaire arrivé hier à accueillir.
+  signatures["sig-demo-leroy"] = { image: SIGNATURE_B, date: decalerJours(aujourdhui, -40), salarieId: salarie("Leroy M.") };
+  const accueils: Accueil[] = [
+    nouvelAccueil({
+      salarieId: salarie("Leroy M."), contrat: "cdi", poste: "Cariste", unite: "Zone de stockage",
+      arriveeLe: decalerJours(aujourdhui, -40), accueilLe: decalerJours(aujourdhui, -40), animateur: "Moreau J., chef d'équipe",
+      points: pointsAccueil.map((p) => p.code).filter((c) => c !== "chimique"), signatureId: "sig-demo-leroy",
+    }),
+    nouvelAccueil({
+      nom: "Thomas B. (agence Intérim Plus)", contrat: "interim", poste: "Préparateur de commandes", unite: "Zone de stockage",
+      arriveeLe: decalerJours(aujourdhui, -1), posteARisque: true,
+    }),
+  ];
+
+  // Causerie sur la circulation, il y a 10 jours : un participant n'a pas encore signé.
+  const presents = ["Martin L.", "Bernard S.", "Petit A.", "Durand C.", "Leroy M."];
+  presents.slice(0, 4).forEach((nom, n) => {
+    signatures[`sig-demo-causerie-${n}`] = { image: n % 2 ? SIGNATURE_A : SIGNATURE_B, date: decalerJours(aujourdhui, -10), salarieId: salarie(nom) };
+  });
+  const causeries: Causerie[] = [
+    nouvelleCauserie({
+      date: decalerJours(aujourdhui, -10), theme: "Circulation : piétons et chariots", animateur: "Moreau J., chef d'équipe", duree: 15,
+      messages: messagesDuTheme("Circulation : piétons et chariots"),
+      remarques: "Le miroir à l'angle de l'allée C est cassé : à remplacer.",
+      participants: presents.map((nom, n) => ({ id: `p${n}`, salarieId: salarie(nom), nom: "", signatureId: n < 4 ? `sig-demo-causerie-${n}` : undefined })),
+    }),
+  ];
+
   const premier = evenements[0];
   actions.push(
     nouvelleAction(premier.risqueId, {
@@ -499,6 +530,8 @@ export function donneesDemo(aujourdhui: string): Donnees {
     protocoles,
     grilles: [],
     visites,
+    accueils,
+    causeries,
     salaries,
     articles,
     mouvements,

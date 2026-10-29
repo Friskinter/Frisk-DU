@@ -9,6 +9,7 @@ import { dernierSuivi, enCoursOuProche, etatIntervention, planEcritObligatoire }
 import { classementCmr, estCmr, etatFds } from "./produits";
 import { actifOuProche, dejaRenouvele, etatProtocole } from "./protocoles";
 import { derniereVisite, sansAction } from "./visites";
+import { accueilsEnRetard, derniereCauserie, etatAccueil, formationRenforcee, nomArrivant } from "./accueils";
 import { typesEvenement } from "./referentiel";
 import { derniereVerification, etatEquipement, observationsOuvertes } from "./verifications";
 import type { Donnees } from "./types";
@@ -16,7 +17,7 @@ import type { Donnees } from "./types";
 export type Alerte = {
   id: string;
   gravite: "critique" | "importante" | "info";
-  categorie: "DUERP" | "Accidents" | "Formations" | "Vérifications" | "Produits chimiques" | "Entreprises extérieures" | "Visites" | "EPI" | "Pénibilité";
+  categorie: "DUERP" | "Accidents" | "Formations" | "Vérifications" | "Produits chimiques" | "Entreprises extérieures" | "Visites" | "Accueil et causeries" | "EPI" | "Pénibilité";
   titre: string;
   detail: string;
   lien: string; // page de l'application où traiter l'alerte
@@ -385,6 +386,38 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
       id: "visites-anciennes", gravite: "info", categorie: "Visites", lien: "/visites",
       titre: "Aucune visite de sécurité depuis plus de 3 mois",
       detail: `Dernière visite le ${formaterDate(derniere.date)}. Une visite régulière du terrain repère les dangers avant l'accident.`,
+    });
+  }
+
+  // Accueil sécurité et causeries
+  const accueils = donnees.accueils ?? [];
+  const lienAccueil = (liste: typeof accueils) => (liste.length === 1 ? `/accueil?accueil=${liste[0].id}` : "/accueil");
+  const nonAccueillis = accueilsEnRetard(accueils, aujourdhui);
+  if (nonAccueillis.length) {
+    const renforces = nonAccueillis.filter(formationRenforcee);
+    alertes.push({
+      id: "accueils-a-faire", gravite: "critique", categorie: "Accueil et causeries", lien: lienAccueil(nonAccueillis),
+      titre: `${nonAccueillis.length} ${nonAccueillis.length > 1 ? "nouveaux arrivants" : "nouvel arrivant"} sans accueil sécurité`,
+      detail:
+        `À faire avant la prise de poste (art. R4141-2) : ${liste(nonAccueillis.map((a) => nomArrivant(a, donnees)))}.` +
+        (renforces.length ? ` Formation renforcée requise sur poste à risques (art. L4154-2) : ${liste(renforces.map((a) => nomArrivant(a, donnees)))}.` : ""),
+    });
+  }
+  const nonSignes = accueils.filter((a) => etatAccueil(a, donnees.signatures, aujourdhui) === "a-signer");
+  if (nonSignes.length) {
+    alertes.push({
+      id: "accueils-a-signer", gravite: "info", categorie: "Accueil et causeries", lien: lienAccueil(nonSignes),
+      titre: `${pluriel(nonSignes.length, "accueil")} sécurité à faire signer`,
+      detail: `La signature prouve que l'accueil a eu lieu : ${liste(nonSignes.map((a) => nomArrivant(a, donnees)))}.`,
+    });
+  }
+  const causeries = donnees.causeries ?? [];
+  const derniereC = derniereCauserie(causeries);
+  if (derniereC && derniereC.date < decalerJours(aujourdhui, -90)) {
+    alertes.push({
+      id: "causeries-anciennes", gravite: "info", categorie: "Accueil et causeries", lien: "/accueil?onglet=causeries",
+      titre: "Aucune causerie sécurité depuis plus de 3 mois",
+      detail: `Dernière causerie le ${formaterDate(derniereC.date)}. Quinze minutes suffisent pour faire passer un message de prévention.`,
     });
   }
 
