@@ -7,7 +7,7 @@ import type { Donnees, Visite } from "@/lib/types";
 import { bilanVisite, grouperParTheme, resultatsPoint } from "@/lib/visites";
 import { Champ, Section, c, s } from "./plan-prevention";
 import type { Marque } from "@/lib/identite";
-import { LogoDocument, MentionFrisk } from "./marque";
+import { BandeauCouleur, CouleurTitres, LogoDocument, MentionFrisk } from "./marque";
 
 const couleurResultat = { conforme: "#0b6b0b", "non-conforme": c.rouge, "sans-objet": c.gris, "": c.gris };
 
@@ -17,11 +17,12 @@ export function RapportVisite({ donnees, visite: v, aujourdhui, marque }: { donn
   const nonConformes = v.reponses.filter((r) => r.resultat === "non-conforme");
   return (
     <Document title={`Visite - ${v.grille} - ${v.date}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+      <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 8, letterSpacing: 2, color: marque.accent, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
-            <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4 }}>Rapport de visite</Text>
+            <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4, color: marque.titre }}>Rapport de visite</Text>
             <Text style={{ fontSize: 10, marginTop: 2 }}>{v.grille}{v.unite ? ` · ${v.unite}` : ""}</Text>
           </View>
           <LogoDocument marque={marque} style={{ marginLeft: 16 }} />
@@ -83,7 +84,7 @@ export function RapportVisite({ donnees, visite: v, aujourdhui, marque }: { donn
               // Le titre et l'en-tête du tableau restent sur la même page que la première ligne.
               return n === 0 ? (
                 <View key={r.id} wrap={false}>
-                  <Text style={[s.titreSection, { marginTop: 0 }]}>3. Non-conformités et actions</Text>
+                  <Text style={[s.titreSection, { marginTop: 0, color: marque.titre }]}>3. Non-conformités et actions</Text>
                   <View style={[s.entete, { borderWidth: 0.5, borderColor: c.pierre }]}>
                     {["Non-conformité", "Action", "Responsable", "Échéance", "Statut"].map((t, i) => (
                       <Text key={t} style={[s.th, { width: ["30%", "30%", "16%", "11%", "13%"][i] }]}>{t}</Text>
@@ -99,7 +100,7 @@ export function RapportVisite({ donnees, visite: v, aujourdhui, marque }: { donn
         )}
 
         <View wrap={false}>
-          <Text style={s.titreSection}>{nonConformes.length ? "4" : "3"}. Synthèse</Text>
+          <Text style={[s.titreSection, { color: marque.titre }]}>{nonConformes.length ? "4" : "3"}. Synthèse</Text>
           <Text style={{ lineHeight: 1.4 }}>{v.synthese || "-"}</Text>
           <Text style={{ marginTop: 18, color: c.gris }}>Visa de la personne ayant réalisé la visite :</Text>
         </View>
@@ -108,8 +109,10 @@ export function RapportVisite({ donnees, visite: v, aujourdhui, marque }: { donn
           <Text>{donnees.entreprise} · Rapport de visite du {formaterDate(v.date)} · édité le {formaterDate(aujourdhui)}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
         </View>
+        <BandeauCouleur marque={marque} />
         <MentionFrisk marque={marque} />
       </Page>
+      </CouleurTitres.Provider>
     </Document>
   );
 }

@@ -2,7 +2,7 @@
 // Polices standard du PDF (Helvetica, Times) : pas de téléchargement de police nécessaire.
 
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
-import type { ReactNode } from "react";
+import { useContext, type ReactNode } from "react";
 import { actionEnRetard, actionsDe, estPapripact } from "@/lib/actions";
 import {
   criticiteBrute,
@@ -25,7 +25,7 @@ import {
 } from "@/lib/referentiel";
 import type { Action, Donnees, LigneDuerp } from "@/lib/types";
 import type { Marque } from "@/lib/identite";
-import { LogoDocument, MentionFrisk } from "./marque";
+import { BandeauCouleur, CouleurTitres, LogoDocument, MentionFrisk } from "./marque";
 
 const c = {
   encre: "#0c0b0a",
@@ -116,12 +116,13 @@ function Pied({ entreprise, version }: { entreprise: string; version: string }) 
 }
 
 function Titre({ numero, surtitre, titre, accent }: { numero: string; surtitre: string; titre: string; accent: string }) {
+  const couleur = useContext(CouleurTitres);
   return (
     <View>
       <Text style={[s.surtitre, { color: accent }]}>
         {numero} · {surtitre}
       </Text>
-      <Text style={s.h1}>{titre}</Text>
+      <Text style={[s.h1, { color: couleur }]}>{titre}</Text>
     </View>
   );
 }
@@ -198,9 +199,10 @@ export function DocumentUnique({
       producer="Frisk DU"
       language="fr"
     >
+      <CouleurTitres.Provider value={marque.titre}>
       {/* Page de garde */}
       <Page size="A4" style={[s.page, { paddingTop: 0, paddingHorizontal: 0 }]}>
-        <View style={{ backgroundColor: c.encre, paddingHorizontal: 42, paddingTop: 60, paddingBottom: 40 }}>
+        <View style={{ backgroundColor: marque.fond, paddingHorizontal: 42, paddingTop: 60, paddingBottom: 40 }}>
           {/* Le logo d'une entreprise est posé sur un cartouche blanc, lisible sur le fond noir. */}
           {marque.logoClient ? (
             <View style={{ alignSelf: "flex-start", backgroundColor: "#ffffff", padding: 6 }}>
@@ -260,13 +262,14 @@ export function DocumentUnique({
           <Text>{donnees.entreprise}</Text>
           <Text>{version}</Text>
         </View>
+        <BandeauCouleur marque={marque} />
         <MentionFrisk marque={marque} />
       </Page>
 
       {/* Cadre et méthode */}
       <Page size="A4" style={s.page}>
         <Titre accent={marque.accent} numero="1" surtitre="Cadre" titre="Objet du document et méthode d'évaluation" />
-        <Text style={s.h2}>Obligations de l&apos;employeur</Text>
+        <Text style={[s.h2, { color: marque.titre }]}>Obligations de l&apos;employeur</Text>
         {[
           "L'employeur évalue les risques pour la santé et la sécurité des travailleurs et transcrit les résultats dans un document unique, qui comporte un inventaire des risques identifiés dans chaque unité de travail.",
           "Le document unique est mis à jour au moins chaque année dans les entreprises d'au moins 11 salariés, ainsi que lors de toute décision d'aménagement important modifiant les conditions de travail, et lorsqu'une information supplémentaire sur un risque est portée à la connaissance de l'employeur.",
@@ -278,7 +281,7 @@ export function DocumentUnique({
           </Text>
         ))}
 
-        <Text style={s.h2}>Méthode de cotation</Text>
+        <Text style={[s.h2, { color: marque.titre }]}>Méthode de cotation</Text>
         <Text style={s.texte}>
           Chaque risque est coté selon sa gravité (G) et la fréquence d&apos;exposition (F), de 1 à 4. Leur produit
           donne la criticité brute (de 1 à 16), c&apos;est-à-dire le risque sans tenir compte des protections.
@@ -344,6 +347,7 @@ export function DocumentUnique({
           </View>
         </View>
         <Pied entreprise={donnees.entreprise} version={version} />
+        <BandeauCouleur marque={marque} />
         <MentionFrisk marque={marque} />
       </Page>
 
@@ -352,7 +356,7 @@ export function DocumentUnique({
         <Titre accent={marque.accent} numero="2" surtitre="Synthèse" titre="Vue d'ensemble des risques" />
         <View style={{ flexDirection: "row", gap: 16 }} wrap={false}>
           <View style={{ flex: 1 }}>
-            <Text style={s.h2}>Matrice des risques (criticité brute)</Text>
+            <Text style={[s.h2, { color: marque.titre }]}>Matrice des risques (criticité brute)</Text>
             <Text style={[s.texte, { fontSize: 7.5 }]}>Nombre de risques dans chaque case Gravité x Fréquence.</Text>
             <View style={{ flexDirection: "row", marginTop: 4 }}>
               <View style={{ width: 52 }} />
@@ -379,7 +383,7 @@ export function DocumentUnique({
             ))}
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={s.h2}>Répartition par niveau (risque résiduel)</Text>
+            <Text style={[s.h2, { color: marque.titre }]}>Répartition par niveau (risque résiduel)</Text>
             <View style={s.table}>
               {niveauxCriticite.map((n) => {
                 const nb = risques.filter((l) => niveauDe(risqueResiduel(l)).code === n.code).length;
@@ -397,7 +401,7 @@ export function DocumentUnique({
           </View>
         </View>
 
-        <Text style={s.h2}>Risques par unité de travail</Text>
+        <Text style={[s.h2, { color: marque.titre }]}>Risques par unité de travail</Text>
         <View style={s.table}>
           <Entete
             colonnes={[
@@ -420,6 +424,7 @@ export function DocumentUnique({
           })}
         </View>
         <Pied entreprise={donnees.entreprise} version={version} />
+        <BandeauCouleur marque={marque} />
         <MentionFrisk marque={marque} />
       </Page>
 
@@ -450,6 +455,7 @@ export function DocumentUnique({
           );
         })}
         <Pied entreprise={donnees.entreprise} version={version} />
+        <BandeauCouleur marque={marque} />
         <MentionFrisk marque={marque} />
       </Page>
 
@@ -503,6 +509,7 @@ export function DocumentUnique({
           </View>
         )}
         <Pied entreprise={donnees.entreprise} version={version} />
+        <BandeauCouleur marque={marque} />
         <MentionFrisk marque={marque} />
       </Page>
 
@@ -537,7 +544,7 @@ export function DocumentUnique({
         )}
 
         <View wrap={false}>
-          <Text style={[s.h2, { marginTop: 24 }]}>6 · Validation et suivi des mises à jour</Text>
+          <Text style={[s.h2, { marginTop: 24, color: marque.titre }]}>6 · Validation et suivi des mises à jour</Text>
           <View style={s.table}>
             <Entete
               colonnes={[
@@ -573,8 +580,10 @@ export function DocumentUnique({
           </View>
         </View>
         <Pied entreprise={donnees.entreprise} version={version} />
+        <BandeauCouleur marque={marque} />
         <MentionFrisk marque={marque} />
       </Page>
+      </CouleurTitres.Provider>
     </Document>
   );
 }

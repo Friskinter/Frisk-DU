@@ -148,7 +148,7 @@ function Signalement() {
 
   return (
     <div className="min-h-screen bg-ivoire" style={(variablesCouleur(identite) ?? undefined) as CSSProperties | undefined}>
-      <header className="bg-encre px-4 py-3 text-pierre">
+      <header className="bg-menu px-4 py-3 text-pierre">
         <div className="mx-auto flex max-w-xl items-center gap-3">
           {identite?.logo ? (
             <Logo identite={identite} />

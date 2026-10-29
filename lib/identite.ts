@@ -8,6 +8,9 @@ import type { Identite } from "./types";
 export const COULEUR_FRISK = "#b08d57";
 const ENCRE = "#0c0b0a";
 const MARBRE = "#ece6dc";
+const PIERRE = "#d9cfc1";
+const GRIS = "#6b645b";
+const ALERTE_MENU = "#ec835a"; // « Hors connexion » dans le menu
 export const LOGO_TAILLE_MAX = 200_000; // caractères de l'image enregistrée (data URL)
 
 type Rgb = [number, number, number];
@@ -56,22 +59,52 @@ function ajuster(couleur: string, fond: string, minimum: number, sens: "clair" |
   return versHex(cible);
 }
 
-// Déclinaisons de la couleur, sur le modèle du bronze de Frisk :
+// Déclinaisons de la couleur, sur le modèle des couleurs de Frisk :
 // - accent : fonds de boutons et d'onglets, avec un texte noir dessus ;
-// - clair : survol et texte sur le menu noir ;
-// - fonce : texte sur fond clair (pages, cartes, documents).
+// - menu : fond du menu, version foncée de la couleur (à la place du noir) ;
+// - clair : survol et texte sur le menu ;
+// - ivoire, marbre : fond des pages et des encadrés, légèrement teintés ;
+// - fonce : titres et texte sur fond clair (pages, cartes, documents).
 export function palette(couleur: string) {
+  const c = versRgb(couleur);
   const accent = ajuster(couleur, ENCRE, 4.5, "clair");
-  const clair = ajuster(versHex(melanger(versRgb(accent), [255, 255, 255], 0.25)), ENCRE, 7, "clair");
-  const fonce = ajuster(couleur, MARBRE, 4.5, "fonce");
-  return { accent, clair, fonce };
+  // Le menu reste assez foncé pour ses textes clairs (dont le texte atténué et l'orange d'alerte).
+  let menu = couleur;
+  for (let part = 0; part <= 1; part += 0.02) {
+    menu = versHex(melanger(c, [0, 0, 0], part));
+    const attenue = versHex(melanger(versRgb(PIERRE), versRgb(menu), 0.3));
+    if (contraste(attenue, menu) >= 4.5 && contraste(ALERTE_MENU, menu) >= 4.5 && part >= 0.55) break;
+  }
+  const clair = ajuster(ajuster(versHex(melanger(versRgb(accent), [255, 255, 255], 0.25)), ENCRE, 7, "clair"), menu, 4.5, "clair");
+  // Teinte des fonds : la plus marquée possible en gardant le texte gris lisible.
+  let ivoire = "#ffffff";
+  let marbre = MARBRE;
+  for (const part of [0.06, 0.05, 0.04, 0.03, 0.02, 0]) {
+    ivoire = versHex(melanger([255, 255, 255], c, part));
+    marbre = versHex(melanger([255, 255, 255], c, part * 2 + 0.04));
+    if (contraste(GRIS, marbre) >= 4.6) break;
+  }
+  // Lisible sur les encadrés teintés de l'espace comme sur ceux, neutres, des documents PDF.
+  const fonce = [marbre, MARBRE].reduce((x, fond) => ajuster(x, fond, 4.5, "fonce"), couleur);
+  return { accent, menu, clair, ivoire, marbre, fonce };
 }
 
-// Variables CSS qui remplacent le bronze de Frisk dans tout l'espace (voir app/globals.css).
+// Variables CSS qui remplacent les couleurs de Frisk dans tout l'espace (voir app/globals.css).
+export const variablesTheme = ["--color-bronze", "--color-bronze-clair", "--color-bronze-fonce", "--color-menu", "--color-titre", "--color-intertitre", "--color-ivoire", "--color-marbre"];
+
 export function variablesCouleur(identite: Identite | undefined): Record<string, string> | null {
   if (!couleurValide(identite?.couleur)) return null;
   const p = palette(identite.couleur);
-  return { "--color-bronze": p.accent, "--color-bronze-clair": p.clair, "--color-bronze-fonce": p.fonce };
+  return {
+    "--color-bronze": p.accent,
+    "--color-bronze-clair": p.clair,
+    "--color-bronze-fonce": p.fonce,
+    "--color-menu": p.menu,
+    "--color-titre": p.fonce,
+    "--color-intertitre": p.fonce,
+    "--color-ivoire": p.ivoire,
+    "--color-marbre": p.marbre,
+  };
 }
 
 // Adresse saisie par le client (« mon-entreprise.fr », « https://… ») : URL du site, ou null.
@@ -192,11 +225,23 @@ export function logoValide(x: unknown): x is string {
 }
 
 // Logo et couleur des documents PDF : ceux du client, sinon ceux de Frisk.
-// accent : texte sur fond blanc ; clair : texte sur fond noir (page de garde du document unique).
-export type Marque = { logo: string; logoClient: boolean; accent: string; clair: string; frisk: string };
+// accent : texte sur fond blanc ; clair : texte sur fond noir (page de garde du document unique) ;
+// titre : couleur des titres ; bandeau : filet de couleur en haut des pages (entreprise seulement) ;
+// fond : fond foncé de la page de garde.
+export type Marque = { logo: string; logoClient: boolean; accent: string; clair: string; titre: string; bandeau: string | null; fond: string; frisk: string };
 
 export function marqueDocuments(identite: Identite | undefined, logoFrisk: string): Marque {
-  const p = palette(couleurValide(identite?.couleur) ? identite.couleur : COULEUR_FRISK);
+  const couleur = couleurValide(identite?.couleur) ? identite.couleur : null;
+  const p = palette(couleur ?? COULEUR_FRISK);
   const logoClient = logoValide(identite?.logo);
-  return { logo: logoClient ? identite!.logo! : logoFrisk, logoClient, accent: p.fonce, clair: p.clair, frisk: logoFrisk };
+  return {
+    logo: logoClient ? identite!.logo! : logoFrisk,
+    logoClient,
+    accent: p.fonce,
+    clair: p.clair,
+    titre: couleur ? p.fonce : ENCRE,
+    bandeau: couleur,
+    fond: couleur ? p.menu : ENCRE, // fond de la page de garde du document unique
+    frisk: logoFrisk,
+  };
 }

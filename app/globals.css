@@ -12,6 +12,10 @@
   --color-bronze-clair: #c9a978;
   --color-bronze-fonce: #7f6235; /* bronze lisible en texte sur fond clair (contraste AA) */
   --color-gris: #6b645b;
+  /* Remplacées par la couleur de l'entreprise (lib/identite.ts) */
+  --color-menu: #0c0b0a;
+  --color-titre: #0c0b0a;
+  --color-intertitre: #24211e;
 
   --font-sans: var(--font-inter);
   --font-serif: var(--font-cinzel);

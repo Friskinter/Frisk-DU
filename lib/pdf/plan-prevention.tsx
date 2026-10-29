@@ -1,12 +1,12 @@
 // Plan de prévention d'une entreprise extérieure (art. R4512-6 à R4512-12 du Code du travail), au format PDF.
 
 import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
-import type { ReactNode } from "react";
+import { useContext, type ReactNode } from "react";
 import { formaterDate } from "@/lib/calculs";
 import { charges, planEcritObligatoire, raisonObligation, travauxDangereux } from "@/lib/interventions";
 import type { Donnees, Intervention, Signature } from "@/lib/types";
 import type { Marque } from "@/lib/identite";
-import { LogoDocument, MentionFrisk } from "./marque";
+import { BandeauCouleur, CouleurTitres, LogoDocument, MentionFrisk } from "./marque";
 
 export const c = { encre: "#0c0b0a", ardoise: "#3a3530", gris: "#6b645b", bronze: "#7f6235", marbre: "#ece6dc", pierre: "#d9cfc1", ivoire: "#f7f4ef", rouge: "#b42318" };
 
@@ -45,7 +45,7 @@ export function Champ({ cle, children }: { cle: string; children: ReactNode }) {
 export function Section({ titre, children, insecable = false }: { titre: string; children: ReactNode; insecable?: boolean }) {
   return (
     <View wrap={!insecable}>
-      <Text style={s.titreSection} minPresenceAhead={70}>{titre}</Text>
+      <Text style={[s.titreSection, { color: useContext(CouleurTitres) }]} minPresenceAhead={70}>{titre}</Text>
       {children}
     </View>
   );
@@ -77,11 +77,12 @@ export function PlanPrevention({ donnees, intervention: i, aujourdhui, marque }:
   const suivi = [...i.suivi].filter((x) => x.date || x.observations).sort((a, b) => a.date.localeCompare(b.date));
   return (
     <Document title={`Plan de prévention - ${i.entreprise}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+      <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 8, letterSpacing: 2, color: marque.accent, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
-            <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4 }}>Plan de prévention</Text>
+            <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4, color: marque.titre }}>Plan de prévention</Text>
             <Text style={{ fontSize: 10, marginTop: 2 }}>{i.entreprise || "Entreprise extérieure"}{i.objet ? ` · ${i.objet}` : ""}</Text>
             <Text style={{ fontSize: 8, color: c.ardoise, marginTop: 4 }}>
               Établi en application des articles R4512-6 à R4512-12 du Code du travail. {obligatoire ? `Plan écrit obligatoire : ${raisonObligation(i)}.` : "Plan établi par écrit à l'initiative des entreprises."}
@@ -167,7 +168,7 @@ export function PlanPrevention({ donnees, intervention: i, aujourdhui, marque }:
         )}
 
         <View wrap={false}>
-          <Text style={s.titreSection}>{suivi.length > 0 ? "7" : "6"}. Signatures</Text>
+          <Text style={[s.titreSection, { color: marque.titre }]}>{suivi.length > 0 ? "7" : "6"}. Signatures</Text>
           <Text style={{ fontSize: 8, color: c.ardoise, marginBottom: 6 }}>
             Les deux entreprises arrêtent d&apos;un commun accord les mesures ci-dessus. Chaque chef d&apos;entreprise les porte à la connaissance de ses
             travailleurs avant le début des travaux. Le plan est tenu à la disposition de l&apos;inspection du travail, des services de prévention et des
@@ -183,8 +184,10 @@ export function PlanPrevention({ donnees, intervention: i, aujourdhui, marque }:
           <Text>{donnees.entreprise} · Plan de prévention {i.entreprise} · édité le {formaterDate(aujourdhui)}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
         </View>
+        <BandeauCouleur marque={marque} />
         <MentionFrisk marque={marque} />
       </Page>
+      </CouleurTitres.Provider>
     </Document>
   );
 }
