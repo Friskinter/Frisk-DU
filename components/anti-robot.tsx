@@ -7,7 +7,8 @@ import { MODE_TEST } from "@/lib/mode-test";
 // et pour le mot de passe oublié (Authentication > Attack Protection > Captcha). Sans
 // NEXT_PUBLIC_TURNSTILE_SITE_KEY, ni en mode de test, rien n'est affiché ni exigé.
 // Un jeton ne sert qu'une fois : après chaque envoi, changer la `key` du composant pour en obtenir un neuf.
-const CLE_SITE = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+// Espaces et retours à la ligne retirés : ils se glissent souvent dans un copier-coller vers Vercel.
+const CLE_SITE = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim();
 export const ANTI_ROBOT_ACTIF = Boolean(CLE_SITE) && !MODE_TEST;
 
 type Turnstile = {

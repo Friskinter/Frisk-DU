@@ -32,7 +32,7 @@ function abonnementConcerne(evenement: Stripe.Event): { abonnement: string | nul
 
 export async function POST(requete: Request) {
   const client = stripe();
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  const secret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
   const admin = supabaseAdmin();
   if (!client || !secret || !admin) return Response.json({ erreur: "Paiement non configuré." }, { status: 503 });
 
