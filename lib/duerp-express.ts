@@ -25,9 +25,9 @@ export function mesuresDe(m: Pick<ModeleRisque, "prevention">): string[] {
   return mesures.map((x) => x.trim()).filter(Boolean).map((x) => x[0].toUpperCase() + x.slice(1));
 }
 
-// Unités de travail d'un métier, dans l'ordre de la bibliothèque.
-export function unitesDe(metier: Metier) {
-  return [...new Set(metier.risques.map((r) => r.unite))];
+// Unités de travail d'un ou plusieurs métiers, dans l'ordre de la bibliothèque.
+export function unitesDe(...choisis: Metier[]) {
+  return [...new Set(choisis.flatMap((m) => m.risques.map((r) => r.unite)))];
 }
 
 // Maîtrise déduite des mesures cochées : aucune, une partie, toutes. « Très bonne » reste un jugement
@@ -53,8 +53,21 @@ const delais: Record<string, number> = { critique: 30, important: 90, modere: 18
 export type ChoixRisque = { cle: string; modele: ModeleRisque; inclus: boolean; enPlace: string[] };
 export type ChoixAction = { cle: string; risqueCle: string; intitule: string; principe: PrincipePrevention; echeance: string; inclus: boolean };
 
-export function cleRisque(m: ModeleRisque, i: number) {
-  return `${m.unite}|${i}`;
+export function cleRisque(metierId: string, i: number) {
+  return `${metierId}|${i}`;
+}
+
+// Risques des métiers choisis (plusieurs métiers possibles), sans doublon d'un métier à l'autre.
+export function risquesDe(choisis: Metier[]): ChoixRisque[] {
+  const vus = new Set<string>();
+  return choisis.flatMap((metier) =>
+    metier.risques.flatMap((modele, i) => {
+      const id = `${modele.unite}|${modele.activite}|${modele.danger}`.toLowerCase();
+      if (vus.has(id)) return [];
+      vus.add(id);
+      return [{ cle: cleRisque(metier.id, i), modele, inclus: true, enPlace: [] }];
+    }),
+  );
 }
 
 // Ligne du DUERP correspondant au choix, avant enregistrement.

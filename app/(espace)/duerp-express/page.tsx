@@ -3,19 +3,21 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Carte, Chargement, EnTetePage, PastilleCriticite, classeBouton, classeBoutonSecondaire, classeChamp } from "@/components/ui";
-import { metiers, type Metier } from "@/lib/bibliotheque";
+import { domaines, metierPersonnalise, metiersDu, type Metier } from "@/lib/bibliotheque";
 import { dateDuJour, risqueResiduel } from "@/lib/calculs";
-import { actionsProposees, appliquerExpress, cleRisque, ligneDepuis, mesuresDe, unitesDe, type ChoixAction, type ChoixRisque } from "@/lib/duerp-express";
+import { actionsProposees, appliquerExpress, ligneDepuis, mesuresDe, risquesDe, unitesDe, type ChoixAction, type ChoixRisque } from "@/lib/duerp-express";
 import { principesPrevention } from "@/lib/referentiel";
 import { modifier, peutModifier, useDonnees, useSession } from "@/lib/stockage";
 
-const etapes = ["Métier", "Unités de travail", "Risques et mesures", "Plan d'actions"];
+const etapes = ["Domaine et métiers", "Unités de travail", "Risques et mesures", "Plan d'actions"];
 
 export default function DuerpExpress() {
   const donnees = useDonnees();
   const { role } = useSession();
   const [etape, setEtape] = useState(0);
-  const [metier, setMetier] = useState<Metier | null>(null);
+  const [domaine, setDomaine] = useState<string | null>(null);
+  const [choisis, setChoisis] = useState<Metier[]>([]);
+  const [autre, setAutre] = useState("");
   const [unites, setUnites] = useState<{ nom: string; effectif: number; retenue: boolean }[]>([]);
   const [risques, setRisques] = useState<ChoixRisque[]>([]);
   const [actions, setActions] = useState<ChoixAction[]>([]);
@@ -31,10 +33,16 @@ export default function DuerpExpress() {
     );
   }
 
-  const choisirMetier = (m: Metier) => {
-    setMetier(m);
-    setUnites(unitesDe(m).map((nom) => ({ nom, effectif: 1, retenue: true })));
-    setRisques(m.risques.map((modele, i) => ({ cle: cleRisque(modele, i), modele, inclus: true, enPlace: [] })));
+  const basculer = (m: Metier) => setChoisis((cs) => (cs.some((c) => c.id === m.id) ? cs.filter((c) => c.id !== m.id) : [...cs, m]));
+  const ajouterAutre = () => {
+    if (!autre.trim() || !domaine) return;
+    const perso = metierPersonnalise(autre, domaine);
+    setChoisis((cs) => (cs.some((c) => c.id === perso.id) ? cs : [...cs, perso]));
+    setAutre("");
+  };
+  const versUnites = () => {
+    setUnites(unitesDe(...choisis).map((nom) => ({ nom, effectif: 1, retenue: true })));
+    setRisques(risquesDe(choisis));
     setEtape(1);
   };
   const retenues = new Set(unites.filter((u) => u.retenue).map((u) => u.nom));
@@ -85,7 +93,7 @@ export default function DuerpExpress() {
     <div className="space-y-4">
       <EnTetePage
         titre="DUERP express"
-        description="Un premier document unique en quelques minutes : choisissez votre métier, cochez ce qui vous concerne et ce qui est déjà en place. Tout reste modifiable ensuite."
+        description="Un premier document unique en quelques minutes : choisissez votre domaine et vos métiers, cochez ce qui vous concerne et ce qui est déjà en place. Tout reste modifiable ensuite."
       />
       <ol className="flex flex-wrap gap-2 text-sm" aria-label="Étapes">
         {etapes.map((e, i) => (
@@ -99,29 +107,75 @@ export default function DuerpExpress() {
         ))}
       </ol>
 
-      {etape === 0 && (
-        <Carte titre="Quel est votre métier ?">
+      {etape === 0 && !domaine && (
+        <Carte titre="Dans quel domaine travaillez-vous ?">
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {metiers.map((m) => (
+            {domaines.map((d) => (
               <button
-                key={m.id}
+                key={d.id}
                 type="button"
-                onClick={() => choisirMetier(m)}
+                onClick={() => setDomaine(d.id)}
                 className="rounded-sm border border-pierre bg-white p-3 text-left transition-colors hover:border-bronze"
               >
-                <span className="block text-sm font-semibold">{m.nom}</span>
-                <span className="mt-0.5 block text-xs text-gris">{m.description}</span>
+                <span className="flex items-center justify-between gap-2 text-sm font-semibold">
+                  {d.nom}
+                  <span className="text-xs font-normal text-gris">{metiersDu(d.id).length} métiers</span>
+                </span>
+                <span className="mt-0.5 block text-xs text-gris">{d.description}</span>
               </button>
             ))}
           </div>
-          <p className="mt-3 text-xs text-gris">
-            Votre métier n&apos;y est pas ? Choisissez le plus proche ; vous ajouterez vos risques propres dans le DUERP.
-          </p>
+          {choisis.length > 0 && <ResumeChoix choisis={choisis} onContinuer={versUnites} />}
         </Carte>
       )}
 
-      {etape === 1 && metier && (
-        <Carte titre={`Vos unités de travail · ${metier.nom}`}>
+      {etape === 0 && domaine && (
+        <Carte titre={`Vos métiers · ${domaines.find((d) => d.id === domaine)?.nom}`}>
+          <p className="mb-3 text-sm text-ardoise">
+            Cochez le ou les métiers exercés dans votre entreprise. Votre métier n&apos;y est pas ? Ajoutez-le : il reprendra les situations
+            courantes du domaine, que vous compléterez.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {[...metiersDu(domaine), ...choisis.filter((c) => c.domaine === domaine && c.id.startsWith("perso-"))].map((m) => (
+              <label
+                key={m.id}
+                className={`flex cursor-pointer items-start gap-2 rounded-sm border bg-white p-3 text-sm transition-colors ${choisis.some((c) => c.id === m.id) ? "border-bronze ring-1 ring-bronze" : "border-pierre hover:border-bronze"}`}
+              >
+                <input type="checkbox" className="mt-1 accent-bronze" checked={choisis.some((c) => c.id === m.id)} onChange={() => basculer(m)} />
+                <span>
+                  <span className="block font-semibold">{m.nom}</span>
+                  <span className="block text-xs text-gris">{m.description}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <div className="mt-4 flex flex-wrap items-end gap-2">
+            <label className="block min-w-64 flex-1 text-sm">
+              Ajouter un autre métier
+              <input
+                value={autre}
+                placeholder="Ex. : vitrier, tapissier, cordiste…"
+                onChange={(e) => setAutre(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), ajouterAutre())}
+                className={`${classeChamp} mt-1`}
+              />
+            </label>
+            <button type="button" className={`${classeBoutonSecondaire} disabled:opacity-60`} disabled={!autre.trim()} onClick={ajouterAutre}>
+              + Ajouter
+            </button>
+          </div>
+          <div className="mt-4 flex flex-wrap justify-between gap-2">
+            <button type="button" className={classeBoutonSecondaire} onClick={() => setDomaine(null)}>← Autres domaines</button>
+            <button type="button" className={`${classeBouton} disabled:opacity-60`} disabled={!choisis.length} onClick={versUnites}>
+              Continuer →
+            </button>
+          </div>
+          {choisis.length > 0 && <p className="mt-3 text-xs text-gris">Choisis : {choisis.map((c) => c.nom).join(", ")}. Vous pouvez aussi ajouter des métiers d&apos;un autre domaine.</p>}
+        </Carte>
+      )}
+
+      {etape === 1 && (
+        <Carte titre="Vos unités de travail">
           <p className="mb-3 text-sm text-ardoise">
             Les lieux ou métiers qui regroupent des salariés exposés aux mêmes risques. Décochez ceux qui n&apos;existent pas chez vous et
             indiquez combien de salariés y travaillent.
@@ -280,6 +334,15 @@ function Navigation({ retour, suite, suiteDesactivee }: { retour: () => void; su
     <div className="mt-4 flex flex-wrap justify-between gap-2">
       <button type="button" className={classeBoutonSecondaire} onClick={retour}>← Retour</button>
       <button type="button" className={`${classeBouton} disabled:opacity-60`} disabled={suiteDesactivee} onClick={suite}>Continuer →</button>
+    </div>
+  );
+}
+
+function ResumeChoix({ choisis, onContinuer }: { choisis: Metier[]; onContinuer: () => void }) {
+  return (
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-pierre/60 pt-3 text-sm">
+      <p>Choisis : {choisis.map((c) => c.nom).join(", ")}</p>
+      <button type="button" className={classeBouton} onClick={onContinuer}>Continuer →</button>
     </div>
   );
 }
