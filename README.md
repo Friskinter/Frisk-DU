@@ -56,6 +56,106 @@ PostgreSQL de test : `supabase/tests/lancer.sh` (variables `PGHOST`, `PGUSER`…
 
 Elles sont lancées automatiquement par GitHub à chaque demande de fusion (`.github/workflows/verifications.yml`).
 
+## Liste de lancement
+
+À dérouler dans l'ordre le jour de la mise en ligne publique. Chaque étape renvoie à la section qui la
+détaille.
+
+### 1. Avant tout : l'entreprise et les documents légaux
+
+- [ ] Renseigner les informations de Frisk dans [`lib/legal.ts`](lib/legal.ts) : raison sociale, forme
+      juridique, capital, siège, RCS ou SIREN, TVA, téléphone, e-mail, directeur de la publication, ville.
+      Tant qu'un champ manque, il s'affiche en rouge « à compléter » sur les pages publiques et la console
+      Frisk le signale.
+- [ ] Renseigner `regionDonnees` (même fichier) : *Supabase > Project Settings > General > Region*.
+- [ ] Faire relire par un juriste les CGV ([`app/legal/cgv`](app/legal/cgv/page.tsx)), et idéalement
+      CGU, politique de confidentialité et accord de traitement.
+- [ ] Accepter les accords de traitement des données (DPA) de Supabase, Vercel, Stripe et Resend
+      (proposés dans leurs tableaux de bord ou sur leurs sites).
+- [ ] Tenir le registre des traitements RGPD de Frisk (comptes clients, données des salariés des
+      clients, paiements).
+
+### 2. Supabase (base de production)
+
+- [ ] **Passer au plan payant** : en gratuit, un projet sans activité pendant une semaine est mis en
+      pause et les sauvegardes quotidiennes ne sont pas incluses.
+- [ ] Vérifier que `supabase/schema.sql` et **toutes** les migrations de `supabase/migrations` ont
+      été exécutées (la dernière : `017_abonnements.sql`).
+- [ ] Compte administrateur Frisk créé (voir [Mise en place de Supabase](#mise-en-place-de-supabase-une-seule-fois))
+      et **double authentification activée** dessus.
+- [ ] *Authentication > Sign In / Providers* : **Allow new users to sign up** et **Confirm email**
+      activés (voir [Inscription libre et essai gratuit](#inscription-libre-et-essai-gratuit)).
+- [ ] *Authentication > URL Configuration* : *Site URL* = adresse définitive (ex.
+      `https://app.frisk.fr`), et `https://<adresse>/auth/callback` dans *Redirect URLs*.
+- [ ] **E-mails d'authentification par un vrai serveur d'envoi** : *Authentication > Emails > SMTP
+      Settings*. Le serveur intégré de Supabase n'envoie qu'une poignée d'e-mails par heure et ne sert
+      qu'aux essais : sans SMTP personnalisé, les confirmations d'inscription se perdent. Resend fournit
+      un accès SMTP (même compte que les alertes).
+- [ ] *Authentication > Emails > Templates* : traduire en français « Confirm signup » et « Reset
+      password ».
+- [ ] *Authentication > Attack Protection* : activer la protection contre les mots de passe divulgués
+      si le plan le permet. **Le captcha attend l'étape 6.**
+
+### 3. Envoi des e-mails (Resend)
+
+- [ ] Créer le compte Resend et **vérifier le domaine d'envoi** (enregistrements DNS SPF et DKIM
+      fournis par Resend), sinon les e-mails partent en courrier indésirable.
+- [ ] Noter la clé d'API (`RESEND_API_KEY`) et choisir l'expéditeur (`ALERTES_EXPEDITEUR`, ex.
+      `Frisk DU <alertes@frisk.fr>`).
+
+### 4. Stripe (paiement réel)
+
+- [ ] Activer le compte Stripe (informations de la société, compte bancaire).
+- [ ] **Refaire en mode réel** tout ce qui a été préparé en mode test : rien n'est copié d'un mode à
+      l'autre. Produit et six prix avec leurs clés de recherche, portail client, webhook (voir
+      [Paiement en ligne](#paiement-en-ligne-stripe)).
+- [ ] Noter la clé secrète réelle (`sk_live_…`) et le secret du webhook réel (`whsec_…`).
+- [ ] Facultatif mais conseillé : TVA (*Paramètres > Taxes*) et relances des impayés.
+
+### 5. Vercel (hébergement)
+
+- [ ] Créer le projet à partir du dépôt GitHub. **Plan Pro** : le plan gratuit est réservé aux usages
+      non commerciaux.
+- [ ] Brancher le nom de domaine définitif (*Settings > Domains*) ; le HTTPS est automatique.
+- [ ] Ajouter les variables d'environnement (voir [Mise en ligne](#mise-en-ligne-vercel)) :
+      `SUPABASE_SECRET_KEY`, `URL_APPLICATION` (adresse définitive), `CRON_SECRET` (longue
+      chaîne aléatoire), `RESEND_API_KEY`, `ALERTES_EXPEDITEUR`, `STRIPE_SECRET_KEY`,
+      `STRIPE_WEBHOOK_SECRET`. **Jamais** `NEXT_PUBLIC_FRISK_E2E` (la compilation la refuse).
+- [ ] Déployer, puis vérifier que la tâche planifiée `/api/alertes` apparaît dans *Settings > Cron Jobs*.
+
+### 6. Protection anti-robot (Turnstile)
+
+Dans cet ordre, sinon plus personne ne peut se connecter (voir [Protection anti-robot](#protection-anti-robot)) :
+
+- [ ] Cloudflare : créer le widget Turnstile pour le domaine définitif.
+- [ ] Vercel : ajouter `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, **redéployer**, vérifier que la vérification
+      s'affiche sur `/inscription` et `/connexion`.
+- [ ] Supabase : *Attack Protection* > activer le captcha (Turnstile, clé secrète).
+
+### 7. Essais en conditions réelles
+
+- [ ] **Inscription** avec une vraie adresse : e-mail de confirmation reçu (en français, pas en
+      indésirables), espace ouvert, essai de 7 jours affiché.
+- [ ] **Connexion**, déconnexion, **mot de passe oublié** jusqu'au bout.
+- [ ] **Paiement** avec une vraie carte sur la plus petite offre : abonnement actif dans l'espace, puis
+      rembourser et résilier depuis Stripe ; vérifier que l'espace suit (webhook).
+- [ ] **Signalement terrain** : scanner le QR code depuis un téléphone, envoyer un signalement avec
+      photo, vérifier l'e-mail reçu par le responsable.
+- [ ] **Alertes** : aperçu sans envoi, qui liste les e-mails qui partiraient :
+      `curl -H "Authorization: Bearer <CRON_SECRET>" "https://<adresse>/api/alertes?apercu=1"`
+- [ ] **PDF** : document unique, rapport annuel, registre des accidents.
+- [ ] Console Frisk > « Erreurs rencontrées » : rien d'anormal après ces essais.
+
+### 8. Ouverture
+
+- [ ] Site vitrine Frisk : faire pointer le lien « Espace client » et les boutons d'essai gratuit vers
+      l'adresse définitive.
+- [ ] Site vitrine Frisk : autoriser les moteurs de recherche (`INDEXATION_AUTORISEE = true` dans
+      son `next.config.ts`). Frisk DU, lui, reste toujours hors des moteurs.
+- [ ] Supprimer les comptes et entreprises créés pendant les essais (console Frisk et Stripe).
+- [ ] Les jours suivants : surveiller la console (erreurs), Stripe (paiements, webhooks en échec) et
+      Resend (e-mails refusés).
+
 ## Mise en ligne (Vercel)
 
 Importer le dépôt sur Vercel et ajouter les variables d'environnement (détail dans `.env.example`) :
