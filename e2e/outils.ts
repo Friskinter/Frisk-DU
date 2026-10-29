@@ -8,6 +8,7 @@ export const JETON_TEST = "a".repeat(64);
 export const pages = [
   { chemin: "/", titre: "Tableau de bord" },
   { chemin: "/duerp", titre: "Document unique (DUERP)" },
+  { chemin: "/duerp-express", titre: "DUERP express" },
   { chemin: "/actions", titre: "Plan d'actions" },
   { chemin: "/accidents", titre: "Accidents et presque-accidents" },
   { chemin: "/formations", titre: "Formations et habilitations" },
