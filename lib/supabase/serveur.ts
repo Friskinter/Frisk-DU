@@ -25,7 +25,7 @@ export async function supabaseServeur() {
 // après avoir vérifié que l'appelant est un administrateur Frisk (ou, pour le signalement terrain,
 // que le lien de signalement est valide).
 export function supabaseAdmin() {
-  const cle = process.env.SUPABASE_SECRET_KEY;
+  const cle = process.env.SUPABASE_SECRET_KEY?.trim();
   if (!cle) return null;
   return createClient(supabaseUrl, cle, {
     auth: { autoRefreshToken: false, persistSession: false },

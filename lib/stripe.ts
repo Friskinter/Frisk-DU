@@ -8,7 +8,7 @@ import { supabaseServeur } from "./supabase/serveur";
 // STRIPE_SECRET_KEY (clé secrète) et STRIPE_WEBHOOK_SECRET (secret de signature des notifications).
 
 export function stripe() {
-  const cle = process.env.STRIPE_SECRET_KEY;
+  const cle = process.env.STRIPE_SECRET_KEY?.trim();
   return cle ? new Stripe(cle) : null;
 }
 
