@@ -5,7 +5,8 @@ import { supabaseClePublique, supabaseUrl } from "@/lib/supabase/config";
 
 // /api/alertes est appelée par le planificateur, sans session : elle vérifie son propre secret.
 // Les pages /legal/ (mentions légales, CGU, confidentialité) sont lisibles sans compte.
-const pagesPubliques = ["/connexion", "/auth/", "/api/alertes", "/legal/"];
+// /signaler/ et /api/signalement : formulaire de signalement des salariés, protégé par le jeton du lien.
+const pagesPubliques = ["/connexion", "/auth/", "/api/alertes", "/legal/", "/signaler/", "/api/signalement"];
 
 // Rafraîchit la session Supabase et renvoie vers la connexion les visiteurs non connectés.
 export async function proxy(requete: NextRequest) {

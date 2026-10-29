@@ -139,6 +139,15 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
       detail: liste(signalementsNonAnalyses.map(nomEvenement)),
     });
   }
+  // Signalés par les salariés (QR code) et pas encore analysés : à prendre en compte sans attendre.
+  const signalesTerrain = evenements.filter((e) => e.signalement && !analyseFaite(e) && e.date > decalerJours(aujourdhui, -30));
+  if (signalesTerrain.length) {
+    alertes.push({
+      id: "signalements-terrain", gravite: "importante", categorie: "Accidents", lien: lienEvenement(signalesTerrain),
+      titre: `${pluriel(signalesTerrain.length, "signalement")} reçu${signalesTerrain.length > 1 ? "s" : ""} du terrain`,
+      detail: `À examiner et à analyser : ${liste(signalesTerrain.map(nomEvenement))}.`,
+    });
+  }
   const aRapprocher = evenements.filter((e) => (!e.risqueId || !e.reevalueLe) && e.date <= decalerJours(aujourdhui, -7));
   if (aRapprocher.length) {
     alertes.push({

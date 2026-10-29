@@ -129,3 +129,8 @@ export async function telechargerProtocole(donnees: Donnees, protocoleId: string
     `Protocole de securite - ${protocole.transporteur || "transporteur"} - ${aujourdhui}.pdf`,
   );
 }
+
+export async function telechargerAfficheSignalement(entreprise: string, lien: string, qr: string) {
+  const { AfficheSignalement } = await import("./affiche-signalement");
+  await enregistrerPdf(createElement(AfficheSignalement, { entreprise, lien, qr, logo: logo() }), `Affiche signalement - ${entreprise}.pdf`);
+}

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
+import { LienSignalement } from "@/components/lien-signalement";
 import {
   Carte,
   Chargement,
@@ -31,6 +32,7 @@ import {
   nouvelEvenement,
   peutAllerAuRegistre,
 } from "@/lib/evenements";
+import { deposerAttestation, liensPhotos, ouvrirAttestation, supprimerAttestation, TYPES_ACCEPTES } from "@/lib/attestations";
 import { telechargerRegistreBenins } from "@/lib/pdf/telecharger";
 import {
   declarations,
@@ -91,6 +93,8 @@ function Accidents() {
   const [annee, setAnnee] = useState("");
   const [aTraiter, setATraiter] = useState(false);
   const [guide, setGuide] = useState(false);
+  const [signalement, setSignalement] = useState(parametres.get("signalement") === "1");
+  const { entrepriseId } = useSession();
 
   if (!donnees) return <Chargement />;
   const modifiable = peutModifier(role, "tout");
@@ -141,6 +145,9 @@ function Accidents() {
             <button type="button" className={classeBoutonSecondaire} onClick={() => setGuide(!guide)}>
               {guide ? "Masquer la méthode" : "? Méthode"}
             </button>
+            <button type="button" className={classeBoutonSecondaire} aria-expanded={signalement} onClick={() => setSignalement(!signalement)}>
+              📱 Signalement par les salariés
+            </button>
             <button
               type="button"
               className={classeBoutonSecondaire}
@@ -168,6 +175,11 @@ function Accidents() {
       />
 
       {guide && <Methode />}
+      {signalement && (
+        <div className="mb-4">
+          <LienSignalement entrepriseId={entrepriseId} entreprise={donnees.entreprise} modifiable={modifiable} />
+        </div>
+      )}
 
       <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Indicateur
@@ -307,6 +319,8 @@ function LigneEvenement({
       <span className="block whitespace-nowrap tabular-nums">
         {e.date ? formaterDate(e.date) : <span className="text-gris">Date ?</span>}
         {e.heure && <span className="block text-xs text-gris">{e.heure}</span>}
+        {e.signalement && <span className="block text-xs text-bronze-fonce">📱 Signalé</span>}
+        {!!e.photos?.length && <span className="block text-xs text-gris">📷 {e.photos.length}</span>}
       </span>
       <span className="block">
         <PastilleType type={e.type} />
@@ -382,6 +396,7 @@ function FicheEvenement({
         evenements: d.evenements.filter((x) => x.id !== e.id),
         actions: d.actions.map((a) => (a.evenementId === e.id ? { ...a, evenementId: undefined } : a)),
       }));
+      e.photos?.forEach((p) => void supprimerAttestation(p.chemin));
       onFermer();
     }
   };
@@ -389,6 +404,13 @@ function FicheEvenement({
 
   return (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+      {e.signalement && (
+        <p className="rounded-sm border border-bronze/60 bg-bronze/10 p-3 text-sm lg:col-span-2">
+          📱 Signalé depuis le terrain par <strong>{e.signalement.par}</strong>, reçu le{" "}
+          {new Date(e.signalement.recuLe).toLocaleString("fr-FR", { dateStyle: "short", timeStyle: "short" })}. Vérifiez les informations, rattachez la
+          personne concernée à votre liste de salariés et complétez l&apos;événement.
+        </p>
+      )}
       <Section
         numero={1}
         titre="Les faits"
@@ -522,6 +544,7 @@ function FicheEvenement({
 
       <ReportDuerp evenement={e} donnees={donnees} aujourdhui={aujourdhui} />
       <ActionsCorrectives evenement={e} donnees={donnees} />
+      <Photos evenement={e} />
 
       <div className="flex flex-wrap items-center justify-between gap-3 lg:col-span-2">
         <Link href={`/journal?element=${e.id}`} className="text-xs text-ardoise underline">
@@ -868,5 +891,79 @@ function Methode() {
         </ol>
       </div>
     </div>
+  );
+}
+
+// Photos de l'événement : prises par le salarié qui l'a signalé, ou ajoutées ensuite.
+function Photos({ evenement: e }: { evenement: Evenement }) {
+  const { entrepriseId } = useSession();
+  const [liens, setLiens] = useState<Record<string, string>>({});
+  const [erreur, setErreur] = useState("");
+  const photos = e.photos ?? [];
+  const chemins = photos.map((p) => p.chemin).join("|");
+
+  useEffect(() => {
+    if (!chemins) return;
+    let actif = true;
+    void liensPhotos(chemins.split("|")).then((l) => actif && setLiens(l));
+    return () => {
+      actif = false;
+    };
+  }, [chemins]);
+
+  const ajouter = async (fichier: File | undefined) => {
+    if (!fichier) return;
+    setErreur("");
+    try {
+      const photo = await deposerAttestation(entrepriseId, e.id, fichier);
+      modifier((d) => ({ ...d, evenements: d.evenements.map((x) => (x.id === e.id ? { ...x, photos: [...(x.photos ?? []), photo] } : x)) }));
+    } catch (err) {
+      setErreur(err instanceof Error ? err.message : "L'envoi de la photo a échoué.");
+    }
+  };
+
+  const retirer = (chemin: string) => {
+    if (!confirm("Supprimer cette photo ?")) return;
+    modifier((d) => ({ ...d, evenements: d.evenements.map((x) => (x.id === e.id ? { ...x, photos: (x.photos ?? []).filter((p) => p.chemin !== chemin) } : x)) }));
+    void supprimerAttestation(chemin);
+  };
+
+  return (
+    <Carte titre="Photos" className="lg:col-span-2">
+      {photos.length === 0 && <p className="mb-2 text-sm text-gris">Aucune photo.</p>}
+      {photos.length > 0 && (
+        <ul className="mb-3 flex flex-wrap gap-3">
+          {photos.map((p, n) => (
+            <li key={p.chemin} className="relative">
+              <a
+                href="#"
+                onClick={(x) => {
+                  x.preventDefault();
+                  void ouvrirAttestation(p.chemin);
+                }}
+                className="block h-28 w-28 overflow-hidden rounded-sm border border-pierre/70 bg-marbre"
+                aria-label={`Ouvrir la photo ${n + 1} en grand`}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- lien temporaire du stockage privé */}
+                {liens[p.chemin] && <img src={liens[p.chemin]} alt="" className="h-full w-full object-cover" />}
+              </a>
+              <button
+                type="button"
+                onClick={() => retirer(p.chemin)}
+                aria-label={`Supprimer la photo ${n + 1}`}
+                className="absolute -right-2 -top-2 h-6 w-6 rounded-full bg-encre text-xs text-white disabled:hidden"
+              >
+                ✕
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {erreur && <p role="alert" className="mb-2 text-sm text-[#b42318]">{erreur}</p>}
+      <label className={`${classeBoutonSecondaire} cursor-pointer has-[:disabled]:hidden`}>
+        📷 Ajouter une photo
+        <input type="file" accept={TYPES_ACCEPTES.filter((t) => t.startsWith("image/")).join(",")} className="sr-only" onChange={(x) => { void ajouter(x.target.files?.[0]); x.target.value = ""; }} />
+      </label>
+    </Carte>
   );
 }

@@ -53,3 +53,11 @@ export async function ouvrirAttestation(chemin: string) {
 export async function supprimerAttestation(chemin: string) {
   await supabaseNavigateur().storage.from(BUCKET).remove([chemin]);
 }
+
+// Liens temporaires (une heure) pour afficher des photos dans la page.
+export async function liensPhotos(chemins: string[]): Promise<Record<string, string>> {
+  if (!chemins.length) return {};
+  const { data } = await supabaseNavigateur().storage.from(BUCKET).createSignedUrls(chemins, 3600);
+  const liens = (data ?? []) as { path: string | null; signedUrl: string }[];
+  return Object.fromEntries(liens.filter((d) => d.signedUrl && d.path).map((d) => [d.path!, d.signedUrl]));
+}

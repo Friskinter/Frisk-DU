@@ -21,3 +21,4 @@ psql -At -f tests/08_double_authentification.test.sql | grep -v '^$' | tail -1
 psql -At -f tests/09_suppression_client.test.sql | grep -v '^$' | tail -1
 psql -At -f tests/10_entreprises_exterieures.test.sql | grep -v '^$' | tail -1
 psql -At -f tests/11_protocoles_securite.test.sql | grep -v '^$' | tail -1
+psql -At -f tests/12_signalement_terrain.test.sql | grep -v '^$' | tail -1
