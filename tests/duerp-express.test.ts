@@ -1,16 +1,44 @@
 import { describe, expect, it } from "vitest";
-import { metiers } from "@/lib/bibliotheque";
+import { domaines, metierPersonnalise, metiers, metiersDu } from "@/lib/bibliotheque";
 import { niveauDe, risqueResiduel } from "@/lib/calculs";
 import { donneesVides } from "@/lib/demo";
-import { actionsProposees, appliquerExpress, cleRisque, ligneDepuis, maitriseDepuis, mesuresDe, principeDe, unitesDe, type ChoixRisque } from "@/lib/duerp-express";
+import { actionsProposees, appliquerExpress, ligneDepuis, maitriseDepuis, mesuresDe, principeDe, risquesDe, unitesDe, type ChoixRisque } from "@/lib/duerp-express";
 import { famillesDangers, facteursPenibilite } from "@/lib/referentiel";
 
 const boulangerie = metiers.find((m) => m.id === "boulangerie")!;
-const choix = (m = boulangerie): ChoixRisque[] => m.risques.map((modele, i) => ({ cle: cleRisque(modele, i), modele, inclus: true, enPlace: [] }));
+const choix = (m = boulangerie): ChoixRisque[] => risquesDe([m]);
 
 describe("bibliothèque par métier", () => {
-  it("couvre une vingtaine de métiers, avec des dangers et facteurs de pénibilité connus", () => {
-    expect(metiers.length).toBeGreaterThanOrEqual(20);
+  it("classe plus de 70 métiers en dix domaines", () => {
+    expect(metiers.length).toBeGreaterThanOrEqual(70);
+    expect(domaines).toHaveLength(10);
+    for (const d of domaines) expect(metiersDu(d.id).length, d.nom).toBeGreaterThanOrEqual(3);
+    for (const m of metiers) expect(domaines.map((d) => d.id), m.nom).toContain(m.domaine);
+    expect(metiersDu("btp").map((m) => m.nom)).toEqual(expect.arrayContaining(["Couverture et zinguerie", "Maçonnerie et gros œuvre", "Électricité du bâtiment"]));
+  });
+
+  it("propose les situations du domaine pour un métier ajouté par le client", () => {
+    for (const d of domaines) {
+      const perso = metierPersonnalise("  Vitrier ", d.id);
+      expect(perso).toMatchObject({ nom: "Vitrier", domaine: d.id });
+      expect(perso.id).toBe(`perso-${d.id}-vitrier`);
+      expect(perso.risques.length, d.nom).toBeGreaterThanOrEqual(5);
+      for (const r of perso.risques) expect(famillesDangers).toContain(r.danger);
+    }
+    expect(unitesDe(metierPersonnalise("Vitrier", "btp"))).toContain("Vitrier");
+  });
+
+  it("réunit plusieurs métiers sans doublon", () => {
+    const garage = metiers.find((m) => m.id === "garage")!;
+    const pneus = metiers.find((m) => m.id === "pneus")!;
+    const ensemble = risquesDe([garage, pneus]);
+    expect(new Set(ensemble.map((r) => r.cle)).size).toBe(ensemble.length);
+    // Les situations communes (incendie, électricité…) n'apparaissent qu'une fois.
+    expect(ensemble.filter((r) => r.modele.danger === "Incendie et explosion" && r.modele.unite === "Toute l'entreprise")).toHaveLength(1);
+    expect(unitesDe(garage, pneus)).toEqual(expect.arrayContaining(["Atelier mécanique", "Atelier", "Toute l'entreprise"]));
+  });
+
+  it("couvre chaque métier avec des dangers et facteurs de pénibilité connus", () => {
     expect(new Set(metiers.map((m) => m.id)).size).toBe(metiers.length);
     for (const m of metiers) {
       expect(m.risques.length, m.nom).toBeGreaterThanOrEqual(5);

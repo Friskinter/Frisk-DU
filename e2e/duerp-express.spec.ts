@@ -15,7 +15,9 @@ test.describe("DUERP express", () => {
     await expect(page.getByRole("heading", { level: 1, name: "DUERP express" })).toBeVisible();
     await verifierAccessibilite(page);
 
-    await page.getByRole("button", { name: /Boulangerie et pâtisserie/ }).click();
+    await page.getByRole("button", { name: /Métiers de bouche/ }).click();
+    await page.getByRole("checkbox", { name: /Boulangerie et pâtisserie/ }).check();
+    await page.getByRole("button", { name: "Continuer →" }).click();
     // Unités : pas de vente dans ce fournil de production, 3 boulangers au fournil.
     await page.getByRole("checkbox", { name: "Vente" }).uncheck();
     await page.getByRole("spinbutton").first().fill("3");
@@ -48,13 +50,32 @@ test.describe("DUERP express", () => {
       JSON.stringify({ statut: "essai", essaiFin: new Date(Date.now() + 5 * 86_400_000).toISOString() }),
     ]);
     await ouvrir(page, "/duerp-express");
-    await page.getByRole("button", { name: /Garage automobile/ }).click();
+    await page.getByRole("button", { name: /Automobile et réparation/ }).click();
+    await page.getByRole("checkbox", { name: /Garage automobile/ }).check();
+    await page.getByRole("button", { name: "Continuer →" }).click();
     await page.getByRole("button", { name: "Continuer →" }).click();
     await page.getByRole("button", { name: "Continuer →" }).click();
     await page.getByRole("button", { name: "Ajouter à mon document unique" }).click();
     await expect(page.getByRole("status").filter({ hasText: "ajouté" })).toBeVisible();
     await expect(page.getByText("Modification refusée")).toHaveCount(0);
   });
+});
+
+test("plusieurs métiers, dont un métier ajouté à la main", async ({ page }) => {
+  await ouvrir(page, "/duerp-express");
+  await page.getByRole("button", { name: /^BTP/ }).click();
+  await page.getByRole("checkbox", { name: /Couverture et zinguerie/ }).check();
+  await page.getByLabel("Ajouter un autre métier").fill("Cordiste");
+  await page.getByRole("button", { name: "+ Ajouter" }).click();
+  await expect(page.getByRole("checkbox", { name: /Cordiste/ })).toBeChecked();
+  await verifierAccessibilite(page);
+  await page.getByRole("button", { name: "← Autres domaines" }).click();
+  await page.getByRole("button", { name: /Industrie/ }).click();
+  await page.getByRole("checkbox", { name: /Chaudronnerie et soudure/ }).check();
+  await page.getByRole("button", { name: "Continuer →" }).click();
+  await expect(page.getByRole("checkbox", { name: "Toiture" })).toBeChecked();
+  await expect(page.getByRole("checkbox", { name: "Cordiste" })).toBeChecked();
+  await expect(page.getByRole("checkbox", { name: "Atelier" })).toBeChecked();
 });
 
 test.describe("lecteur", () => {

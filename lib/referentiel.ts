@@ -353,6 +353,7 @@ export const famillesDangers = [
   "Agents biologiques",
   "Bruit",
   "Vibrations",
+  "Rayonnements",
   "Ambiances thermiques",
   "Éclairage insuffisant",
   "Travail sur écran",

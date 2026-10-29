@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { PastilleCriticite, classeBouton, classeBoutonSecondaire, classeChamp } from "@/components/ui";
-import { metiers, type Metier, type ModeleRisque } from "@/lib/bibliotheque";
+import { domaines, metiersDu, type Metier, type ModeleRisque } from "@/lib/bibliotheque";
 import { nouvelleAction } from "@/lib/actions";
 import { nouvelId } from "@/lib/calculs";
 import { facteursPenibilite } from "@/lib/referentiel";
@@ -103,18 +103,25 @@ export function BibliothequeRisques({
         </div>
 
         {!metier ? (
-          <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-3">
-            {metiers.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => choisir(m)}
-                className="rounded-sm border border-pierre/70 bg-white p-4 text-left transition-colors hover:border-bronze"
-              >
-                <p className="font-medium">{m.nom}</p>
-                <p className="mt-1 text-xs text-ardoise">{m.description}</p>
-                <p className="mt-2 text-xs text-bronze-fonce">{m.risques.length} situations</p>
-              </button>
+          <div className="space-y-5 p-5">
+            {domaines.map((d) => (
+              <section key={d.id}>
+                <h3 className="mb-2 text-sm font-semibold uppercase tracking-wider text-ardoise">{d.nom}</h3>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {metiersDu(d.id).map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => choisir(m)}
+                      className="rounded-sm border border-pierre/70 bg-white p-4 text-left transition-colors hover:border-bronze"
+                    >
+                      <p className="font-medium">{m.nom}</p>
+                      <p className="mt-1 text-xs text-ardoise">{m.description}</p>
+                      <p className="mt-2 text-xs text-bronze-fonce">{m.risques.length} situations</p>
+                    </button>
+                  ))}
+                </div>
+              </section>
             ))}
           </div>
         ) : (

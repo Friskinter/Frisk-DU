@@ -1,51 +1,12 @@
-// Bibliothèque de risques par métier : situations courantes pour démarrer un DUERP.
+// Bibliothèque de risques par métier, classée par domaine d'activité, pour démarrer un DUERP.
 // Les cotations sont des valeurs typiques, à ajuster à la situation réelle de l'entreprise.
 
-export type ModeleRisque = {
-  unite: string;
-  activite: string;
-  danger: string;
-  risque: string;
-  gravite: number;
-  frequence: number;
-  prevention: string; // mesure de prévention conseillée
-  penibilite?: string; // code du facteur de pénibilité éventuel
-};
+import { b, bureau, communs, r, type Metier, type ModeleRisque } from "./bibliotheque-base";
+import { complements } from "./bibliotheque-complements";
 
-export type Metier = {
-  id: string;
-  nom: string;
-  description: string;
-  risques: ModeleRisque[];
-};
+export type { Metier, ModeleRisque };
 
-const r = (
-  unite: string,
-  activite: string,
-  danger: string,
-  risque: string,
-  gravite: number,
-  frequence: number,
-  prevention: string,
-  penibilite?: string,
-): ModeleRisque => ({ unite, activite, danger, risque, gravite, frequence, prevention, penibilite });
-
-// Situations communes à presque toutes les entreprises.
-const communs: ModeleRisque[] = [
-  r("Toute l'entreprise", "Déplacements dans les locaux", "Chute de plain-pied", "Entorse, fracture", 2, 3, "Sols dégagés et entretenus, nettoyage des zones humides, éclairage suffisant des passages"),
-  r("Toute l'entreprise", "Utilisation des installations électriques", "Électricité", "Électrisation, brûlure", 4, 1, "Vérification périodique des installations, interdiction des multiprises en cascade"),
-  r("Toute l'entreprise", "Présence dans les locaux", "Incendie et explosion", "Brûlures, intoxication par les fumées", 4, 1, "Extincteurs vérifiés, consignes et plan d'évacuation affichés, exercice annuel, désignation de guides-files"),
-];
-
-const bureau: ModeleRisque[] = [
-  r("Bureaux", "Travail sur écran", "Travail sur écran", "Fatigue visuelle, TMS de la nuque et des poignets", 2, 4, "Postes réglables (écran, siège, éclairage), pauses régulières, sensibilisation aux bonnes postures"),
-  r("Bureaux", "Organisation et charge de travail", "Risques psychosociaux", "Stress, épuisement professionnel", 3, 3, "Entretiens réguliers, répartition de la charge, droit à la déconnexion, procédure de signalement"),
-  r("Bureaux", "Déplacements professionnels", "Déplacements routiers", "Accident de la route", 4, 2, "Privilégier la visioconférence, planification des trajets, entretien des véhicules, pas de téléphone au volant"),
-  r("Bureaux", "Rangement et archivage", "Chute de hauteur", "Chute d'un escabeau, fracture", 3, 1, "Escabeau stable avec garde-corps, archives lourdes rangées en bas"),
-  r("Bureaux", "Accueil du public", "Agression physique ou verbale", "Choc psychologique, blessures", 3, 2, "Formation à la gestion des conflits, aménagement de l'accueil, procédure d'alerte"),
-];
-
-export const metiers: Metier[] = [
+const existants: Omit<Metier, "domaine">[] = [
   {
     id: "bureau",
     nom: "Bureaux et services",
@@ -85,8 +46,8 @@ export const metiers: Metier[] = [
   },
   {
     id: "btp",
-    nom: "BTP",
-    description: "Gros œuvre, second œuvre, rénovation, travaux publics.",
+    nom: "Maçonnerie et gros œuvre",
+    description: "Maçons, gros œuvre, rénovation, petits travaux de bâtiment.",
     risques: [
       r("Chantier", "Travail en hauteur (toiture, échafaudage)", "Chute de hauteur", "Fracture grave, décès", 4, 3, "Protections collectives (garde-corps, filets), échafaudages vérifiés, harnais en dernier recours, formation"),
       r("Chantier", "Port de matériaux", "Manutention manuelle", "Lombalgies, hernie discale", 3, 4, "Aides à la manutention (grue, monte-charge, diable), sacs de 25 kg maximum, travail en binôme", "manutention"),
@@ -117,7 +78,7 @@ export const metiers: Metier[] = [
   },
   {
     id: "atelier",
-    nom: "Industrie et atelier",
+    nom: "Atelier de fabrication",
     description: "Fabrication, mécanique, métallerie, menuiserie.",
     risques: [
       r("Atelier", "Utilisation de machines", "Machines et outils", "Coupure, écrasement, amputation", 4, 3, "Machines conformes avec protecteurs, vérifications périodiques, consignation pour la maintenance, formation"),
@@ -364,3 +325,76 @@ export const metiers: Metier[] = [
     ],
   },
 ];
+
+export type Domaine = { id: string; nom: string; description: string };
+
+export const domaines: Domaine[] = [
+  { id: "btp", nom: "BTP", description: "Gros œuvre, second œuvre, travaux publics, rénovation" },
+  { id: "industrie", nom: "Industrie", description: "Fabrication, mécanique, métallerie, agroalimentaire, imprimerie" },
+  { id: "commerce", nom: "Commerce et distribution", description: "Magasins, grandes surfaces, négoce, pharmacies" },
+  { id: "bouche", nom: "Métiers de bouche", description: "Boulangerie, boucherie, poissonnerie, traiteur" },
+  { id: "hotellerie-restauration", nom: "Hôtellerie et restauration", description: "Restaurants, bars, hôtels, cuisines collectives" },
+  { id: "transport-logistique", nom: "Transport et logistique", description: "Transport de marchandises et de personnes, entrepôts, livraison" },
+  { id: "sante-social", nom: "Santé et action sociale", description: "EHPAD, aide à domicile, cabinets de soins, petite enfance" },
+  { id: "services", nom: "Services", description: "Bureaux, nettoyage, coiffure, sécurité, formation" },
+  { id: "automobile", nom: "Automobile et réparation", description: "Garages, carrosserie, pneus, contrôle technique, dépannage" },
+  { id: "agriculture-environnement", nom: "Agriculture et environnement", description: "Exploitations agricoles, espaces verts, forêt, déchets" },
+];
+
+const domaineDe: Record<string, string> = {
+  bureau: "services",
+  commerce: "commerce",
+  restauration: "hotellerie-restauration",
+  btp: "btp",
+  logistique: "transport-logistique",
+  atelier: "industrie",
+  garage: "automobile",
+  nettoyage: "services",
+  "aide-domicile": "sante-social",
+  coiffure: "services",
+  boulangerie: "bouche",
+  boucherie: "bouche",
+  transport: "transport-logistique",
+  hotellerie: "hotellerie-restauration",
+  ehpad: "sante-social",
+  menuiserie: "btp",
+  electricite: "btp",
+  plomberie: "btp",
+  paysagiste: "agriculture-environnement",
+  agriculture: "agriculture-environnement",
+  creche: "sante-social",
+};
+
+export const metiers: Metier[] = [...existants.map((m) => ({ ...m, domaine: domaineDe[m.id] })), ...complements].sort((x, y) =>
+  x.nom.localeCompare(y.nom, "fr"),
+);
+
+export function metiersDu(domaine: string) {
+  return metiers.filter((m) => m.domaine === domaine);
+}
+
+// Risques de départ d'un métier absent de la bibliothèque : situations communes au domaine.
+const socles: Record<string, (u: string) => ModeleRisque[]> = {
+  btp: (u) => [b.hauteur(u), b.manutention(u, "Port de matériaux", 3, 4), b.postures(u), b.poussieres(u, "Découpe, perçage, ponçage", "Maladies respiratoires (silice, poussières)"), b.bruit(u, "Utilisation d'outils électroportatifs"), b.chaleur(u), b.route()],
+  industrie: (u) => [b.machines(u, "Utilisation des machines de production"), b.bruit(u), b.manutention(u, "Manutention de pièces et de matières"), b.repetitif(u), b.chimique(u, "Utilisation de produits (huiles, solvants, colles)", "Dermatoses, intoxication"), b.engins(u, "Circulation des chariots dans l'atelier"), ...communs],
+  commerce: (u) => [b.manutention(u, "Réception et mise en rayon"), b.escabeau(u), b.coupures(u, "Ouverture des colis"), b.agression(u), b.postures(u, "Travail debout prolongé"), ...communs],
+  bouche: (u) => [b.coupures(u), b.machines(u, "Utilisation des machines de préparation"), b.froid(u), b.glissade(u), b.manutention(u, "Réception des marchandises"), b.entretien(u), ...communs],
+  "hotellerie-restauration": (u) => [b.coupures(u), b.glissade(u), b.manutention(u, "Réception des livraisons"), b.postures(u, "Service et travail debout"), b.rps(u, "Horaires coupés et pics d'activité", "Stress, fatigue"), b.entretien(u), ...communs],
+  "transport-logistique": (u) => [b.route(u, "Conduite"), b.manutention(u, "Chargement et déchargement", 3, 4), b.engins(u), b.nuit(u, "Horaires décalés"), b.isole(u, "Travail seul sur la route"), b.agression(u, "Relation avec les clients")],
+  "sante-social": (u) => [b.manutention(u, "Aide à la mobilisation des personnes", 3, 4), b.biologique(u, "Soins et contact avec les patients"), b.agression(u, "Relation avec les patients et les familles"), b.rps(u, "Charge émotionnelle et de travail"), b.route(u, "Déplacements entre les lieux d'intervention"), ...communs],
+  services: (u) => [b.ecran(u), b.rps(u), b.route(), b.agression(u, "Accueil du public"), b.escabeau(u), ...communs],
+  automobile: (u) => [b.chuteObjets(u, "Travail sous véhicule"), b.chimique(u, "Vidanges, nettoyage des pièces", "Dermatoses, intoxication", 3, 4), b.postures(u, "Travail sous capot et sous véhicule"), b.manutention(u, "Démontage de pièces lourdes"), b.electrique(u, "Intervention sur véhicules électriques ou hybrides"), b.bruit(u, "Utilisation d'outils pneumatiques"), ...communs],
+  "agriculture-environnement": (u) => [b.engins(u, "Conduite de tracteurs et d'engins"), b.machines(u, "Utilisation de machines et d'outils à moteur"), b.chimique(u, "Utilisation de produits phytosanitaires", "Intoxication, maladies chroniques", 4, 2), b.chaleur(u), b.manutention(u), b.isole(u, "Travail seul dans les parcelles")],
+};
+
+// Métier ajouté par le client : les situations communes à son domaine, sous le nom qu'il a choisi.
+export function metierPersonnalise(nom: string, domaine: string): Metier {
+  const unite = nom.trim();
+  return {
+    id: `perso-${domaine}-${unite.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+    nom: unite,
+    domaine,
+    description: "Métier ajouté : situations courantes du domaine, à compléter dans le DUERP.",
+    risques: (socles[domaine] ?? socles.services)(unite),
+  };
+}
