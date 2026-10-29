@@ -8,7 +8,8 @@ import { supabaseClePublique, supabaseUrl } from "@/lib/supabase/config";
 // /signaler/ et /api/signalement : formulaire de signalement des salariés, protégé par le jeton du lien.
 // /inscription : création d'un compte d'essai. /api/stripe/webhook : notifications de Stripe, signées.
 // /api/erreurs : erreurs rencontrées dans le navigateur, y compris avant la connexion.
-const pagesPubliques = ["/connexion", "/inscription", "/auth/", "/api/alertes", "/legal/", "/signaler/", "/api/signalement", "/api/stripe/webhook", "/api/erreurs"];
+// /api/avis : avis clients publiés, lus par le site vitrine Frisk.
+const pagesPubliques = ["/connexion", "/inscription", "/auth/", "/api/alertes", "/legal/", "/signaler/", "/api/signalement", "/api/stripe/webhook", "/api/erreurs", "/api/avis"];
 
 // Rafraîchit la session Supabase et renvoie vers la connexion les visiteurs non connectés.
 export async function proxy(requete: NextRequest) {
