@@ -227,6 +227,15 @@ Tant que Stripe n'est pas configuré, la page Abonnement invite à contacter Fri
 5. Facultatif : *Paramètres > Taxes* pour la TVA, *Paramètres > Facturation* pour les relances
    automatiques en cas d'échec de paiement.
 
+## Avis clients
+
+Chaque utilisateur peut laisser un avis (note et texte) dans *Mon compte*. Frisk le relit dans la
+console, rubrique « Avis clients » (*Publier* ou *Ne pas publier*), puis il apparaît sur la page
+d'accueil du site vitrine, qui le lit sur `/api/avis` (mis en cache quelques minutes). Modifier un
+avis le renvoie en relecture. Règle annoncée sur le site vitrine : les avis positifs comme négatifs
+sont publiés ; seuls sont écartés les propos injurieux, hors sujet ou contenant des données
+personnelles. Tables et droits : migration `018_avis.sql`.
+
 ## Suivi des erreurs
 
 Les erreurs rencontrées par les utilisateurs (navigateur) et par le serveur sont enregistrées dans la

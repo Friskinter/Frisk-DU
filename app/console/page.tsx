@@ -12,6 +12,7 @@ import {
   classeChamp,
 } from "@/components/ui";
 import { accesEntreprise, joursRestants, offres, type StatutAbonnement } from "@/lib/abonnement";
+import { libellesStatutAvis, type StatutAvis } from "@/lib/avis";
 import { formaterDate } from "@/lib/calculs";
 import { champsManquants } from "@/lib/legal";
 import { deconnecter, ouvrirEntreprise } from "@/lib/stockage";
@@ -304,6 +305,7 @@ export default function Console() {
 
         <NouveauClient onCreer={(nom, email, demo) => afficher(creerClient(nom, email, demo), email.trim().toLowerCase())} />
 
+        <AvisClients />
         <ErreursRecentes />
 
         <div className="flex items-center gap-3">
@@ -539,6 +541,100 @@ function NouvelEtablissement({ onCreer }: { onCreer: (nom: string, memesUtilisat
       <button type="submit" className={`${classeBouton} py-1 text-xs`}>Créer</button>
       <button type="button" className="pb-1.5 text-xs text-gris underline" onClick={() => setOuvert(false)}>Annuler</button>
     </form>
+  );
+}
+
+type AvisConsole = {
+  id: string;
+  modifie_le: string;
+  note: number;
+  texte: string;
+  auteur: string;
+  fonction: string;
+  entreprise_affichee: string;
+  statut: StatutAvis;
+  entreprises: { nom: string } | null;
+};
+
+// Avis des clients à relire avant publication sur le site vitrine (migration 018). On publie les
+// avis positifs comme négatifs ; on n'écarte que l'injurieux, le hors sujet et les données
+// personnelles (règle annoncée sur le site vitrine).
+function AvisClients() {
+  const [avis, setAvis] = useState<AvisConsole[] | null>(null);
+  const [toutVoir, setToutVoir] = useState(false);
+  const [erreur, setErreur] = useState("");
+  const lire = useCallback(async () => {
+    const { data, error } = await supabaseNavigateur()
+      .from("avis")
+      .select("id, modifie_le, note, texte, auteur, fonction, entreprise_affichee, statut, entreprises(nom)")
+      .order("modifie_le", { ascending: false })
+      .limit(100);
+    // Base pas encore à jour (migration 018) : la rubrique reste masquée.
+    setAvis(error ? null : ((data ?? []) as unknown as AvisConsole[]));
+  }, []);
+  useEffect(() => {
+    // Chargement initial des avis depuis Supabase.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void lire();
+  }, [lire]);
+  if (!avis) return null;
+
+  const moderer = async (id: string, statut: StatutAvis) => {
+    setErreur("");
+    const { error } = await supabaseNavigateur().rpc("moderer_avis", { p_avis: id, p_statut: statut });
+    if (error) setErreur("La modification n'a pas pu être enregistrée.");
+    await lire();
+  };
+  const enAttente = avis.filter((a) => a.statut === "en_attente");
+  const affiches = toutVoir ? avis : enAttente;
+
+  return (
+    <section className="rounded-sm border border-pierre/70 bg-white p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-ardoise">Avis clients</h2>
+        <p className="text-sm">
+          {enAttente.length ? `${enAttente.length} à relire` : "Aucun avis à relire."} · {avis.filter((a) => a.statut === "publie").length} publié(s)
+        </p>
+      </div>
+      {avis.length > enAttente.length && (
+        <button type="button" className="mt-2 text-sm text-bronze-fonce underline" onClick={() => setToutVoir(!toutVoir)}>
+          {toutVoir ? "Afficher seulement les avis à relire" : "Afficher tous les avis"}
+        </button>
+      )}
+      {erreur && <p className="mt-2 text-sm text-[#b42318]">{erreur}</p>}
+      {affiches.length > 0 && (
+        <ul className="mt-3 divide-y divide-pierre/60 text-sm">
+          {affiches.map((a) => (
+            <li key={a.id} className="py-3">
+              <p className="text-xs text-gris">
+                {new Date(a.modifie_le).toLocaleDateString("fr-FR")} · {a.entreprises?.nom ?? "—"} · {libellesStatutAvis[a.statut]}
+              </p>
+              <p className="mt-1">
+                <span className="text-bronze" aria-label={`${a.note} étoiles sur 5`}>{"★".repeat(a.note)}</span>
+                <span className="text-pierre" aria-hidden>{"★".repeat(5 - a.note)}</span>
+              </p>
+              <p className="mt-1 whitespace-pre-line">{a.texte}</p>
+              <p className="mt-1 text-xs text-ardoise">
+                {a.auteur}
+                {a.fonction && `, ${a.fonction}`}
+                {a.entreprise_affichee ? ` · ${a.entreprise_affichee}` : " · entreprise non citée"}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-3 text-xs">
+                {a.statut !== "publie" && (
+                  <button type="button" className="text-bronze-fonce underline" onClick={() => moderer(a.id, "publie")}>Publier</button>
+                )}
+                {a.statut !== "refuse" && (
+                  <button type="button" className="text-[#b42318] underline" onClick={() => moderer(a.id, "refuse")}>Ne pas publier</button>
+                )}
+                {a.statut !== "en_attente" && (
+                  <button type="button" className="text-gris underline" onClick={() => moderer(a.id, "en_attente")}>Remettre à relire</button>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

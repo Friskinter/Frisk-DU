@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AvisClient } from "@/components/avis-client";
 import { DoubleAuthentification } from "@/components/double-authentification";
 import { Carte, Chargement, EnTetePage } from "@/components/ui";
 import { libellesRoles } from "@/lib/operations";
@@ -28,6 +29,14 @@ export default function PageCompte() {
       </Carte>
 
       <DoubleAuthentification recommandee={session.admin || session.role === "responsable"} />
+
+      {!session.admin && (
+        <AvisClient
+          entrepriseId={session.entrepriseId}
+          entreprise={session.espaces.find((e) => e.id === session.entrepriseId)?.nom ?? session.donnees?.entreprise ?? ""}
+          email={session.email}
+        />
+      )}
     </div>
   );
 }
