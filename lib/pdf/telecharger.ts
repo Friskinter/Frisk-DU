@@ -118,3 +118,14 @@ export async function telechargerPlanPrevention(donnees: Donnees, interventionId
     `Plan de prevention - ${intervention.entreprise || "entreprise exterieure"} - ${aujourdhui}.pdf`,
   );
 }
+
+export async function telechargerProtocole(donnees: Donnees, protocoleId: string) {
+  const { ProtocoleSecurite } = await import("./protocole-securite");
+  const protocole = donnees.protocoles.find((p) => p.id === protocoleId);
+  if (!protocole) return;
+  const aujourdhui = dateDuJour();
+  await enregistrerPdf(
+    createElement(ProtocoleSecurite, { donnees, protocole, aujourdhui, logo: logo() }),
+    `Protocole de securite - ${protocole.transporteur || "transporteur"} - ${aujourdhui}.pdf`,
+  );
+}

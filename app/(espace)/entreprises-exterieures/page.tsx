@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { PaveSignature } from "@/components/signature";
+import { BlocSignature } from "@/components/signature";
 import {
   Carte,
   Chargement,
@@ -33,14 +33,24 @@ import {
   travauxDangereux,
 } from "@/lib/interventions";
 import { telechargerPlanPrevention } from "@/lib/pdf/telecharger";
+import { Protocoles } from "./protocoles";
 import { modifier, peutModifier, useDonnees, useSession } from "@/lib/stockage";
-import type { Donnees, Intervention, RisqueIntervention, SuiviIntervention } from "@/lib/types";
+import type { Donnees, Intervention, RisqueIntervention, Signature, SuiviIntervention } from "@/lib/types";
 
 const libelle = "mb-1 block text-xs font-medium text-ardoise";
 const grilleLigne = "lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_9rem_1.5rem]";
 
 function maj(id: string, champs: Partial<Intervention>) {
   modifier((d) => ({ ...d, interventions: d.interventions.map((i) => (i.id === id ? { ...i, ...champs } : i)) }));
+}
+
+function signer(id: string, cle: "signatureEu" | "signatureEe", signature: Signature) {
+  const signatureId = nouvelId();
+  modifier((d) => ({
+    ...d,
+    signatures: { ...d.signatures, [signatureId]: signature },
+    interventions: d.interventions.map((i) => (i.id === id ? { ...i, [cle]: signatureId } : i)),
+  }));
 }
 
 function majListe<T extends { id: string }>(i: Intervention, cle: "risques" | "suivi", id: string, champs: Partial<T>) {
@@ -56,15 +66,56 @@ export default function PageEntreprisesExterieures() {
   );
 }
 
+type Onglet = "plans" | "protocoles";
+
+const onglets: { valeur: Onglet; libelle: string }[] = [
+  { valeur: "plans", libelle: "Plans de prévention" },
+  { valeur: "protocoles", libelle: "Protocoles de sécurité (transporteurs)" },
+];
+
 function EntreprisesExterieures() {
   const donnees = useDonnees();
   const { role } = useSession();
   const parametres = useSearchParams();
-  const [ouvert, setOuvert] = useState(parametres.get("intervention") ?? "");
-  const [terminees, setTerminees] = useState(false);
+  const [onglet, setOnglet] = useState<Onglet>(parametres.get("onglet") === "protocoles" || parametres.get("protocole") ? "protocoles" : "plans");
 
   if (!donnees) return <Chargement />;
   const modifiable = peutModifier(role, "tout");
+
+  return (
+    <div>
+      <EnTetePage
+        titre="Entreprises extérieures"
+        description="Maintenance, nettoyage, travaux, sous-traitants, transporteurs… Avant toute intervention, les deux entreprises analysent ensemble les risques liés à leur présence simultanée et arrêtent les mesures de prévention : plan de prévention (art. R4512-6 du Code du travail) ou, pour les chargements et déchargements, protocole de sécurité (art. R4515-4)."
+      />
+      <div className="mb-6 flex gap-1 overflow-x-auto border-b border-pierre" role="tablist">
+        {onglets.map((o) => (
+          <button
+            key={o.valeur}
+            type="button"
+            role="tab"
+            aria-selected={onglet === o.valeur}
+            onClick={() => setOnglet(o.valeur)}
+            className={`-mb-px shrink-0 border-b-2 px-4 py-2.5 text-sm transition-colors ${
+              onglet === o.valeur ? "border-bronze font-medium text-encre" : "border-transparent text-gris hover:text-encre"
+            }`}
+          >
+            {o.libelle}
+          </button>
+        ))}
+      </div>
+      {onglet === "plans" ? (
+        <PlansPrevention donnees={donnees} modifiable={modifiable} ouvertInitial={parametres.get("intervention") ?? ""} />
+      ) : (
+        <Protocoles donnees={donnees} modifiable={modifiable} ouvertInitial={parametres.get("protocole") ?? ""} />
+      )}
+    </div>
+  );
+}
+
+function PlansPrevention({ donnees, modifiable, ouvertInitial }: { donnees: Donnees; modifiable: boolean; ouvertInitial: string }) {
+  const [ouvert, setOuvert] = useState(ouvertInitial);
+  const [terminees, setTerminees] = useState(false);
   const aujourdhui = dateDuJour();
   const { interventions, signatures } = donnees;
   const etat = (i: Intervention) => etatIntervention(i, signatures, aujourdhui);
@@ -97,22 +148,22 @@ function EntreprisesExterieures() {
 
   return (
     <div>
-      <EnTetePage
-        titre="Entreprises extérieures"
-        description="Maintenance, nettoyage, travaux, sous-traitants… Avant toute intervention d'une entreprise extérieure, inspectez les lieux ensemble, analysez les risques liés à la présence simultanée des deux entreprises et arrêtez les mesures dans un plan de prévention (art. R4512-6 du Code du travail)."
-        actions={
-          <>
-            <button type="button" className={classeBoutonSecondaire} onClick={exporter}>
-              Exporter (Excel)
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-3xl text-sm text-ardoise">
+          Inspection commune des lieux, analyse des risques d&apos;interférence et mesures arrêtées ensemble. Écrit obligatoire dès {SEUIL_HEURES} heures de
+          travaux sur 12 mois ou pour un travail dangereux.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className={classeBoutonSecondaire} onClick={exporter}>
+            Exporter (Excel)
+          </button>
+          {modifiable && (
+            <button type="button" className={classeBouton} onClick={ajouter}>
+              + Intervention
             </button>
-            {modifiable && (
-              <button type="button" className={classeBouton} onClick={ajouter}>
-                + Intervention
-              </button>
-            )}
-          </>
-        }
-      />
+          )}
+        </div>
+      </div>
 
       <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Indicateur libelle="En cours" valeur={compter(["en-cours"])} detail="plan de prévention signé" />
@@ -434,8 +485,18 @@ function FicheIntervention({
             </p>
           )}
           <div className="grid gap-4 lg:grid-cols-2">
-            <BlocSignature intervention={i} donnees={donnees} cote="eu" titre="Entreprise utilisatrice" nomPropose={i.coordinateur} />
-            <BlocSignature intervention={i} donnees={donnees} cote="ee" titre="Entreprise extérieure" nomPropose={i.responsable} />
+            <BlocSignature
+              titre="Entreprise utilisatrice"
+              nomPropose={i.coordinateur}
+              signature={i.signatureEu ? donnees.signatures?.[i.signatureEu] : undefined}
+              onValider={(signature) => signer(i.id, "signatureEu", signature)}
+            />
+            <BlocSignature
+              titre="Entreprise extérieure"
+              nomPropose={i.responsable}
+              signature={i.signatureEe ? donnees.signatures?.[i.signatureEe] : undefined}
+              onValider={(signature) => signer(i.id, "signatureEe", signature)}
+            />
           </div>
         </Carte>
       </fieldset>
@@ -487,60 +548,5 @@ function LigneRisque({ intervention: i, risque: r, numero }: { intervention: Int
         </label>
       </div>
     </li>
-  );
-}
-
-function BlocSignature({
-  intervention: i,
-  donnees,
-  cote,
-  titre,
-  nomPropose,
-}: {
-  intervention: Intervention;
-  donnees: Donnees;
-  cote: "eu" | "ee";
-  titre: string;
-  nomPropose: string;
-}) {
-  const [image, setImage] = useState<string | null>(null);
-  const [nom, setNom] = useState(nomPropose);
-  const id = cote === "eu" ? i.signatureEu : i.signatureEe;
-  const signature = id ? donnees.signatures?.[id] : undefined;
-
-  if (signature) {
-    return (
-      <div className="rounded-sm border border-pierre/70 bg-white p-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-ardoise">{titre}</p>
-        <p className="mt-1 text-sm">{signature.nom}</p>
-        {/* eslint-disable-next-line @next/next/no-img-element -- image en data URL */}
-        <img src={signature.image} alt={`Signature de ${signature.nom || titre}`} className="mt-2 h-16 w-auto" />
-        <p className="text-xs text-gris">Signé le {formaterDate(signature.date)}</p>
-      </div>
-    );
-  }
-
-  const valider = () => {
-    if (!image || !nom.trim()) return;
-    const signatureId = nouvelId();
-    modifier((d) => ({
-      ...d,
-      signatures: { ...d.signatures, [signatureId]: { image, date: dateDuJour(), salarieId: "", nom: nom.trim() } },
-      interventions: d.interventions.map((x) => (x.id === i.id ? { ...x, [cote === "eu" ? "signatureEu" : "signatureEe"]: signatureId } : x)),
-    }));
-  };
-
-  return (
-    <div className="rounded-sm border border-pierre/70 bg-white p-3">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ardoise">{titre}</p>
-      <label className="mb-2 block">
-        <span className={libelle}>Nom et qualité du signataire</span>
-        <input value={nom} onChange={(x) => setNom(x.target.value)} className={classeChamp} />
-      </label>
-      <PaveSignature onChange={setImage} />
-      <button type="button" className={`${classeBouton} mt-2 disabled:opacity-50`} disabled={!image || !nom.trim()} onClick={valider}>
-        Valider la signature
-      </button>
-    </div>
   );
 }

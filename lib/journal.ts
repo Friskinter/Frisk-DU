@@ -40,6 +40,7 @@ export const zones: Record<string, string> = {
   verifications: "Vérifications",
   produits: "Produits chimiques",
   interventions: "Entreprises extérieures",
+  protocoles: "Protocoles de sécurité",
   salaries: "Salariés",
   articles: "Catalogue EPI",
   mouvements: "Mouvements d'EPI",
@@ -281,6 +282,8 @@ export function libelleElement(e: EntreeJournal, donnees: Donnees): string {
       return String(donnees.produits?.find((x) => x.id === e.element_id)?.nom || source.nom || "Produit");
     case "interventions":
       return `Plan de prévention : ${donnees.interventions?.find((x) => x.id === e.element_id)?.entreprise || source.entreprise || "entreprise extérieure"}`;
+    case "protocoles":
+      return `Protocole de sécurité : ${donnees.protocoles?.find((x) => x.id === e.element_id)?.transporteur || source.transporteur || "transporteur"}`;
     case "equipements":
       return String(donnees.equipements?.find((x) => x.id === e.element_id)?.nom || source.nom || "Équipement");
     case "verifications": {

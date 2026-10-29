@@ -6,14 +6,14 @@ import { formaterDate } from "@/lib/calculs";
 import { charges, planEcritObligatoire, raisonObligation, travauxDangereux } from "@/lib/interventions";
 import type { Donnees, Intervention, Signature } from "@/lib/types";
 
-const c = { encre: "#0c0b0a", ardoise: "#3a3530", gris: "#6b645b", bronze: "#7f6235", marbre: "#ece6dc", pierre: "#d9cfc1", ivoire: "#f7f4ef", rouge: "#b42318" };
+export const c = { encre: "#0c0b0a", ardoise: "#3a3530", gris: "#6b645b", bronze: "#7f6235", marbre: "#ece6dc", pierre: "#d9cfc1", ivoire: "#f7f4ef", rouge: "#b42318" };
 
-const s = StyleSheet.create({
+export const s = StyleSheet.create({
   page: { paddingTop: 32, paddingBottom: 50, paddingHorizontal: 36, fontFamily: "Helvetica", fontSize: 9, color: c.encre },
   pied: { position: "absolute", bottom: 20, left: 36, right: 36, flexDirection: "row", justifyContent: "space-between", fontSize: 7.5, color: c.gris, borderTopWidth: 0.5, borderTopColor: c.pierre, paddingTop: 6 },
   titreSection: { fontFamily: "Times-Bold", fontSize: 12, marginTop: 14, marginBottom: 5 },
   champ: { flexDirection: "row", marginBottom: 4 },
-  cle: { width: 130, color: c.gris },
+  cle: { width: 138, paddingRight: 8, color: c.gris },
   valeur: { flex: 1 },
   table: { borderWidth: 0.5, borderColor: c.pierre, borderBottomWidth: 0 },
   ligne: { flexDirection: "row", borderBottomWidth: 0.5, borderBottomColor: c.pierre },
@@ -30,7 +30,7 @@ const colonnes = [
   { titre: "À la charge de", largeur: "12%" },
 ];
 
-function Champ({ cle, children }: { cle: string; children: ReactNode }) {
+export function Champ({ cle, children }: { cle: string; children: ReactNode }) {
   return (
     <View style={s.champ}>
       <Text style={s.cle}>{cle}</Text>
@@ -39,7 +39,7 @@ function Champ({ cle, children }: { cle: string; children: ReactNode }) {
   );
 }
 
-function Section({ titre, children }: { titre: string; children: ReactNode }) {
+export function Section({ titre, children }: { titre: string; children: ReactNode }) {
   return (
     <View>
       <Text style={s.titreSection} minPresenceAhead={40}>{titre}</Text>
@@ -48,7 +48,7 @@ function Section({ titre, children }: { titre: string; children: ReactNode }) {
   );
 }
 
-function CadreSignature({ titre, nom, signature }: { titre: string; nom: string; signature?: Signature }) {
+export function CadreSignature({ titre, nom, signature }: { titre: string; nom: string; signature?: Signature }) {
   return (
     <View style={{ flex: 1, borderWidth: 0.5, borderColor: c.pierre, padding: 8, minHeight: 90 }}>
       <Text style={{ fontFamily: "Helvetica-Bold", fontSize: 8 }}>{titre}</Text>

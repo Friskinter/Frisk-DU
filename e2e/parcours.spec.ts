@@ -70,6 +70,30 @@ test("préparer et signer un plan de prévention", async ({ page }) => {
   expect((await telechargement).suggestedFilename()).toMatch(/^Plan de prevention - Toitures Lyonnaises - .+\.pdf$/);
 });
 
+test("établir le protocole de sécurité d'un transporteur", async ({ page }) => {
+  await ouvrir(page, "/entreprises-exterieures");
+  await page.getByRole("tab", { name: /Protocoles de sécurité/ }).click();
+  await expect(page.getByRole("button", { name: /Transports Rhône Express/ })).toBeVisible();
+  await page.getByRole("button", { name: "+ Protocole" }).click();
+  // Les informations de l'entreprise d'accueil sont reprises du dernier protocole.
+  await expect(page.getByLabel("Lieu de livraison ou de prise en charge")).toHaveValue("Quais 1 à 3 du bâtiment de réception");
+  await page.getByLabel("Raison sociale du transporteur").fill("Messagerie Express");
+  await page.getByLabel(/Transport de matières dangereuses/).check();
+  await expect(page.getByText(/les précautions liées aux matières dangereuses/)).toBeVisible();
+  await verifierAccessibilite(page);
+
+  const telechargement = page.waitForEvent("download");
+  await page.getByRole("button", { name: /Protocole de sécurité \(PDF\)/ }).click();
+  expect((await telechargement).suggestedFilename()).toMatch(/^Protocole de securite - Messagerie Express - .+\.pdf$/);
+});
+
+test("une alerte ouvre directement le protocole concerné", async ({ page }) => {
+  await ouvrir(page, "/");
+  await page.getByRole("link", { name: /protocole de sécurité à renouveler/ }).click();
+  await expect(page.getByRole("tab", { name: /Protocoles de sécurité/ })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("button", { name: "Renouveler pour 12 mois" })).toBeVisible();
+});
+
 test.describe("compte en lecture seule", () => {
   test.use({ role: "lecteur" });
 
