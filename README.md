@@ -150,6 +150,8 @@ Dans cet ordre, sinon plus personne ne peut se connecter (voir [Protection anti-
 
 - [ ] Site vitrine Frisk : faire pointer le lien « Espace client » et les boutons d'essai gratuit vers
       l'adresse définitive.
+- [ ] Site vitrine Frisk : autoriser les moteurs de recherche (`INDEXATION_AUTORISEE = true` dans
+      son `next.config.ts`). Frisk DU, lui, reste toujours hors des moteurs.
 - [ ] Supprimer les comptes et entreprises créés pendant les essais (console Frisk et Stripe).
 - [ ] Les jours suivants : surveiller la console (erreurs), Stripe (paiements, webhooks en échec) et
       Resend (e-mails refusés).
