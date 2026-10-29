@@ -33,9 +33,10 @@ const champsFiche: { cle: keyof FicheEntreprise; libelle: string; exemple: strin
 
 export default function PageReglages() {
   const donnees = useDonnees();
-  const { role } = useSession();
+  const { role, abonnement } = useSession();
   if (!donnees) return <Chargement />;
   const modifiable = peutModifier(role, "tout");
+  const essai = abonnement.acces === "essai";
 
   const majSalarie = (id: string, champs: Partial<Salarie>) =>
     modifier((d) => ({ ...d, salaries: d.salaries.map((s) => (s.id === id ? { ...s, ...champs } : s)) }));
@@ -112,7 +113,17 @@ export default function PageReglages() {
           </div>
         </Carte>
 
-        <IdentiteVisuelle entreprise={donnees.entreprise} identite={donnees.identite} />
+        {essai ? (
+          <Carte titre="Identité visuelle">
+            <p className="text-sm text-ardoise">
+              🔒 Avec l&apos;abonnement, votre logo et votre couleur remplacent ceux de Frisk dans votre espace, sur le formulaire de
+              signalement et dans tous vos documents PDF.{" "}
+              <Link href="/abonnement" className="text-bronze-fonce underline">Voir l&apos;abonnement</Link>
+            </p>
+          </Carte>
+        ) : (
+          <IdentiteVisuelle entreprise={donnees.entreprise} identite={donnees.identite} />
+        )}
 
         <Carte titre="Alertes par e-mail">
           <label className="flex items-start gap-3 text-sm">
@@ -229,7 +240,7 @@ export default function PageReglages() {
           <button type="button" className={classeBouton} onClick={sauvegarder}>
             Télécharger une sauvegarde
           </button>
-          {modifiable && (
+          {modifiable && !essai && (
             <>
               <label className={`${classeBoutonSecondaire} cursor-pointer`}>
                 Restaurer une sauvegarde

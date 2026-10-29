@@ -35,6 +35,9 @@ export async function GET(requete: Request) {
 
   const rapport: { entreprise: string; destinataires: string[]; alertes: number; envoye: boolean }[] = [];
 
+  // Suivi des erreurs : conservation limitée à 90 jours.
+  if (!apercu) await admin.from("erreurs").delete().lt("created_at", new Date(Date.now() - 90 * 86_400_000).toISOString());
+
   for (const e of entreprises ?? []) {
     const donnees = (e.espaces as unknown as { contenu: Donnees } | null)?.contenu;
     const destinataires = ((e.membres ?? []) as { email: string }[]).map((m) => m.email);

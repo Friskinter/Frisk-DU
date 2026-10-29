@@ -9,3 +9,6 @@ export const CLE_ROLE_TEST = "frisk-e2e-role";
 // Données de remplacement (JSON), déposées par le test dans une variable globale (le stockage local
 // du navigateur est limité à 5 Mo) : sert aux essais avec un gros volume.
 export const CLE_DONNEES_TEST = "__friskDonneesTest";
+
+// Abonnement simulé (JSON { statut, essaiFin }), pour tester l'essai gratuit et la lecture seule.
+export const CLE_ABONNEMENT_TEST = "frisk-e2e-abonnement";

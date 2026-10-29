@@ -15,14 +15,25 @@ export function LogoDocument({ marque, hauteur = 40, style }: { marque: Marque; 
   );
 }
 
-// « Réalisé avec Frisk DU », discret, en bas de chaque page.
+// « Réalisé avec Frisk DU », discret, en bas de chaque page ; pendant l'essai, mention « Version d'essai ».
 export function MentionFrisk({ marque }: { marque: Marque }) {
   return (
-    <View fixed style={{ position: "absolute", bottom: 7, left: 0, right: 0, flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
-      {/* eslint-disable-next-line jsx-a11y/alt-text -- composant PDF, sans attribut alt */}
-      <Image src={marque.frisk} style={{ width: 7, height: 7, marginRight: 3 }} />
-      <Text style={{ fontSize: 6, color: "#8a837a" }}>Réalisé avec Frisk DU</Text>
-    </View>
+    <>
+      {marque.essai && (
+        <View fixed style={{ position: "absolute", top: "42%", left: 0, right: 0, alignItems: "center" }}>
+          <Text style={{ fontSize: 54, fontFamily: "Helvetica-Bold", color: "#d9cfc1", opacity: 0.45, transform: "rotate(-30deg)" }}>
+            VERSION D&apos;ESSAI
+          </Text>
+        </View>
+      )}
+      <View fixed style={{ position: "absolute", bottom: 7, left: 0, right: 0, flexDirection: "row", justifyContent: "center", alignItems: "center" }}>
+        {/* eslint-disable-next-line jsx-a11y/alt-text -- composant PDF, sans attribut alt */}
+        <Image src={marque.frisk} style={{ width: 7, height: 7, marginRight: 3 }} />
+        <Text style={{ fontSize: 6, color: "#8a837a" }}>
+          {marque.essai ? "Version d'essai, sans valeur de document officiel · Réalisé avec Frisk DU" : "Réalisé avec Frisk DU"}
+        </Text>
+      </View>
+    </>
   );
 }
 

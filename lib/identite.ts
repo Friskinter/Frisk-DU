@@ -228,9 +228,10 @@ export function logoValide(x: unknown): x is string {
 // accent : texte sur fond blanc ; clair : texte sur fond noir (page de garde du document unique) ;
 // titre : couleur des titres ; bandeau : filet de couleur en haut des pages (entreprise seulement) ;
 // fond : fond foncé de la page de garde.
-export type Marque = { logo: string; logoClient: boolean; accent: string; clair: string; titre: string; bandeau: string | null; fond: string; frisk: string };
+export type Marque = { logo: string; logoClient: boolean; accent: string; clair: string; titre: string; bandeau: string | null; fond: string; frisk: string; essai: boolean };
 
-export function marqueDocuments(identite: Identite | undefined, logoFrisk: string): Marque {
+// essai : document produit pendant l'essai gratuit, marqué « Version d'essai ».
+export function marqueDocuments(identite: Identite | undefined, logoFrisk: string, essai = false): Marque {
   const couleur = couleurValide(identite?.couleur) ? identite.couleur : null;
   const p = palette(couleur ?? COULEUR_FRISK);
   const logoClient = logoValide(identite?.logo);
@@ -243,5 +244,6 @@ export function marqueDocuments(identite: Identite | undefined, logoFrisk: strin
     bandeau: couleur,
     fond: couleur ? p.menu : ENCRE, // fond de la page de garde du document unique
     frisk: logoFrisk,
+    essai,
   };
 }

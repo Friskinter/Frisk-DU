@@ -3,6 +3,7 @@
 import { createElement, type ReactElement } from "react";
 import { dateDuJour } from "@/lib/calculs";
 import { marqueDocuments } from "@/lib/identite";
+import { accesActuel } from "@/lib/stockage";
 import type { Donnees, Identite } from "@/lib/types";
 import type { LigneHistorique } from "./document-unique";
 
@@ -32,7 +33,9 @@ async function enregistrerPdf(document: ReactElement, nom: string) {
 }
 
 // Logo et couleur de l'entreprise (sinon ceux de Frisk), et logo de Frisk pour la mention en bas de page.
-const marque = (identite: Identite | undefined) => marqueDocuments(identite, `${window.location.origin}/logo-frisk.png`);
+// Pendant l'essai gratuit, les documents portent la mention « Version d'essai ».
+const marque = (identite: Identite | undefined) =>
+  marqueDocuments(identite, `${window.location.origin}/logo-frisk.png`, accesActuel() === "essai");
 
 // Sans version : document de travail à la date du jour. Avec version : la version figée, telle qu'enregistrée.
 export async function telechargerDocumentUnique(

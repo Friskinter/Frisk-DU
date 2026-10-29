@@ -11,6 +11,7 @@ import {
   classeBoutonSecondaire,
   classeChamp,
 } from "@/components/ui";
+import { accesEntreprise, joursRestants, offres, type StatutAbonnement } from "@/lib/abonnement";
 import { formaterDate } from "@/lib/calculs";
 import { champsManquants } from "@/lib/legal";
 import { deconnecter, ouvrirEntreprise } from "@/lib/stockage";
@@ -29,6 +30,12 @@ type Client = {
   actif: boolean;
   created_at: string;
   groupe_id: string | null;
+  abonnement: StatutAbonnement;
+  essai_fin: string | null;
+  offre: string | null;
+  periodicite: string | null;
+  stripe_abonnement: string | null;
+  inscription_libre: boolean;
   membres: { user_id: string; email: string; role: RoleMembre }[];
   espaces: { updated_at: string } | null;
 };
@@ -63,7 +70,7 @@ export default function Console() {
     const [{ data }, { data: listeGroupes }] = await Promise.all([
       supabase
         .from("entreprises")
-        .select("id, nom, actif, created_at, groupe_id, membres(user_id, email, role), espaces(updated_at)")
+        .select("id, nom, actif, created_at, groupe_id, abonnement, essai_fin, offre, periodicite, stripe_abonnement, inscription_libre, membres(user_id, email, role), espaces(updated_at)")
         .order("nom"),
       supabase.from("groupes").select("id, nom").order("nom"),
     ]);
@@ -92,6 +99,14 @@ export default function Console() {
     const verbe = client.actif ? "Suspendre" : "Réactiver";
     if (!confirm(`${verbe} l'accès de « ${client.nom} » ?`)) return;
     await supabaseNavigateur().from("entreprises").update({ actif: !client.actif }).eq("id", client.id);
+    await recharger();
+  };
+
+  // Abonnement accordé par Frisk (client conseil, paiement hors ligne) ou essai prolongé.
+  const changerAbonnement = async (client: Client, changement: Partial<Pick<Client, "abonnement" | "essai_fin">>, message: string) => {
+    if (!confirm(`${message} pour « ${client.nom} » ?`)) return;
+    const { error } = await supabaseNavigateur().from("entreprises").update(changement).eq("id", client.id);
+    setRetour({ resultat: error ? { ok: false, message: "L'abonnement n'a pas pu être modifié." } : { ok: true, message: `${message} : fait.` } });
     await recharger();
   };
 
@@ -289,6 +304,8 @@ export default function Console() {
 
         <NouveauClient onCreer={(nom, email, demo) => afficher(creerClient(nom, email, demo), email.trim().toLowerCase())} />
 
+        <ErreursRecentes />
+
         <div className="flex items-center gap-3">
           <input
             type="search"
@@ -315,6 +332,7 @@ export default function Console() {
                         <Pastille couleur="#d03b3b" texte="#ffffff" icone="✕">Suspendu</Pastille>
                       )}
                     </div>
+                    <p className="mt-1 text-xs text-ardoise">{resumeAbonnement(c)}</p>
                     {c.groupe_id && (
                       <p className="mt-1 text-xs text-bronze-fonce">
                         Groupe {nomGroupe(c)} · {clients.filter((x) => x.groupe_id === c.groupe_id).length} établissement(s)
@@ -332,6 +350,20 @@ export default function Console() {
                     <button type="button" className={classeBoutonSecondaire} onClick={() => changerStatut(c)}>
                       {c.actif ? "Suspendre" : "Réactiver"}
                     </button>
+                    {!c.stripe_abonnement && c.abonnement !== "actif" && (
+                      <button type="button" className={classeBoutonSecondaire} onClick={() => changerAbonnement(c, { abonnement: "actif" }, "Accorder l'abonnement (hors paiement en ligne)")}>
+                        Accorder l&apos;abonnement
+                      </button>
+                    )}
+                    {c.abonnement === "essai" && (
+                      <button
+                        type="button"
+                        className={classeBoutonSecondaire}
+                        onClick={() => changerAbonnement(c, { essai_fin: new Date(Math.max(Date.now(), new Date(c.essai_fin ?? 0).getTime()) + 7 * 86_400_000).toISOString() }, "Prolonger l'essai de 7 jours")}
+                      >
+                        Prolonger l&apos;essai
+                      </button>
+                    )}
                     <button type="button" className={classeBoutonSecondaire} onClick={() => exporter(c)} title="Toutes les données du client au format JSON">
                       Exporter les données
                     </button>
@@ -510,6 +542,65 @@ function NouvelEtablissement({ onCreer }: { onCreer: (nom: string, memesUtilisat
   );
 }
 
+type Erreur = { id: number; created_at: string; origine: string; message: string; detail: string; page: string; navigateur: string };
+
+// Dernières erreurs rencontrées par les utilisateurs (navigateur) ou par le serveur, sur 90 jours.
+function ErreursRecentes() {
+  const [liste, setListe] = useState<{ erreurs: Erreur[]; semaine: number } | null>(null);
+  const [ouvert, setOuvert] = useState(false);
+  useEffect(() => {
+    const lire = async () => {
+      const { data } = await supabaseNavigateur()
+        .from("erreurs")
+        .select("id, created_at, origine, message, detail, page, navigateur")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      const erreurs = (data ?? []) as Erreur[];
+      const depuis = Date.now() - 7 * 86_400_000;
+      setListe({ erreurs, semaine: erreurs.filter((e) => new Date(e.created_at).getTime() > depuis).length });
+    };
+    void lire();
+  }, []);
+  if (!liste) return null;
+  const { erreurs, semaine } = liste;
+  return (
+    <section className="rounded-sm border border-pierre/70 bg-white p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-ardoise">Erreurs rencontrées</h2>
+        <p className="text-sm">
+          {erreurs.length ? `${semaine} cette semaine · ${erreurs.length} au total (50 dernières)` : "Aucune erreur enregistrée."}
+        </p>
+      </div>
+      {erreurs.length > 0 && (
+        <>
+          <button type="button" className="mt-2 text-sm text-bronze-fonce underline" onClick={() => setOuvert(!ouvert)}>
+            {ouvert ? "Masquer" : "Afficher le détail"}
+          </button>
+          {ouvert && (
+            <ul className="mt-3 divide-y divide-pierre/60 text-sm">
+              {erreurs.map((e) => (
+                <li key={e.id} className="py-2">
+                  <p>
+                    <span className="text-xs text-gris">{new Date(e.created_at).toLocaleString("fr-FR")} · {e.origine} · {e.page || "—"}</span>
+                    <br />
+                    <strong className="break-all">{e.message}</strong>
+                  </p>
+                  {e.detail && (
+                    <details className="mt-1">
+                      <summary className="cursor-pointer text-xs text-gris">Détail technique</summary>
+                      <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded-sm bg-ivoire p-2 text-xs">{e.detail}{e.navigateur ? `\n\n${e.navigateur}` : ""}</pre>
+                    </details>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
 function NouveauClient({ onCreer }: { onCreer: (nom: string, email: string, demo: boolean) => Promise<void> }) {
   const [nom, setNom] = useState("");
   const [email, setEmail] = useState("");
@@ -616,4 +707,16 @@ Vous choisirez votre propre mot de passe à la première connexion.`;
       <p className="mt-2 text-xs text-gris">Ce mot de passe ne sera plus affiché : copiez-le maintenant.</p>
     </div>
   );
+}
+
+function resumeAbonnement(c: Client) {
+  const offre = offres.find((o) => o.code === c.offre)?.libelle;
+  const acces = accesEntreprise({ abonnement: c.abonnement, essaiFin: c.essai_fin });
+  const origine = c.inscription_libre ? "inscription en ligne" : "créé par Frisk";
+  if (c.abonnement === "essai") {
+    return acces === "essai" ? `Essai gratuit : ${joursRestants(c.essai_fin)} jour(s) restant(s) · ${origine}` : `Essai terminé, sans abonnement · ${origine}`;
+  }
+  if (c.abonnement === "termine") return `Abonnement terminé (lecture seule) · ${origine}`;
+  const detail = [offre, c.periodicite === "an" ? "annuel" : c.periodicite === "mois" ? "mensuel" : null].filter(Boolean).join(", ");
+  return `${c.abonnement === "impaye" ? "Paiement en échec" : "Abonné"}${c.stripe_abonnement ? " en ligne" : " (accordé par Frisk)"}${detail ? ` · ${detail}` : ""} · ${origine}`;
 }

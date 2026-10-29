@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { classeBouton, classeBoutonSecondaire, classeChamp } from "@/components/ui";
 import { formaterDate } from "@/lib/calculs";
@@ -65,7 +66,13 @@ export function VersionsDuerp({ donnees, onFermer }: { donnees: Donnees; onFerme
           </button>
         </div>
 
-        {!peutModifier(session.role, "tout") ? (
+        {session.abonnement.acces === "essai" ? (
+          <p className="border-b border-pierre/70 p-5 text-sm text-ardoise">
+            🔒 La version officielle, datée et conservée 40 ans, se fige avec l&apos;abonnement. Pendant l&apos;essai, vous pouvez
+            préparer votre document unique et le télécharger en version d&apos;essai.{" "}
+            {session.roleCompte === "responsable" && <Link href="/abonnement" className="text-bronze-fonce underline">Choisir mon abonnement</Link>}
+          </p>
+        ) : !peutModifier(session.role, "tout") ? (
           <p className="border-b border-pierre/70 p-5 text-sm text-ardoise">
             Seul un responsable de l&apos;entreprise peut figer une nouvelle version.
           </p>

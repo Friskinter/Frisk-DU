@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Cinzel, Inter } from "next/font/google";
+import { SuiviErreurs } from "@/components/suivi-erreurs";
 import "./globals.css";
 
 const cinzel = Cinzel({
@@ -24,7 +25,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="fr" className={`${cinzel.variable} ${inter.variable} h-full antialiased`}>
-      <body className="min-h-full font-sans">{children}</body>
+      <body className="min-h-full font-sans">
+        <SuiviErreurs />
+        {children}
+      </body>
     </html>
   );
 }

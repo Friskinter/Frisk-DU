@@ -21,11 +21,14 @@ export const pages = [
   { chemin: "/penibilite", titre: null },
   { chemin: "/bilans", titre: null },
   { chemin: "/reglages", titre: null },
+  { chemin: "/abonnement", titre: "Abonnement" },
   { chemin: "/compte", titre: "Mon compte" },
   { chemin: "/import", titre: null },
   { chemin: "/legal/mentions", titre: "Mentions légales" },
   { chemin: "/legal/confidentialite", titre: "Politique de confidentialité" },
   { chemin: "/connexion", titre: "Connexion" },
+  { chemin: "/inscription", titre: "Essai gratuit" },
+  { chemin: "/legal/cgv", titre: "Conditions générales de vente" },
   { chemin: `/signaler/${JETON_TEST}`, titre: "Signaler un accident ou un danger" },
 ];
 
@@ -40,6 +43,20 @@ export const test = base.extend<{ role: string }>({
       r.request().method() === "GET"
         ? r.fulfill({ json: { entreprise: "Logistique Démo SAS", unites: ["Quai de réception", "Zone de stockage"] } })
         : r.fulfill({ json: { ok: true } }),
+    );
+    // Prix des abonnements, normalement lus dans Stripe.
+    await page.route("**/api/abonnement/tarifs", (r) =>
+      r.fulfill({
+        json: {
+          configure: true,
+          tarifs: Object.fromEntries(
+            [["tpe", 29], ["pe", 59], ["pme", 119]].flatMap(([o, m]) => [
+              [`frisk_du_${o}_mois`, { montant: m, devise: "eur", ht: true }],
+              [`frisk_du_${o}_an`, { montant: (m as number) * 10, devise: "eur", ht: true }],
+            ]),
+          ),
+        },
+      }),
     );
     await page.addInitScript(([cle, valeur]) => localStorage.setItem(cle, valeur), [CLE_ROLE_TEST, role]);
     const erreurs: string[] = [];
