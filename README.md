@@ -17,8 +17,9 @@ Application de prévention des risques professionnels proposée par Frisk aux en
 1. **Créer les tables** : Supabase > *SQL Editor* > *New query* > coller le contenu de
    [`supabase/schema.sql`](supabase/schema.sql) > *Run*. Pour une base déjà en place, exécuter seulement les
    nouvelles migrations de [`supabase/migrations`](supabase/migrations), dans l'ordre.
-2. **Couper les inscriptions publiques** (c'est Frisk qui crée les comptes) :
-   *Authentication* > *Sign In / Providers* > décocher *Allow new users to sign up* > *Save*.
+2. **Inscriptions** : les clients s'inscrivent eux-mêmes, voir
+   [Inscription libre et essai gratuit](#inscription-libre-et-essai-gratuit) et
+   [Protection anti-robot](#protection-anti-robot).
 3. **Créer le compte administrateur Frisk** :
    *Authentication* > *Users* > *Add user* > *Create new user*, cocher *Auto Confirm User*.
    Puis dans le *SQL Editor* (en remplaçant l'e-mail) :
@@ -57,7 +58,15 @@ Elles sont lancées automatiquement par GitHub à chaque demande de fusion (`.gi
 
 ## Mise en ligne (Vercel)
 
-Importer le dépôt sur Vercel et ajouter la variable d'environnement `SUPABASE_SECRET_KEY`.
+Importer le dépôt sur Vercel et ajouter les variables d'environnement (détail dans `.env.example`) :
+
+| Variable | Rôle |
+| --- | --- |
+| `SUPABASE_SECRET_KEY` | Console Frisk, signalements, alertes et webhook Stripe (obligatoire) |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Protection anti-robot de l'inscription et de la connexion |
+| `CRON_SECRET`, `RESEND_API_KEY`, `ALERTES_EXPEDITEUR`, `URL_APPLICATION` | Récapitulatif hebdomadaire des alertes par e-mail |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Paiement en ligne |
+
 Reporter ensuite l'adresse obtenue dans Supabase (*Site URL*) et dans le lien « Espace client » du site Frisk.
 
 ## Inscription libre et essai gratuit
@@ -71,8 +80,25 @@ abonnement à la fin de l'essai, l'espace passe en lecture seule. Dans Supabase 
    `https://<adresse>/auth/callback` dans *Redirect URLs*.
 3. *Authentication > Emails* : traduire en français l'e-mail « Confirm signup ».
 
+Sans protection anti-robot, n'importe quel programme peut créer des comptes en masse : la mettre en
+place avant d'ouvrir l'inscription au public (section suivante).
+
 Depuis la console Frisk, un administrateur peut accorder l'abonnement (client conseil, paiement hors
 ligne) ou prolonger un essai.
+
+## Protection anti-robot
+
+L'inscription, la connexion et « mot de passe oublié » affichent une vérification Cloudflare Turnstile
+(gratuite, le plus souvent sans action de l'utilisateur), contrôlée par Supabase.
+
+1. Sur dash.cloudflare.com : *Turnstile* > *Add widget*, ajouter le domaine de Frisk DU (et
+   `localhost` pour les essais), mode *Managed*. Noter la **clé du site** et la **clé secrète**.
+2. Dans Vercel : ajouter `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (clé du site), puis **redéployer**.
+3. **Une fois le déploiement en ligne**, dans Supabase : *Authentication* > *Attack Protection* >
+   activer *Enable Captcha protection*, fournisseur *Turnstile*, coller la clé secrète.
+
+L'ordre compte : si Supabase exige la vérification avant que le site l'affiche, plus personne ne peut
+se connecter. Pour revenir en arrière, désactiver d'abord l'option dans Supabase.
 
 ## Paiement en ligne (Stripe)
 
