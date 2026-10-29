@@ -5,6 +5,7 @@ import { actionEnRetard, actionsDe } from "./actions";
 import { calculerStocks, decalerJours, formaterDate, niveauDe, risqueResiduel } from "./calculs";
 import { analyseFaite, declarationEnRetard, echeanceDeclaration, estAccident } from "./evenements";
 import { etatFormation, formationsEnVigueur, formationsManquantes, libelleFormation, typeFormation } from "./formations";
+import { dernierSuivi, enCoursOuProche, etatIntervention, planEcritObligatoire } from "./interventions";
 import { classementCmr, estCmr, etatFds } from "./produits";
 import { typesEvenement } from "./referentiel";
 import { derniereVerification, etatEquipement, observationsOuvertes } from "./verifications";
@@ -13,7 +14,7 @@ import type { Donnees } from "./types";
 export type Alerte = {
   id: string;
   gravite: "critique" | "importante" | "info";
-  categorie: "DUERP" | "Accidents" | "Formations" | "Vérifications" | "Produits chimiques" | "EPI" | "Pénibilité";
+  categorie: "DUERP" | "Accidents" | "Formations" | "Vérifications" | "Produits chimiques" | "Entreprises extérieures" | "EPI" | "Pénibilité";
   titre: string;
   detail: string;
   lien: string; // page de l'application où traiter l'alerte
@@ -270,6 +271,48 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
       id: "chimie-duerp", gravite: "info", categorie: "Produits chimiques", lien: "/produits",
       titre: `${pluriel(horsDuerp.length, "produit")} dangereux non rattaché${horsDuerp.length > 1 ? "s" : ""} au DUERP`,
       detail: `Le risque chimique doit être évalué dans le document unique (art. R4412-5) : ${liste(horsDuerp.map(nomProduit))}.`,
+    });
+  }
+
+  // Entreprises extérieures
+  const interventions = donnees.interventions ?? [];
+  const nonPrete = (i: (typeof interventions)[number]) => ["a-preparer", "a-signer"].includes(etatIntervention(i, donnees.signatures, aujourdhui));
+  const nomEE = (i: (typeof interventions)[number]) => i.entreprise || "entreprise sans nom";
+  const lienIntervention = (liste: typeof interventions) =>
+    liste.length === 1 ? `/entreprises-exterieures?intervention=${liste[0].id}` : "/entreprises-exterieures";
+  const enCours = interventions.filter((i) => enCoursOuProche(i, aujourdhui) && nonPrete(i));
+  const enCoursObligatoires = enCours.filter(planEcritObligatoire);
+  if (enCoursObligatoires.length) {
+    alertes.push({
+      id: "interventions-sans-plan", gravite: "critique", categorie: "Entreprises extérieures", lien: lienIntervention(enCoursObligatoires),
+      titre: `${pluriel(enCoursObligatoires.length, "intervention")} en cours sans plan de prévention signé`,
+      detail: `Plan écrit obligatoire (400 heures ou travaux dangereux, art. R4512-7) : ${liste(enCoursObligatoires.map(nomEE))}.`,
+    });
+  }
+  const enCoursAutres = enCours.filter((i) => !planEcritObligatoire(i));
+  if (enCoursAutres.length) {
+    alertes.push({
+      id: "interventions-a-completer", gravite: "importante", categorie: "Entreprises extérieures", lien: lienIntervention(enCoursAutres),
+      titre: `${pluriel(enCoursAutres.length, "intervention")} en cours à compléter`,
+      detail: `Inspection commune et analyse des risques d'interférence à faire, même sans plan écrit (art. R4512-2 et R4512-6) : ${liste(enCoursAutres.map(nomEE))}.`,
+    });
+  }
+  const prochaines = interventions.filter((i) => i.debut > aujourdhui && enCoursOuProche(i, aujourdhui, 15) && nonPrete(i));
+  if (prochaines.length) {
+    alertes.push({
+      id: "interventions-a-preparer", gravite: "importante", categorie: "Entreprises extérieures", lien: lienIntervention(prochaines),
+      titre: `${pluriel(prochaines.length, "plan")} de prévention à préparer avant l'intervention`,
+      detail: liste(prochaines.map((i) => `${nomEE(i)} (début le ${formaterDate(i.debut)})`)),
+    });
+  }
+  const sansSuivi = interventions.filter(
+    (i) => enCoursOuProche(i, aujourdhui) && !nonPrete(i) && i.travauxDangereux.length > 0 && dernierSuivi(i) < decalerJours(aujourdhui, -90),
+  );
+  if (sansSuivi.length) {
+    alertes.push({
+      id: "interventions-suivi", gravite: "info", categorie: "Entreprises extérieures", lien: lienIntervention(sansSuivi),
+      titre: `${pluriel(sansSuivi.length, "intervention")} sans inspection ni réunion de coordination depuis 3 mois`,
+      detail: `Travaux dangereux : prévoyez des inspections et réunions périodiques de coordination : ${liste(sansSuivi.map(nomEE))}.`,
     });
   }
 

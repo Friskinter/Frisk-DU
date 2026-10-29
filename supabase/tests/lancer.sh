@@ -19,3 +19,4 @@ psql -At -f tests/06_produits.test.sql | grep -v '^$' | tail -1
 psql -At -f tests/07_groupes.test.sql | grep -v '^$' | tail -1
 psql -At -f tests/08_double_authentification.test.sql | grep -v '^$' | tail -1
 psql -At -f tests/09_suppression_client.test.sql | grep -v '^$' | tail -1
+psql -At -f tests/10_entreprises_exterieures.test.sql | grep -v '^$' | tail -1

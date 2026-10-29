@@ -848,3 +848,21 @@ as $$
     )
   end;
 $$;
+
+-- ---------- Migration 011 : entreprises extérieures ----------
+
+create or replace function public.frisk_version()
+returns integer
+language sql
+immutable
+set search_path = ''
+as $$ select 11; $$;
+grant execute on function public.frisk_version() to authenticated, anon;
+
+-- Nouvelle liste « interventions », modifiable par le responsable.
+create or replace function public.collections_frisk()
+returns text[]
+language sql
+immutable
+set search_path = ''
+as $$ select array['duerp', 'actions', 'evenements', 'formations', 'exigences', 'equipements', 'verifications', 'produits', 'interventions', 'salaries', 'articles', 'mouvements']; $$;

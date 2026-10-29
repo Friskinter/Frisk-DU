@@ -4,9 +4,10 @@ import { nouvelleAction } from "./actions";
 import { nouvelEvenement } from "./evenements";
 import { ajouterMois, nouvelleExigence, nouvelleFormation } from "./formations";
 import { nouveauProduit } from "./produits";
+import { nouveauRisqueIntervention, nouveauSuivi, nouvelleIntervention, risqueDuTravail, risquesCourants } from "./interventions";
 import { nouvelEquipement, nouvelleObservation, nouvelleVerification } from "./verifications";
 import { cle, decalerJours, nouvelId } from "./calculs";
-import type { Action, Article, Donnees, Evenement, Formation, LigneDuerp, Mouvement, PrincipePrevention, Salarie } from "./types";
+import type { Action, Article, Donnees, Intervention, Evenement, Formation, LigneDuerp, Mouvement, PrincipePrevention, Salarie } from "./types";
 
 // Générateur pseudo-aléatoire déterministe pour des démos reproductibles.
 function aleatoire(graine: number) {
@@ -34,6 +35,7 @@ export function donneesVides(): Donnees {
     equipements: [],
     verifications: [],
     produits: [],
+    interventions: [],
   };
 }
 
@@ -365,6 +367,49 @@ export function donneesDemo(aujourdhui: string): Donnees {
     }),
   ];
 
+  // Entreprises extérieures : un nettoyage industriel en cours (plan signé) et des travaux de
+  // soudure sur les racks dans 10 jours, dont le plan reste à préparer.
+  const courant = (code: string) => {
+    const r = risquesCourants.find((x) => x.code === code)!;
+    return nouveauRisqueIntervention({ phase: r.phase, risque: r.risque, mesures: r.mesures, charge: r.charge });
+  };
+  const signatures: NonNullable<Donnees["signatures"]> = {
+    "sig-demo-eu": { image: SIGNATURE_A, date: decalerJours(aujourdhui, -32), salarieId: "", nom: "Claire Moreau, gérante" },
+    "sig-demo-ee": { image: SIGNATURE_B, date: decalerJours(aujourdhui, -32), salarieId: "", nom: "Karim B., chef d'équipe Net'Indus" },
+  };
+  const interventions: Intervention[] = [
+    nouvelleIntervention({
+      entreprise: "Net'Indus Services", siret: "987 654 321 00025", responsable: "Karim B., chef d'équipe", telephone: "04 72 00 00 00",
+      objet: "Nettoyage industriel des sols de l'entrepôt et des quais (autolaveuse, 3 passages par semaine)",
+      lieux: "Zone de stockage, Quai de réception", debut: decalerJours(aujourdhui, -30), fin: decalerJours(aujourdhui, 335),
+      effectif: 2, heures: 470, coordinateur: "Responsable entrepôt",
+      inspectionLe: decalerJours(aujourdhui, -35), inspectionPar: "Responsable entrepôt, Karim B. (Net'Indus)",
+      risques: [
+        courant("circulation"),
+        courant("coactivite"),
+        nouveauRisqueIntervention({
+          phase: "Nettoyage des allées pendant la préparation de commandes", risque: "Heurt d'un agent de nettoyage par un chariot élévateur ; sol glissant",
+          mesures: "Nettoyage des allées fermées au trafic chariots (de 6 h à 8 h) ; panneaux « sol glissant » ; gilets haute visibilité", charge: "commun",
+        }),
+        nouveauRisqueIntervention({
+          phase: "Produits de nettoyage", risque: "Irritation de la peau et des yeux",
+          mesures: "FDS du nettoyant sols remise à Net'Indus ; gants et lunettes fournis par l'entreprise extérieure", charge: "ee",
+        }),
+      ],
+      consignes: "Accueil sécurité à la première venue de chaque agent. Accès par le portail B, badge à retirer à l'accueil. Interdiction de conduire les chariots du site.",
+      materiels: "Local ménage mis à disposition (point d'eau, prise 230 V). L'autolaveuse appartient à Net'Indus et est vérifiée par elle.",
+      secours: "Sauveteurs secouristes du travail : Laurent P. et Sophie D. Trousse de secours à l'accueil et à l'atelier. Urgences : 112. Rassemblement en cas d'évacuation : parking visiteurs.",
+      suivi: [nouveauSuivi({ date: decalerJours(aujourdhui, -5), type: "inspection", observations: "Balisage respecté. Rappel : ne pas laisser l'autolaveuse dans l'allée C." })],
+      signatureEu: "sig-demo-eu", signatureEe: "sig-demo-ee",
+    }),
+    nouvelleIntervention({
+      entreprise: "Métal Rhône", responsable: "Atelier de soudure, M. Faure", objet: "Renforcement et soudure de lisses sur les racks de la zone de stockage",
+      lieux: "Zone de stockage", debut: decalerJours(aujourdhui, 10), fin: decalerJours(aujourdhui, 14), effectif: 3, heures: 90,
+      travauxDangereux: ["hauteur", "points-chauds"], coordinateur: "Responsable entrepôt",
+      risques: [courant("coactivite"), risqueDuTravail("hauteur")!, risqueDuTravail("points-chauds")!],
+    }),
+  ];
+
   const premier = evenements[0];
   actions.push(
     nouvelleAction(premier.risqueId, {
@@ -394,8 +439,14 @@ export function donneesDemo(aujourdhui: string): Donnees {
     equipements,
     verifications,
     produits,
+    interventions,
     salaries,
     articles,
     mouvements,
+    signatures,
   };
 }
+
+// Signatures tracées pour la démonstration.
+const SIGNATURE_A = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAABQCAQAAACaYqA+AAADP0lEQVR42u2czXLDIAyEY42Pef8n9b09eDw2CdiApOUn+/XSaZMItBLIMs7rRQghhBBCCCGEEEIIIYQQQgghhBBCCCGEEELIqCwzTur9d/y2LWib2wAelZklD3/H2ERZpOjdBh1Fh7ItDL+fEX3Ps205ZEfk3WFzlECTmbMcKcJuCxdoGta5qtqYu99/vrbbSVzrW0GJ0MY1+AUXvanUWBNcDqBk/xba0/JZQ4xzjSCjDLT281vl+o8Xcj1UtfjNBWPx8G2ZNfGe9rWqbbOze+6y8cXdP8hjvu1weY/L/v47fvx3V3TAYe2VWBNELOYMFFXvWoZZ283q9G1nl2zpXP92u58Mp1Nswywd2C2aNPnWoNX7Kft1gJY7YOqz4n8fOdvDGZX5UDyjLmcoZ5fcN86vNhBXE365nv7MXGsrOj7jOb7/3bdhGspuJcfTiI859XTIYkUb7KV1oQ+z3LD5vF7ReSC1hpbMx2V5r2lN6pbDeov48G5fSfz8yRlPCbxkj39ufhCvL+K4tnz+Xyv38/tzFnhp5Q77ehdv0XOMsSbSk2dz5yPzZF3ra2XLQAulPtpZVv7gadgOw+z700vbxvevltphpTrYmkMFmnpaY7FUQt3BiXyb6Qbv0zvuXyXaSLSP+ToJ5ttM9l5labs1p8Mpz/n8NOnvV8x45nxvfdhInnPv8dqtPITM86uyeo+9PfacWMvjj9ozajnv3EM/lFwf2He+ih3LsEslqR1cOIxrfanfme/cEbreKsieLOLWMkTaSF1z4btgQBxLuGac1VJbI4Je8rYPRax5E0/fKbK7X1XqfuwDyciHNbxtSX5MpsTV3M63yAGExblKUynPs9htPdxety3hZQzikSUPG+lQ8w+wtW6w6IGma4lZFnbkHi9lkx77oFGprCOfoVNnej+nXXzzrLztqZtNeNYFF2JD3E9v85BgnghWB6mRLP3LbCu5vYs1IzvnhgzsdYwstxTr7gz8Z4+x3VcpDCW65QS8Honor24fXHQrV4XB4+/+sLOIu33aIrBlhOxoc6WMsYpobA1SyF0FQEt+ZN+830THr9jrqIZAwYORPwhFb7y/EkIIIYQQQgghhBBCCJmOf8N/n4gbXQrlAAAAAElFTkSuQmCC";
+const SIGNATURE_B = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAABQCAQAAACaYqA+AAADOklEQVR42u2cvZKrMAxGF03KvP+T0meLTCYQDNjWJ2zgnFvcLTLC+rVkh/z9AQAAAAAAAAAAAAAAAAAAAAAAAAAAAJyGAROs83y9/x8vZiXDtXsun/51DR5k5/3WZWTn/dZl13S5StY4vDNTLxmndx0CPbZxz5dHvws6/ZOdHrN88lwTQvOqoXN57Zqsh6j9/NMU5Igw0kryaeqvYNbe5RG7XYTra1cXF4wXKe+6guzJqUg3qaR69LMenKzb7aKyXd3DK4K7Xr8OMv29eH/z1eeAFFE1vA2m1aihabx+F+x3+69plfnZRzOXtli402Mar2VYKfO5TNpWbvZ4Cl++pofvAc9XutTkxODSuOPwe1ypm2xbds/K+VwhzbxqfLNSUQN+FfJuIq2bufSnddtOnSSrfdQ8w5fOqXf70vEKt1/tevSwTJ+Xl3QWTWtAbakah7Ihbrvs1bh9SzddhraqXeZ56NI1vvlxLedVWZojR/UZfQum2yrM/9CPo79OUo83qhJ/tLu2q9lJynvuHp8bf8cprnK7OnzabBVWtjzt8KFUae9z2jNvhcPKCvOe/UtWY/G5FT2W5Kpbd3ZwhmwvtXXw2Xtfg5Kq+y5xe16oKeyUL8M0xaVmefnS9I3hEW4vC4ic+4z11U/Def+51n9e6atG20l7W0p6bfk7f87XqE7/Hbn2VcM7D2hPIHNkWIRh9cZXD3db+VQeQOsmzpP1PoH0NYipkXmN0Ddcprdmikhue1cWv4WMw3dfXt5e6oZS61P9M/TwERXoGKtZ7uN7zrH2d+Xx3+NV6mhncVPauHXGPqo7qXvOb6egz3mLzfOlq/op9ukAqtV0Lk33HYCIOmvn2o/vRoz97TwuX9s9a7JAuxPr32yN7VIs59GeJcwN0uqurkV+1mmZ+vECdQg89ift8Ra/S1PrqPV+RXP1GsFwpEH9eT6XUCNPXx3mtUyhZTQHOr0ugqOcpAigrXXeyulxTvrKn+aWt26oZKleOTqCgLP3lLpl777sm1dnUp2s6U1D333QYYt7vlRN4TSjvPKUsrRaNhvZ1Pl//TngHFryi5E3xM6ZTaqCrJQFAAAAAAAAAAAAAAB35R/707vSX8xb2QAAAABJRU5ErkJggg==";

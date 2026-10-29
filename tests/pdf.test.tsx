@@ -6,6 +6,7 @@ import { FicheEpi } from "@/lib/pdf/fiche-epi";
 import { EtatFormations } from "@/lib/pdf/etat-formations";
 import { RegistreBenins } from "@/lib/pdf/registre-benins";
 import { InventaireProduits, NoticesDePoste } from "@/lib/pdf/produits";
+import { PlanPrevention } from "@/lib/pdf/plan-prevention";
 import { RegistreSecurite } from "@/lib/pdf/registre-securite";
 
 const logo = `${process.cwd()}/public/logo-frisk.png`;
@@ -77,6 +78,13 @@ describe("PDF des versions figées", () => {
   it("inventaire des produits chimiques et notices de poste", async () => {
     for (const Composant of [InventaireProduits, NoticesDePoste]) {
       const pdf = await renderToBuffer(<Composant donnees={d} aujourdhui="2026-10-28" logo={logo} />);
+      expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
+    }
+  }, 30_000);
+
+  it("plans de prévention : signé avec suivi, et à préparer", async () => {
+    for (const intervention of d.interventions) {
+      const pdf = await renderToBuffer(<PlanPrevention donnees={d} intervention={intervention} aujourdhui="2026-10-28" logo={logo} />);
       expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
     }
   }, 30_000);
