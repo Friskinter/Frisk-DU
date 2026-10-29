@@ -7,6 +7,7 @@ import { EcranAuth } from "@/components/ecran-auth";
 import { classeBouton, classeChamp } from "@/components/ui";
 import { DUREE_ESSAI_JOURS, effectifsInscription } from "@/lib/abonnement";
 import { VERSION_CONDITIONS } from "@/lib/legal";
+import { messageInscription } from "@/lib/messages-inscription";
 import { MODE_TEST } from "@/lib/mode-test";
 import { rechargerVers } from "@/lib/navigation";
 import { supabaseNavigateur } from "@/lib/supabase/client";
@@ -52,15 +53,7 @@ export default function Inscription() {
     setJeton("");
     setEssai((n) => n + 1);
     if (error) {
-      setErreur(
-        error.code === "captcha_failed"
-          ? "La vérification anti-robot a échoué. Cochez-la de nouveau puis réessayez."
-          : error.code === "weak_password"
-          ? "Mot de passe trop simple : mélangez lettres, chiffres et caractères spéciaux."
-          : error.code === "over_email_send_rate_limit" || error.status === 429
-            ? "Trop d'inscriptions en peu de temps. Réessayez dans quelques minutes."
-            : "L'inscription n'a pas pu aboutir. Vérifiez l'adresse e-mail et réessayez.",
-      );
+      setErreur(messageInscription(error));
       return;
     }
     // Confirmation par e-mail désactivée dans Supabase : la session est déjà ouverte.
