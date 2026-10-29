@@ -7,6 +7,7 @@ import { analyseFaite, declarationEnRetard, echeanceDeclaration, estAccident } f
 import { etatFormation, formationsEnVigueur, formationsManquantes, libelleFormation, typeFormation } from "./formations";
 import { dernierSuivi, enCoursOuProche, etatIntervention, planEcritObligatoire } from "./interventions";
 import { classementCmr, estCmr, etatFds } from "./produits";
+import { actifOuProche, dejaRenouvele, etatProtocole } from "./protocoles";
 import { typesEvenement } from "./referentiel";
 import { derniereVerification, etatEquipement, observationsOuvertes } from "./verifications";
 import type { Donnees } from "./types";
@@ -313,6 +314,38 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
       id: "interventions-suivi", gravite: "info", categorie: "Entreprises extérieures", lien: lienIntervention(sansSuivi),
       titre: `${pluriel(sansSuivi.length, "intervention")} sans inspection ni réunion de coordination depuis 3 mois`,
       detail: `Travaux dangereux : prévoyez des inspections et réunions périodiques de coordination : ${liste(sansSuivi.map(nomEE))}.`,
+    });
+  }
+
+  // Protocoles de sécurité (chargement et déchargement)
+  const protocoles = donnees.protocoles ?? [];
+  const etatP = (p: (typeof protocoles)[number]) => etatProtocole(p, donnees.signatures, aujourdhui);
+  const nomT = (p: (typeof protocoles)[number]) => p.transporteur || "transporteur sans nom";
+  const lienProtocole = (liste: typeof protocoles) =>
+    liste.length === 1 ? `/entreprises-exterieures?protocole=${liste[0].id}` : "/entreprises-exterieures?onglet=protocoles";
+  const nonPret = (p: (typeof protocoles)[number]) => ["a-completer", "a-signer"].includes(etatP(p));
+  const protocolesActifs = protocoles.filter((p) => actifOuProche(p, aujourdhui) && nonPret(p));
+  if (protocolesActifs.length) {
+    alertes.push({
+      id: "protocoles-non-signes", gravite: "critique", categorie: "Entreprises extérieures", lien: lienProtocole(protocolesActifs),
+      titre: `${pluriel(protocolesActifs.length, "protocole")} de sécurité non signé${protocolesActifs.length > 1 ? "s" : ""} pour des opérations en cours`,
+      detail: `Chargements et déchargements sans protocole écrit et signé (art. R4515-4) : ${liste(protocolesActifs.map(nomT))}.`,
+    });
+  }
+  const protocolesProches = protocoles.filter((p) => p.debut > aujourdhui && actifOuProche(p, aujourdhui, 15) && nonPret(p));
+  if (protocolesProches.length) {
+    alertes.push({
+      id: "protocoles-a-preparer", gravite: "importante", categorie: "Entreprises extérieures", lien: lienProtocole(protocolesProches),
+      titre: `${pluriel(protocolesProches.length, "protocole")} de sécurité à finaliser avant l'opération`,
+      detail: liste(protocolesProches.map((p) => `${nomT(p)} (le ${formaterDate(p.debut)})`)),
+    });
+  }
+  const protocolesARenouveler = protocoles.filter((p) => etatP(p) === "a-renouveler" && !dejaRenouvele(p, protocoles));
+  if (protocolesARenouveler.length) {
+    alertes.push({
+      id: "protocoles-a-renouveler", gravite: "importante", categorie: "Entreprises extérieures", lien: lienProtocole(protocolesARenouveler),
+      titre: `${pluriel(protocolesARenouveler.length, "protocole")} de sécurité à renouveler`,
+      detail: liste(protocolesARenouveler.map((p) => `${nomT(p)} (fin le ${formaterDate(p.fin)})`)),
     });
   }
 

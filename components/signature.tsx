@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { classeBoutonSecondaire } from "@/components/ui";
+import { classeBouton, classeBoutonSecondaire, classeChamp } from "@/components/ui";
+import { dateDuJour, formaterDate } from "@/lib/calculs";
+import type { Signature } from "@/lib/types";
 
 // Pavé de signature : au doigt sur tablette ou téléphone, à la souris sur ordinateur.
 export function PaveSignature({ onChange }: { onChange: (image: string | null) => void }) {
@@ -71,6 +73,54 @@ export function PaveSignature({ onChange }: { onChange: (image: string | null) =
       </div>
       <button type="button" onClick={effacer} className={`${classeBoutonSecondaire} mt-2 py-1 text-xs`}>
         Effacer
+      </button>
+    </div>
+  );
+}
+
+// Signature d'un document par une personne qui n'est pas forcément salariée (entreprise extérieure,
+// transporteur) : nom et qualité, puis tracé. Une fois validée, la signature ne change plus.
+export function BlocSignature({
+  titre,
+  nomPropose,
+  signature,
+  onValider,
+}: {
+  titre: string;
+  nomPropose: string;
+  signature?: Signature;
+  onValider: (signature: Signature) => void;
+}) {
+  const [image, setImage] = useState<string | null>(null);
+  const [nom, setNom] = useState(nomPropose);
+
+  if (signature) {
+    return (
+      <div className="rounded-sm border border-pierre/70 bg-white p-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ardoise">{titre}</p>
+        <p className="mt-1 text-sm">{signature.nom}</p>
+        {/* eslint-disable-next-line @next/next/no-img-element -- image en data URL */}
+        <img src={signature.image} alt={`Signature de ${signature.nom || titre}`} className="mt-2 h-16 w-auto" />
+        <p className="text-xs text-gris">Signé le {formaterDate(signature.date)}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-sm border border-pierre/70 bg-white p-3">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ardoise">{titre}</p>
+      <label className="mb-2 block">
+        <span className="mb-1 block text-xs font-medium text-ardoise">Nom et qualité du signataire</span>
+        <input value={nom} onChange={(x) => setNom(x.target.value)} className={classeChamp} />
+      </label>
+      <PaveSignature onChange={setImage} />
+      <button
+        type="button"
+        className={`${classeBouton} mt-2 disabled:opacity-50`}
+        disabled={!image || !nom.trim()}
+        onClick={() => image && onValider({ image, date: dateDuJour(), salarieId: "", nom: nom.trim() })}
+      >
+        Valider la signature
       </button>
     </div>
   );

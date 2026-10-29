@@ -216,6 +216,37 @@ export type SuiviIntervention = {
   observations: string;
 };
 
+// Protocole de sécurité des opérations de chargement et de déchargement (art. R4515-4 et suivants) :
+// il remplace le plan de prévention pour les transporteurs.
+export type Protocole = {
+  id: string;
+  transporteur: string;
+  siret: string;
+  contact: string; // représentant du transporteur (nom, fonction)
+  telephone: string;
+  email: string;
+  operation: "chargement" | "dechargement" | "les-deux";
+  permanent: boolean; // opérations répétitives : un protocole unique (art. R4515-8)
+  debut: string; // date de l'opération, ou début de validité
+  fin: string; // fin de validité (égale au début pour une opération ponctuelle)
+  // Informations de l'entreprise d'accueil (art. R4515-6)
+  lieu: string; // lieu de livraison ou de prise en charge
+  acces: string; // modalités d'accès et de stationnement
+  circulation: string; // plan et consignes de circulation
+  materiels: string; // matériels et engins utilisés pour l'opération
+  consignes: string; // consignes de sécurité de l'opération
+  secours: string; // moyens de secours en cas d'accident ou d'incident
+  responsable: string; // responsable désigné par l'entreprise d'accueil
+  // Informations du transporteur (art. R4515-7)
+  vehicules: string; // caractéristiques, aménagement et équipements des véhicules
+  marchandises: string; // nature et conditionnement
+  precautions: string; // précautions particulières liées aux marchandises
+  matieresDangereuses: boolean; // transport soumis à la réglementation des matières dangereuses (ADR)
+  signatureAccueil?: string; // identifiants dans Donnees.signatures
+  signatureTransporteur?: string;
+  notes: string;
+};
+
 export type Intervention = {
   id: string;
   entreprise: string; // entreprise extérieure
@@ -269,6 +300,7 @@ export type Donnees = {
   verifications: Verification[];
   produits: Produit[];
   interventions: Intervention[];
+  protocoles: Protocole[];
   salaries: Salarie[];
   articles: Article[];
   mouvements: Mouvement[];

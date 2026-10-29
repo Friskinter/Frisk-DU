@@ -4,10 +4,11 @@ import { nouvelleAction } from "./actions";
 import { nouvelEvenement } from "./evenements";
 import { ajouterMois, nouvelleExigence, nouvelleFormation } from "./formations";
 import { nouveauProduit } from "./produits";
+import { nouveauProtocole } from "./protocoles";
 import { nouveauRisqueIntervention, nouveauSuivi, nouvelleIntervention, risqueDuTravail, risquesCourants } from "./interventions";
 import { nouvelEquipement, nouvelleObservation, nouvelleVerification } from "./verifications";
 import { cle, decalerJours, nouvelId } from "./calculs";
-import type { Action, Article, Donnees, Intervention, Evenement, Formation, LigneDuerp, Mouvement, PrincipePrevention, Salarie } from "./types";
+import type { Action, Article, Donnees, Intervention, Protocole, Evenement, Formation, LigneDuerp, Mouvement, PrincipePrevention, Salarie } from "./types";
 
 // Générateur pseudo-aléatoire déterministe pour des démos reproductibles.
 function aleatoire(graine: number) {
@@ -36,6 +37,7 @@ export function donneesVides(): Donnees {
     verifications: [],
     produits: [],
     interventions: [],
+    protocoles: [],
   };
 }
 
@@ -410,6 +412,36 @@ export function donneesDemo(aujourdhui: string): Donnees {
     }),
   ];
 
+  // Protocoles de sécurité : le messager des livraisons quotidiennes (à renouveler dans 20 jours)
+  // et une livraison ponctuelle de produits dangereux la semaine prochaine, à compléter.
+  signatures["sig-demo-accueil"] = { image: SIGNATURE_A, date: decalerJours(aujourdhui, -345), salarieId: "", nom: "Claire Moreau, gérante" };
+  signatures["sig-demo-transporteur"] = { image: SIGNATURE_B, date: decalerJours(aujourdhui, -345), salarieId: "", nom: "Julien V., exploitation Rhône Express" };
+  const accueil = {
+    lieu: "Quais 1 à 3 du bâtiment de réception",
+    acces: "Entrée par le portail A, de 6 h à 14 h. Présentation à l'accueil quais (bâtiment B), remise des clés du camion pendant l'opération. Stationnement en attente sur la zone poids lourds, moteur coupé.",
+    circulation: "Plan de circulation remis à l'accueil : sens unique, 10 km/h, aucune marche arrière hors des quais. Chauffeur à pied uniquement dans la zone sécurisée balisée en vert.",
+    materiels: "Déchargement par les caristes du site (chariots élévateurs, transpalettes électriques). Hayon du camion manœuvré par le chauffeur.",
+    consignes: "Cales de roues posées avant l'ouverture des portes. Gilet haute visibilité et chaussures de sécurité obligatoires. Interdiction de monter sur les quais et de conduire les engins du site.",
+    secours: "Sauveteurs secouristes du travail : Laurent P. et Sophie D. Trousse de secours à l'accueil quais. Urgences : 112.",
+    responsable: "Responsable entrepôt",
+  };
+  const protocoles: Protocole[] = [
+    nouveauProtocole([], aujourdhui, {
+      ...accueil,
+      transporteur: "Transports Rhône Express", siret: "456 789 123 00031", contact: "Julien V., responsable d'exploitation", telephone: "04 78 00 00 00",
+      operation: "dechargement", permanent: true, debut: decalerJours(aujourdhui, -345), fin: decalerJours(aujourdhui, 20),
+      vehicules: "Porteurs 19 t et semi-remorques bâchées, hayon élévateur sur les porteurs.",
+      marchandises: "Palettes filmées de produits d'emballage, 600 kg au plus par palette.",
+      signatureAccueil: "sig-demo-accueil", signatureTransporteur: "sig-demo-transporteur",
+    }),
+    nouveauProtocole([], aujourdhui, {
+      ...accueil,
+      transporteur: "ChimTrans", contact: "Service exploitation", operation: "dechargement", permanent: false,
+      debut: decalerJours(aujourdhui, 5), fin: decalerJours(aujourdhui, 5),
+      marchandises: "4 fûts de 60 L de dégraissant solvanté DX 40 (liquide inflammable, UN 1993).", matieresDangereuses: true,
+    }),
+  ];
+
   const premier = evenements[0];
   actions.push(
     nouvelleAction(premier.risqueId, {
@@ -440,6 +472,7 @@ export function donneesDemo(aujourdhui: string): Donnees {
     verifications,
     produits,
     interventions,
+    protocoles,
     salaries,
     articles,
     mouvements,

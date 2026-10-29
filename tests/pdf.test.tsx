@@ -7,6 +7,7 @@ import { EtatFormations } from "@/lib/pdf/etat-formations";
 import { RegistreBenins } from "@/lib/pdf/registre-benins";
 import { InventaireProduits, NoticesDePoste } from "@/lib/pdf/produits";
 import { PlanPrevention } from "@/lib/pdf/plan-prevention";
+import { ProtocoleSecurite } from "@/lib/pdf/protocole-securite";
 import { RegistreSecurite } from "@/lib/pdf/registre-securite";
 
 const logo = `${process.cwd()}/public/logo-frisk.png`;
@@ -85,6 +86,13 @@ describe("PDF des versions figées", () => {
   it("plans de prévention : signé avec suivi, et à préparer", async () => {
     for (const intervention of d.interventions) {
       const pdf = await renderToBuffer(<PlanPrevention donnees={d} intervention={intervention} aujourdhui="2026-10-28" logo={logo} />);
+      expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
+    }
+  }, 30_000);
+
+  it("protocoles de sécurité : signé, et à compléter avec matières dangereuses", async () => {
+    for (const protocole of d.protocoles) {
+      const pdf = await renderToBuffer(<ProtocoleSecurite donnees={d} protocole={protocole} aujourdhui="2026-10-28" logo={logo} />);
       expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
     }
   }, 30_000);
