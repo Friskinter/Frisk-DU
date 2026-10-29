@@ -7,18 +7,19 @@ import { operations } from "@/lib/protocoles";
 import type { Donnees, Protocole } from "@/lib/types";
 import { CadreSignature, Champ, Section, c, s } from "./plan-prevention";
 import type { Marque } from "@/lib/identite";
-import { LogoDocument, MentionFrisk } from "./marque";
+import { BandeauCouleur, CouleurTitres, LogoDocument, MentionFrisk } from "./marque";
 
 export function ProtocoleSecurite({ donnees, protocole: p, aujourdhui, marque }: { donnees: Donnees; protocole: Protocole; aujourdhui: string; marque: Marque }) {
   const fiche = donnees.fiche;
   const operation = operations.find((o) => o.valeur === p.operation)?.libelle ?? "";
   return (
     <Document title={`Protocole de sécurité - ${p.transporteur}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+      <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 8, letterSpacing: 2, color: marque.accent, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
-            <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4 }}>Protocole de sécurité</Text>
+            <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4, color: marque.titre }}>Protocole de sécurité</Text>
             <Text style={{ fontSize: 10, marginTop: 2 }}>{operation} · {p.transporteur || "Transporteur"}</Text>
             <Text style={{ fontSize: 8, color: c.ardoise, marginTop: 4 }}>
               Établi en application des articles R4515-4 à R4515-11 du Code du travail, à la suite d&apos;un échange entre l&apos;entreprise d&apos;accueil et
@@ -74,7 +75,7 @@ export function ProtocoleSecurite({ donnees, protocole: p, aujourdhui, marque }:
         </Section>
 
         <View wrap={false}>
-          <Text style={s.titreSection}>4. Signatures</Text>
+          <Text style={[s.titreSection, { color: marque.titre }]}>4. Signatures</Text>
           <Text style={{ fontSize: 8, color: c.ardoise, marginBottom: 6 }}>
             Chaque entreprise porte ce protocole à la connaissance de ses salariés concernés ; le transporteur le remet à ses chauffeurs. Un exemplaire est
             conservé par chaque partie et tenu à la disposition de l&apos;inspection du travail et des représentants du personnel.
@@ -89,8 +90,10 @@ export function ProtocoleSecurite({ donnees, protocole: p, aujourdhui, marque }:
           <Text>{donnees.entreprise} · Protocole de sécurité {p.transporteur} · édité le {formaterDate(aujourdhui)}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
         </View>
+        <BandeauCouleur marque={marque} />
         <MentionFrisk marque={marque} />
       </Page>
+      </CouleurTitres.Provider>
     </Document>
   );
 }

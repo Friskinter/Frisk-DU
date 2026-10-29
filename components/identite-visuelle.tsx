@@ -202,9 +202,9 @@ export function IdentiteVisuelle({ entreprise, identite }: { entreprise: string;
 function Apercu({ entreprise, identite }: { entreprise: string; identite: Identite }) {
   const style = (variablesCouleur(identite) ?? {}) as CSSProperties;
   return (
-    <div style={style} aria-label="Aperçu" role="group" className="space-y-3">
+    <div style={style} aria-label="Aperçu" role="group" className="space-y-3 rounded-sm bg-ivoire p-3">
       <p className="text-xs font-medium uppercase tracking-wider text-gris">Aperçu</p>
-      <div className="rounded-sm bg-encre p-3 text-pierre">
+      <div className="rounded-sm bg-menu p-3 text-pierre">
         <div className="flex items-center gap-3">
           <Logo identite={identite} />
           <p className="truncate text-sm text-marbre">{entreprise || "Votre entreprise"}</p>
@@ -220,7 +220,7 @@ function Apercu({ entreprise, identite }: { entreprise: string; identite: Identi
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-[10px] uppercase tracking-widest text-bronze-fonce">{entreprise || "Votre entreprise"}</p>
-            <p className="font-serif text-lg">Document unique</p>
+            <p className="font-serif text-lg text-titre">Document unique</p>
           </div>
           <Logo identite={identite} petit />
         </div>
@@ -231,13 +231,14 @@ function Apercu({ entreprise, identite }: { entreprise: string; identite: Identi
 }
 
 // Logo de l'entreprise sur une pastille blanche (lisible sur le menu noir), sinon celui de Frisk.
-export function Logo({ identite, petit = false }: { identite: Identite | undefined; petit?: boolean }) {
+export function Logo({ identite, petit = false, grand = false }: { identite: Identite | undefined; petit?: boolean; grand?: boolean }) {
   if (!identite?.logo) {
     return <Image src="/logo-frisk.png" alt="" width={36} height={36} className="h-9 w-9 shrink-0 rounded-sm" />;
   }
+  const taille = grand ? "h-10 max-w-32 lg:h-16 lg:max-w-full lg:p-2" : petit ? "h-10 max-w-28" : "h-10 max-w-32";
   return (
-    <span className={`flex shrink-0 items-center justify-center rounded-sm bg-white p-1 ${petit ? "h-10 max-w-28" : "h-10 max-w-32"}`}>
-      <Image src={identite.logo} alt="" width={120} height={32} unoptimized className="h-full w-auto max-w-full object-contain" />
+    <span className={`flex shrink-0 items-center justify-center rounded-sm bg-white p-1 ${taille}`}>
+      <Image src={identite.logo} alt="" width={200} height={56} unoptimized className="h-full w-auto max-w-full object-contain" />
     </span>
   );
 }

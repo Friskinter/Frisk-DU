@@ -5,7 +5,7 @@ import { formaterDate } from "@/lib/calculs";
 import { nomVictime } from "@/lib/evenements";
 import type { Donnees } from "@/lib/types";
 import type { Marque } from "@/lib/identite";
-import { LogoDocument, MentionFrisk } from "./marque";
+import { BandeauCouleur, CouleurTitres, LogoDocument, MentionFrisk } from "./marque";
 
 const c = { encre: "#0c0b0a", ardoise: "#3a3530", gris: "#8a837a", bronze: "#b08d57", marbre: "#ece6dc", pierre: "#d9cfc1", ivoire: "#f7f4ef" };
 
@@ -37,11 +37,12 @@ export function RegistreBenins({ donnees, aujourdhui, marque }: { donnees: Donne
 
   return (
     <Document title={`Registre des accidents bénins - ${donnees.entreprise}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+      <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" orientation="landscape" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View>
             <Text style={{ fontSize: 8, letterSpacing: 2, color: marque.accent, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
-            <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4 }}>Registre des accidents bénins</Text>
+            <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4, color: marque.titre }}>Registre des accidents bénins</Text>
             <Text style={{ fontSize: 8, color: c.ardoise, marginTop: 4, lineHeight: 1.35 }}>
               {[donnees.fiche?.siret && `SIRET ${donnees.fiche.siret}`, donnees.fiche?.adresse].filter(Boolean).join(" · ")}
             </Text>
@@ -78,8 +79,10 @@ export function RegistreBenins({ donnees, aujourdhui, marque }: { donnees: Donne
           <Text>{donnees.entreprise} · Registre des accidents bénins · édité le {formaterDate(aujourdhui)}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
         </View>
+        <BandeauCouleur marque={marque} />
         <MentionFrisk marque={marque} />
       </Page>
+      </CouleurTitres.Provider>
     </Document>
   );
 }

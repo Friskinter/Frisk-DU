@@ -5,7 +5,7 @@ import { formaterDate } from "@/lib/calculs";
 import { classementCmr, etatFds, etatsFds, libelleMention, pictogrammesDe } from "@/lib/produits";
 import type { Donnees, Produit } from "@/lib/types";
 import type { Marque } from "@/lib/identite";
-import { LogoDocument, MentionFrisk } from "./marque";
+import { BandeauCouleur, CouleurTitres, LogoDocument, MentionFrisk } from "./marque";
 
 const c = { encre: "#0c0b0a", ardoise: "#3a3530", gris: "#8a837a", bronze: "#b08d57", marbre: "#ece6dc", pierre: "#d9cfc1", ivoire: "#f7f4ef", rouge: "#b42318" };
 
@@ -26,7 +26,7 @@ function EnTete({ entreprise, titre, sousTitre, marque }: { entreprise: string; 
     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
       <View style={{ flex: 1 }}>
         <Text style={{ fontSize: 8, letterSpacing: 2, color: marque.accent, textTransform: "uppercase" }}>{entreprise}</Text>
-        <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4 }}>{titre}</Text>
+        <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4, color: marque.titre }}>{titre}</Text>
         <Text style={{ fontSize: 8, color: c.ardoise, marginTop: 4, lineHeight: 1.35 }}>{sousTitre}</Text>
       </View>
       <LogoDocument marque={marque} style={{ marginLeft: 16 }} />
@@ -54,6 +54,7 @@ export function InventaireProduits({ donnees, aujourdhui, marque }: { donnees: D
   const nom = (id: string) => donnees.salaries.find((x) => x.id === id)?.nom ?? "";
   return (
     <Document title={`Inventaire des produits chimiques - ${donnees.entreprise}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+      <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" orientation="landscape" style={s.page}>
         <EnTete
           entreprise={donnees.entreprise}
@@ -93,8 +94,10 @@ export function InventaireProduits({ donnees, aujourdhui, marque }: { donnees: D
           <Text>{donnees.entreprise} · Inventaire des produits chimiques · édité le {formaterDate(aujourdhui)}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
         </View>
+        <BandeauCouleur marque={marque} />
         <MentionFrisk marque={marque} />
       </Page>
+      </CouleurTitres.Provider>
     </Document>
   );
 }
@@ -105,6 +108,7 @@ export function NoticesDePoste({ donnees, aujourdhui, marque }: { donnees: Donne
   const unites = [...new Set(produits.map((p) => p.unite || "Unité non précisée"))].sort((a, b) => a.localeCompare(b, "fr"));
   return (
     <Document title={`Notices de poste - ${donnees.entreprise}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+      <CouleurTitres.Provider value={marque.titre}>
       {unites.map((unite) => (
         <Page key={unite} size="A4" style={s.page}>
           <EnTete
@@ -117,7 +121,7 @@ export function NoticesDePoste({ donnees, aujourdhui, marque }: { donnees: Donne
             .filter((p) => (p.unite || "Unité non précisée") === unite)
             .map((p) => (
               <View key={p.id} wrap={false} style={{ marginTop: 12, borderWidth: 0.5, borderColor: c.pierre, padding: 10 }}>
-                <Text style={{ fontFamily: "Times-Bold", fontSize: 13 }}>{p.nom || "Produit sans nom"}</Text>
+                <Text style={{ fontFamily: "Times-Bold", fontSize: 13 , color: marque.titre }}>{p.nom || "Produit sans nom"}</Text>
                 {p.usage ? <Text style={[s.texte, { color: c.ardoise }]}>{p.usage}</Text> : null}
                 {cmrTexte(p) ? (
                   <Text style={[s.texte, { marginTop: 4, fontFamily: "Helvetica-Bold", color: c.rouge }]}>
@@ -151,9 +155,11 @@ export function NoticesDePoste({ donnees, aujourdhui, marque }: { donnees: Donne
             <Text>{donnees.entreprise} · Notice de poste · {unite} · {formaterDate(aujourdhui)}</Text>
             <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
           </View>
-          <MentionFrisk marque={marque} />
+          <BandeauCouleur marque={marque} />
+        <MentionFrisk marque={marque} />
       </Page>
       ))}
+      </CouleurTitres.Provider>
     </Document>
   );
 }

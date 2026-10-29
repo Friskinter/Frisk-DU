@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { Logo } from "@/components/identite-visuelle";
 import { calculerAlertes } from "@/lib/alertes";
-import { variablesCouleur } from "@/lib/identite";
+import { variablesCouleur, variablesTheme } from "@/lib/identite";
 import { documentsLegaux } from "@/lib/legal";
 import { libellesRoles } from "@/lib/operations";
 import { dateDuJour } from "@/lib/calculs";
@@ -31,15 +31,13 @@ const liens = [
   { href: "/reglages", label: "Salariés & réglages", icone: "⚙" },
 ];
 
-const variables = ["--color-bronze", "--color-bronze-clair", "--color-bronze-fonce"];
-
-// Couleur de l'entreprise : remplace le bronze de Frisk dans toute la page (voir app/globals.css).
+// Couleur de l'entreprise : remplace les couleurs de Frisk dans toute la page (voir app/globals.css).
 function useCouleurEntreprise(couleur: string | undefined) {
   useEffect(() => {
     const style = document.documentElement.style;
     const valeurs = variablesCouleur({ couleur });
-    variables.forEach((v) => (valeurs ? style.setProperty(v, valeurs[v]) : style.removeProperty(v)));
-    return () => variables.forEach((v) => style.removeProperty(v));
+    variablesTheme.forEach((v) => (valeurs ? style.setProperty(v, valeurs[v]) : style.removeProperty(v)));
+    return () => variablesTheme.forEach((v) => style.removeProperty(v));
   }, [couleur]);
 }
 
@@ -61,10 +59,10 @@ export function Navigation() {
     : 0;
 
   return (
-    <aside className="print:hidden border-b border-white/10 bg-encre text-pierre lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:shrink-0 lg:flex-col lg:border-r lg:border-b-0">
+    <aside className="print:hidden border-b border-white/10 bg-menu text-pierre lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-64 lg:shrink-0 lg:flex-col lg:border-r lg:border-b-0">
       <div className={`flex gap-3 px-4 py-3 lg:px-5 lg:pt-6 lg:pb-5 ${identite?.logo ? "items-center lg:flex-col lg:items-start lg:gap-2" : "items-center"}`}>
         {identite?.logo ? (
-          <Logo identite={identite} />
+          <Logo identite={identite} grand />
         ) : (
           <Image src="/logo-frisk.png" alt="" width={36} height={36} className="h-9 w-9 rounded-sm" priority />
         )}
@@ -82,7 +80,7 @@ export function Navigation() {
               value={session.entrepriseId}
               onChange={(e) => ouvrirEntreprise(e.target.value)}
               aria-label="Changer d'établissement"
-              className="mt-1 w-full max-w-48 truncate rounded-sm border border-white/15 bg-encre px-1 py-0.5 text-xs text-pierre"
+              className="mt-1 w-full max-w-48 truncate rounded-sm border border-white/15 bg-menu px-1 py-0.5 text-xs text-pierre"
             >
               {session.espaces.map((e) => (
                 <option key={e.id} value={e.id}>{e.nom}</option>

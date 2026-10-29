@@ -32,7 +32,7 @@ export function EnTetePage({
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="font-serif text-2xl sm:text-3xl">{titre}</h1>
+        <h1 className="font-serif text-2xl text-titre sm:text-3xl">{titre}</h1>
         {description && (
           <p className="mt-1 max-w-3xl text-sm text-ardoise">{description}</p>
         )}
@@ -57,7 +57,7 @@ export function Carte({
     <section className={`rounded-sm border border-pierre/70 bg-white p-4 sm:p-5 ${className}`}>
       {(titre || actions) && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-          {titre && <h2 className="text-sm font-semibold uppercase tracking-wider text-ardoise">{titre}</h2>}
+          {titre && <h2 className="text-sm font-semibold uppercase tracking-wider text-intertitre">{titre}</h2>}
           {actions}
         </div>
       )}

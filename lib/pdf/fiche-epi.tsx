@@ -4,7 +4,7 @@ import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/render
 import { formaterDate } from "@/lib/calculs";
 import type { Donnees } from "@/lib/types";
 import type { Marque } from "@/lib/identite";
-import { LogoDocument, MentionFrisk } from "./marque";
+import { BandeauCouleur, CouleurTitres, LogoDocument, MentionFrisk } from "./marque";
 
 const c = { encre: "#0c0b0a", ardoise: "#3a3530", gris: "#8a837a", bronze: "#b08d57", marbre: "#ece6dc", pierre: "#d9cfc1", ivoire: "#f7f4ef" };
 
@@ -48,11 +48,12 @@ export function FicheEpi({
 
   return (
     <Document title={`Fiche EPI - ${salarie.nom}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+      <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View>
             <Text style={{ fontSize: 8, letterSpacing: 2, color: marque.accent, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
-            <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4 }}>
+            <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4, color: marque.titre }}>
               Fiche de remise des équipements de protection individuelle
             </Text>
           </View>
@@ -73,7 +74,7 @@ export function FicheEpi({
           ))}
         </View>
 
-        <Text style={{ fontFamily: "Times-Bold", fontSize: 12.5, marginTop: 18, marginBottom: 6 }}>Équipements remis</Text>
+        <Text style={{ fontFamily: "Times-Bold", fontSize: 12.5, marginTop: 18, marginBottom: 6 , color: marque.titre }}>Équipements remis</Text>
         <View style={s.table}>
           <View style={s.entete} fixed>
             {colonnes.map((col) => (
@@ -103,7 +104,7 @@ export function FicheEpi({
         </View>
 
         <View wrap={false} style={{ marginTop: 18 }}>
-          <Text style={{ fontFamily: "Times-Bold", fontSize: 12.5, marginBottom: 6 }}>Engagement du salarié</Text>
+          <Text style={{ fontFamily: "Times-Bold", fontSize: 12.5, marginBottom: 6 , color: marque.titre }}>Engagement du salarié</Text>
           <Text style={{ color: c.ardoise }}>
             Je reconnais avoir reçu les équipements de protection individuelle mentionnés ci-dessus, adaptés à mon poste et à
             ma taille, et avoir été informé(e) des risques contre lesquels ils me protègent ainsi que de leurs conditions
@@ -129,8 +130,10 @@ export function FicheEpi({
           <Text>{donnees.entreprise} · Fiche EPI · {salarie.nom}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
         </View>
+        <BandeauCouleur marque={marque} />
         <MentionFrisk marque={marque} />
       </Page>
+      </CouleurTitres.Provider>
     </Document>
   );
 }

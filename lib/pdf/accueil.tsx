@@ -6,14 +6,14 @@ import { formaterDate, risqueResiduel } from "@/lib/calculs";
 import type { Accueil, Causerie, Donnees } from "@/lib/types";
 import { CadreSignature, Champ, Section, c, s } from "./plan-prevention";
 import type { Marque } from "@/lib/identite";
-import { LogoDocument, MentionFrisk } from "./marque";
+import { BandeauCouleur, CouleurTitres, LogoDocument, MentionFrisk } from "./marque";
 
 function EnTete({ donnees, titre, sousTitre, marque }: { donnees: Donnees; titre: string; sousTitre: string; marque: Marque }) {
   return (
     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
       <View style={{ flex: 1 }}>
         <Text style={{ fontSize: 8, letterSpacing: 2, color: marque.accent, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
-        <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4 }}>{titre}</Text>
+        <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4, color: marque.titre }}>{titre}</Text>
         <Text style={{ fontSize: 10, marginTop: 2 }}>{sousTitre}</Text>
       </View>
       <LogoDocument marque={marque} style={{ marginLeft: 16 }} />
@@ -36,6 +36,7 @@ export function FicheAccueil({ donnees, accueil: a, aujourdhui, marque }: { donn
   const signature = a.signatureId ? donnees.signatures?.[a.signatureId] : undefined;
   return (
     <Document title={`Accueil sécurité - ${nom}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+      <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" style={s.page}>
         <EnTete donnees={donnees} titre="Accueil sécurité" sousTitre={nom} marque={marque} />
         <Text style={{ fontSize: 8, color: c.ardoise, marginTop: 4 }}>
@@ -108,8 +109,10 @@ export function FicheAccueil({ donnees, accueil: a, aujourdhui, marque }: { donn
         </View>
 
         <Pied texte={`${donnees.entreprise} · Accueil sécurité de ${nom} · édité le ${formaterDate(aujourdhui)}`} />
+        <BandeauCouleur marque={marque} />
         <MentionFrisk marque={marque} />
       </Page>
+      </CouleurTitres.Provider>
     </Document>
   );
 }
@@ -118,6 +121,7 @@ export function FeuilleEmargement({ donnees, causerie: x, aujourdhui, marque }: 
   const nomParticipant = (p: Causerie["participants"][number]) => donnees.salaries.find((s) => s.id === p.salarieId)?.nom || p.nom || "Participant";
   return (
     <Document title={`Causerie - ${x.theme}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+      <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" style={s.page}>
         <EnTete donnees={donnees} titre="Causerie sécurité" sousTitre={x.theme || "Thème à préciser"} marque={marque} />
 
@@ -151,8 +155,10 @@ export function FeuilleEmargement({ donnees, causerie: x, aujourdhui, marque }: 
         </Section>
 
         <Pied texte={`${donnees.entreprise} · Causerie du ${x.date ? formaterDate(x.date) : "?"} · édité le ${formaterDate(aujourdhui)}`} />
+        <BandeauCouleur marque={marque} />
         <MentionFrisk marque={marque} />
       </Page>
+      </CouleurTitres.Provider>
     </Document>
   );
 }

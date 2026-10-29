@@ -7,7 +7,7 @@ import { actionLibelle, evolution, type Rapport } from "@/lib/rapport";
 import type { Donnees } from "@/lib/types";
 import { Champ, Section, c, s } from "./plan-prevention";
 import type { Marque } from "@/lib/identite";
-import { LogoDocument, MentionFrisk } from "./marque";
+import { BandeauCouleur, CouleurTitres, LogoDocument, MentionFrisk } from "./marque";
 
 // Les polices standard du PDF n'ont pas l'espace insécable fine des nombres français (« 4 900 € »).
 const espaces = (t: string) => t.replace(/[\u202f\u00a0]/g, " ");
@@ -55,11 +55,12 @@ export function RapportAnnuel({ donnees, rapport: r, synthese, aujourdhui, marqu
   const enCours = r.reference < `${r.annee}-12-31`;
   return (
     <Document title={`Rapport annuel SST ${r.annee} - ${donnees.entreprise}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+      <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 8, letterSpacing: 2, color: marque.accent, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
-            <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4 }}>Rapport annuel santé, sécurité et conditions de travail</Text>
+            <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4, color: marque.titre }}>Rapport annuel santé, sécurité et conditions de travail</Text>
             <Text style={{ fontSize: 12, marginTop: 2 }}>Année {r.annee}{enCours ? ` (situation au ${formaterDate(r.reference)})` : ""}</Text>
             <Text style={{ fontSize: 8, color: c.ardoise, marginTop: 4 }}>
               {r.papripact
@@ -181,9 +182,9 @@ export function RapportAnnuel({ donnees, rapport: r, synthese, aujourdhui, marqu
         </Section>
 
         <View wrap={false}>
-          <Text style={s.titreSection}>9. Synthèse de l&apos;employeur</Text>
+          <Text style={[s.titreSection, { color: marque.titre }]}>9. Synthèse de l&apos;employeur</Text>
           <Text style={{ lineHeight: 1.4 }}>{synthese || "-"}</Text>
-          <Text style={s.titreSection}>10. Avis du comité social et économique</Text>
+          <Text style={[s.titreSection, { color: marque.titre }]}>10. Avis du comité social et économique</Text>
           <View style={{ borderWidth: 0.5, borderColor: c.pierre, height: 90 }} />
           <Text style={{ marginTop: 4, fontSize: 7.5, color: c.gris }}>Date de présentation au CSE : ............................</Text>
         </View>
@@ -192,8 +193,10 @@ export function RapportAnnuel({ donnees, rapport: r, synthese, aujourdhui, marqu
           <Text>{donnees.entreprise} · Rapport annuel SST {r.annee} · édité le {formaterDate(aujourdhui)}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
         </View>
+        <BandeauCouleur marque={marque} />
         <MentionFrisk marque={marque} />
       </Page>
+      </CouleurTitres.Provider>
     </Document>
   );
 }

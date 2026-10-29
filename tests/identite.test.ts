@@ -10,6 +10,7 @@ import {
   marqueDocuments,
   palette,
   variablesCouleur,
+  variablesTheme,
 } from "@/lib/identite";
 import { calculerOperations } from "@/lib/operations";
 import { donneesDemo } from "@/lib/demo";
@@ -28,7 +29,21 @@ describe("couleurs de l'entreprise", () => {
       expect(contraste(p.clair, ENCRE), `${couleur} : menu`).toBeGreaterThanOrEqual(7);
       expect(contraste(p.fonce, MARBRE), `${couleur} : texte`).toBeGreaterThanOrEqual(4.5);
       expect(contraste(p.fonce, "#ffffff"), `${couleur} : texte sur blanc`).toBeGreaterThanOrEqual(4.5);
+      expect(contraste(p.fonce, p.marbre), `${couleur} : texte sur encadré teinté`).toBeGreaterThanOrEqual(4.5);
+      expect(contraste(p.clair, p.menu), `${couleur} : texte clair du menu`).toBeGreaterThanOrEqual(4.5);
+      expect(contraste("#ec835a", p.menu), `${couleur} : alerte du menu`).toBeGreaterThanOrEqual(4.5);
+      expect(contraste("#ffffff", p.menu), `${couleur} : blanc sur le menu`).toBeGreaterThanOrEqual(7);
+      expect(contraste("#6b645b", p.marbre), `${couleur} : gris sur encadré`).toBeGreaterThanOrEqual(4.5);
+      expect(contraste("#6b645b", p.ivoire), `${couleur} : gris sur la page`).toBeGreaterThanOrEqual(4.5);
     }
+  });
+
+  it("teintent le menu et les fonds avec la couleur de l'entreprise", () => {
+    const p = palette("#002b5c");
+    expect(p.menu).not.toBe("#0c0b0a");
+    expect(p.ivoire).not.toBe("#ffffff");
+    const [r, , b] = [1, 3, 5].map((i) => parseInt(p.menu.slice(i, i + 2), 16));
+    expect(b).toBeGreaterThan(r); // le menu reste bleu
   });
 
   it("gardent la teinte choisie quand elle est déjà lisible", () => {
@@ -39,7 +54,7 @@ describe("couleurs de l'entreprise", () => {
   it("ne remplacent le bronze de Frisk que si une couleur est choisie", () => {
     expect(variablesCouleur(undefined)).toBeNull();
     expect(variablesCouleur({ couleur: "rouge" })).toBeNull();
-    expect(Object.keys(variablesCouleur({ couleur: "#002b5c" })!)).toEqual(["--color-bronze", "--color-bronze-clair", "--color-bronze-fonce"]);
+    expect(Object.keys(variablesCouleur({ couleur: "#002b5c" })!)).toEqual(variablesTheme);
   });
 
   it("lit les écritures courantes d'une couleur", () => {
@@ -126,7 +141,9 @@ describe("logo enregistré", () => {
   it("remplace le logo de Frisk dans les documents, sinon le garde", () => {
     expect(marqueDocuments(undefined, "/frisk.png")).toMatchObject({ logo: "/frisk.png", logoClient: false, frisk: "/frisk.png" });
     const client = marqueDocuments({ logo: "data:image/png;base64,iVBORw0KGgo=", couleur: "#002b5c" }, "/frisk.png");
-    expect(client).toMatchObject({ logo: "data:image/png;base64,iVBORw0KGgo=", logoClient: true, accent: "#002b5c", frisk: "/frisk.png" });
+    expect(client).toMatchObject({ logo: "data:image/png;base64,iVBORw0KGgo=", logoClient: true, accent: "#002b5c", titre: "#002b5c", bandeau: "#002b5c", frisk: "/frisk.png" });
+    // Documents Frisk : titres noirs, sans bandeau, comme avant.
+    expect(marqueDocuments(undefined, "/frisk.png")).toMatchObject({ titre: "#0c0b0a", bandeau: null, fond: "#0c0b0a" });
   });
 
   it("est enregistré comme une information générale de l'espace", () => {

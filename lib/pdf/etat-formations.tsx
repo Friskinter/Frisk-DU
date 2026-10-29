@@ -5,7 +5,7 @@ import { formaterDate } from "@/lib/calculs";
 import { etatFormation, etatsFormation, formationsEnVigueur, formationsManquantes, libelleFormation, typeFormation } from "@/lib/formations";
 import type { Donnees } from "@/lib/types";
 import type { Marque } from "@/lib/identite";
-import { LogoDocument, MentionFrisk } from "./marque";
+import { BandeauCouleur, CouleurTitres, LogoDocument, MentionFrisk } from "./marque";
 
 const c = { encre: "#0c0b0a", ardoise: "#3a3530", gris: "#8a837a", bronze: "#b08d57", marbre: "#ece6dc", pierre: "#d9cfc1", ivoire: "#f7f4ef", rouge: "#b42318" };
 
@@ -42,11 +42,12 @@ export function EtatFormations({ donnees, aujourdhui, marque }: { donnees: Donne
 
   return (
     <Document title={`Formations et habilitations - ${donnees.entreprise}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+      <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View>
             <Text style={{ fontSize: 8, letterSpacing: 2, color: marque.accent, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
-            <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4 }}>État des formations et habilitations</Text>
+            <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4, color: marque.titre }}>État des formations et habilitations</Text>
             <Text style={{ fontSize: 8, color: c.ardoise, marginTop: 4 }}>Situation au {formaterDate(aujourdhui)} · dernière session suivie pour chaque formation</Text>
           </View>
           <LogoDocument marque={marque} style={{ marginLeft: 16 }} />
@@ -55,7 +56,7 @@ export function EtatFormations({ donnees, aujourdhui, marque }: { donnees: Donne
         {salaries.length === 0 && <Text style={{ marginTop: 18, color: c.gris }}>Aucune formation enregistrée.</Text>}
         {salaries.map(({ salarie, formations, manquantes: aFaire }) => (
           <View key={salarie.id} style={{ marginTop: 14 }} wrap={false}>
-            <Text style={{ fontFamily: "Times-Bold", fontSize: 12, marginBottom: 4 }}>
+            <Text style={{ fontFamily: "Times-Bold", fontSize: 12, marginBottom: 4 , color: marque.titre }}>
               {salarie.nom || "Salarié sans nom"}
               <Text style={{ fontFamily: "Helvetica", fontSize: 8, color: c.gris }}>
                 {"  "}
@@ -97,8 +98,10 @@ export function EtatFormations({ donnees, aujourdhui, marque }: { donnees: Donne
           <Text>{donnees.entreprise} · Formations et habilitations · édité le {formaterDate(aujourdhui)}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
         </View>
+        <BandeauCouleur marque={marque} />
         <MentionFrisk marque={marque} />
       </Page>
+      </CouleurTitres.Provider>
     </Document>
   );
 }
