@@ -134,3 +134,13 @@ export async function telechargerAfficheSignalement(entreprise: string, lien: st
   const { AfficheSignalement } = await import("./affiche-signalement");
   await enregistrerPdf(createElement(AfficheSignalement, { entreprise, lien, qr, logo: logo() }), `Affiche signalement - ${entreprise}.pdf`);
 }
+
+export async function telechargerRapportVisite(donnees: Donnees, visiteId: string) {
+  const { RapportVisite } = await import("./rapport-visite");
+  const visite = donnees.visites.find((v) => v.id === visiteId);
+  if (!visite) return;
+  await enregistrerPdf(
+    createElement(RapportVisite, { donnees, visite, aujourdhui: dateDuJour(), logo: logo() }),
+    `Rapport de visite - ${visite.grille} - ${visite.date}.pdf`,
+  );
+}

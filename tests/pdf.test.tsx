@@ -8,6 +8,7 @@ import { RegistreBenins } from "@/lib/pdf/registre-benins";
 import { InventaireProduits, NoticesDePoste } from "@/lib/pdf/produits";
 import { PlanPrevention } from "@/lib/pdf/plan-prevention";
 import { ProtocoleSecurite } from "@/lib/pdf/protocole-securite";
+import { RapportVisite } from "@/lib/pdf/rapport-visite";
 import { RegistreSecurite } from "@/lib/pdf/registre-securite";
 
 const logo = `${process.cwd()}/public/logo-frisk.png`;
@@ -95,5 +96,10 @@ describe("PDF des versions figées", () => {
       const pdf = await renderToBuffer(<ProtocoleSecurite donnees={d} protocole={protocole} aujourdhui="2026-10-28" logo={logo} />);
       expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
     }
+  }, 30_000);
+
+  it("rapport de visite", async () => {
+    const pdf = await renderToBuffer(<RapportVisite donnees={d} visite={d.visites[0]} aujourdhui="2026-10-28" logo={logo} />);
+    expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
   }, 30_000);
 });

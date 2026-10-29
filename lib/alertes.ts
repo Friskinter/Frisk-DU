@@ -8,6 +8,7 @@ import { etatFormation, formationsEnVigueur, formationsManquantes, libelleFormat
 import { dernierSuivi, enCoursOuProche, etatIntervention, planEcritObligatoire } from "./interventions";
 import { classementCmr, estCmr, etatFds } from "./produits";
 import { actifOuProche, dejaRenouvele, etatProtocole } from "./protocoles";
+import { derniereVisite, sansAction } from "./visites";
 import { typesEvenement } from "./referentiel";
 import { derniereVerification, etatEquipement, observationsOuvertes } from "./verifications";
 import type { Donnees } from "./types";
@@ -15,7 +16,7 @@ import type { Donnees } from "./types";
 export type Alerte = {
   id: string;
   gravite: "critique" | "importante" | "info";
-  categorie: "DUERP" | "Accidents" | "Formations" | "Vérifications" | "Produits chimiques" | "Entreprises extérieures" | "EPI" | "Pénibilité";
+  categorie: "DUERP" | "Accidents" | "Formations" | "Vérifications" | "Produits chimiques" | "Entreprises extérieures" | "Visites" | "EPI" | "Pénibilité";
   titre: string;
   detail: string;
   lien: string; // page de l'application où traiter l'alerte
@@ -355,6 +356,35 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
       id: "protocoles-a-renouveler", gravite: "importante", categorie: "Entreprises extérieures", lien: lienProtocole(protocolesARenouveler),
       titre: `${pluriel(protocolesARenouveler.length, "protocole")} de sécurité à renouveler`,
       detail: liste(protocolesARenouveler.map((p) => `${nomT(p)} (fin le ${formaterDate(p.fin)})`)),
+    });
+  }
+
+  // Visites et audits terrain
+  const visites = donnees.visites ?? [];
+  const lienVisite = (liste: typeof visites) => (liste.length === 1 ? `/visites?visite=${liste[0].id}` : "/visites");
+  const ncSansAction = sansAction(visites, actions);
+  if (ncSansAction.length) {
+    const concernees = [...new Map(ncSansAction.map((x) => [x.visite.id, x.visite])).values()];
+    alertes.push({
+      id: "visites-sans-action", gravite: "importante", categorie: "Visites", lien: lienVisite(concernees),
+      titre: `${pluriel(ncSansAction.length, "non-conformité")} relevée${ncSansAction.length > 1 ? "s" : ""} en visite sans action`,
+      detail: liste(ncSansAction.map((x) => x.reponse.question)),
+    });
+  }
+  const visitesOuvertes = visites.filter((v) => !v.clotureeLe && v.date && v.date < decalerJours(aujourdhui, -7));
+  if (visitesOuvertes.length) {
+    alertes.push({
+      id: "visites-a-cloturer", gravite: "info", categorie: "Visites", lien: lienVisite(visitesOuvertes),
+      titre: `${pluriel(visitesOuvertes.length, "visite")} commencée${visitesOuvertes.length > 1 ? "s" : ""} il y a plus d'une semaine`,
+      detail: `Terminez-la et clôturez-la : ${liste(visitesOuvertes.map((v) => `${v.grille} du ${formaterDate(v.date)}`))}.`,
+    });
+  }
+  const derniere = derniereVisite(visites);
+  if (derniere && derniere.date < decalerJours(aujourdhui, -90)) {
+    alertes.push({
+      id: "visites-anciennes", gravite: "info", categorie: "Visites", lien: "/visites",
+      titre: "Aucune visite de sécurité depuis plus de 3 mois",
+      detail: `Dernière visite le ${formaterDate(derniere.date)}. Une visite régulière du terrain repère les dangers avant l'accident.`,
     });
   }
 

@@ -48,6 +48,7 @@ export type Action = {
   efficacite: Efficacite;
   commentaire: string; // constat de la vérification d'efficacité
   evenementId?: string; // accident ou presque-accident à l'origine de l'action
+  visiteId?: string; // visite ou audit à l'origine de l'action (non-conformité relevée)
 };
 
 export type TypeEvenement = "accident-travail" | "accident-trajet" | "presque-accident" | "situation-dangereuse";
@@ -218,6 +219,40 @@ export type SuiviIntervention = {
   observations: string;
 };
 
+// Visites et audits terrain : une grille de points à contrôler, remplie sur place.
+export type PointGrille = { id: string; theme: string; question: string };
+
+export type GrilleAudit = {
+  id: string;
+  nom: string;
+  description: string;
+  points: PointGrille[];
+};
+
+export type ResultatPoint = "" | "conforme" | "non-conforme" | "sans-objet";
+
+export type ReponseVisite = {
+  id: string; // identifiant du point de la grille
+  theme: string;
+  question: string; // recopiés : modifier la grille ne change pas les visites passées
+  resultat: ResultatPoint;
+  commentaire: string;
+  photo?: { chemin: string; nom: string };
+  actionId?: string; // action du plan créée pour une non-conformité
+};
+
+export type Visite = {
+  id: string;
+  grille: string; // nom de la grille utilisée
+  date: string;
+  unite: string;
+  auditeur: string;
+  participants: string;
+  reponses: ReponseVisite[];
+  synthese: string;
+  clotureeLe: string; // AAAA-MM-JJ, "" tant que la visite est en cours
+};
+
 // Protocole de sécurité des opérations de chargement et de déchargement (art. R4515-4 et suivants) :
 // il remplace le plan de prévention pour les transporteurs.
 export type Protocole = {
@@ -303,6 +338,8 @@ export type Donnees = {
   produits: Produit[];
   interventions: Intervention[];
   protocoles: Protocole[];
+  grilles: GrilleAudit[];
+  visites: Visite[];
   salaries: Salarie[];
   articles: Article[];
   mouvements: Mouvement[];

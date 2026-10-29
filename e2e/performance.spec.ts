@@ -32,20 +32,23 @@ test("saisie fluide dans un DUERP de 500 risques", async ({ page }) => {
   const champ = page.getByRole("combobox", { name: "Danger" }).first();
   await champ.click();
   await champ.press("End");
-  // Durée moyenne entre une frappe et l'affichage du caractère.
+  // Durée médiane entre une frappe et l'affichage du caractère (la médiane écarte une frappe
+  // ralentie par une autre tâche de la machine).
   const duree = await page.evaluate(async () => {
     const champ = document.activeElement as HTMLInputElement;
-    const debut = performance.now();
-    for (let i = 0; i < 10; i++) {
+    const durees: number[] = [];
+    for (let i = 0; i < 11; i++) {
       const avant = champ.value;
+      const debut = performance.now();
       document.execCommand("insertText", false, "x");
       await new Promise<void>((fin) => {
         const verifier = () => (champ.value !== avant && document.activeElement === champ ? fin() : requestAnimationFrame(verifier));
         verifier();
       });
       await new Promise((fin) => requestAnimationFrame(() => setTimeout(fin)));
+      durees.push(performance.now() - debut);
     }
-    return (performance.now() - debut) / 10;
+    return durees.sort((a, b) => a - b)[5];
   });
   console.log(`saisie DUERP : ${Math.round(duree)} ms par caractère`);
   expect(duree).toBeLessThan(150);
