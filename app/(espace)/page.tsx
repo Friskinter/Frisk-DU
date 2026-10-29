@@ -4,6 +4,7 @@ import Link from "next/link";
 import { BoutonDocumentUnique } from "@/components/bouton-document-unique";
 import { actionEnRetard, actionsDuRisque } from "@/lib/actions";
 import { Alertes } from "@/components/alertes";
+import { AssistantDemarrage } from "@/components/assistant-demarrage";
 import {
   BarresHorizontales,
   Carte,
@@ -94,6 +95,7 @@ export default function TableauDeBord() {
         }
       />
 
+      <AssistantDemarrage donnees={donnees} />
       <Alertes donnees={donnees} aujourdhui={aujourdhui} />
 
       <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

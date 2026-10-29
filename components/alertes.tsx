@@ -21,6 +21,8 @@ export function Alertes({ donnees, aujourdhui }: { donnees: Donnees; aujourdhui:
   const alertes = calculerAlertes(donnees, aujourdhui, derniere);
 
   if (!alertes.length) {
+    // Entreprise qui démarre : rien à dire tant qu'aucun risque n'est évalué (l'assistant guide).
+    if (!donnees.duerp.length) return null;
     return (
       <div className="mb-6 rounded-sm border border-[#0ca30c] bg-[#0ca30c]/10 p-4 text-sm">
         <strong>✓ Rien d&apos;urgent.</strong> Aucune action en retard, aucun stock en rupture, DUERP à jour.
