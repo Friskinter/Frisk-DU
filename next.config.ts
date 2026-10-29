@@ -40,7 +40,12 @@ const entetesSecurite = [
 
 const nextConfig: NextConfig = {
   async headers() {
-    return [{ source: "/:chemin*", headers: entetesSecurite }];
+    return [
+      { source: "/:chemin*", headers: entetesSecurite },
+      // Application réservée aux clients : jamais dans les moteurs de recherche (le site vitrine
+      // Frisk sert à être trouvé). En-tête plutôt que robots.txt, qui empêcherait de le lire.
+      { source: "/:chemin*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+    ];
   },
   cacheComponents: true,
   partialPrefetching: true,
