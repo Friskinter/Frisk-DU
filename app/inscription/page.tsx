@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { AntiRobot, ANTI_ROBOT_ACTIF } from "@/components/anti-robot";
 import { EcranAuth } from "@/components/ecran-auth";
 import { classeBouton, classeChamp } from "@/components/ui";
 import { DUREE_ESSAI_JOURS, effectifsInscription } from "@/lib/abonnement";
@@ -20,6 +21,8 @@ export default function Inscription() {
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState("");
   const [envoye, setEnvoye] = useState(false);
+  const [jeton, setJeton] = useState("");
+  const [essai, setEssai] = useState(0);
 
   const inscrire = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +38,7 @@ export default function Inscription() {
       email: email.trim(),
       password: motDePasse,
       options: {
+        captchaToken: jeton || undefined,
         emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: {
           inscription: { entreprise: entreprise.trim(), effectif },
@@ -44,9 +48,14 @@ export default function Inscription() {
       },
     });
     setEnvoi(false);
+    // Le jeton anti-robot ne sert qu'une fois : nouvelle vérification pour un éventuel nouvel essai.
+    setJeton("");
+    setEssai((n) => n + 1);
     if (error) {
       setErreur(
-        error.code === "weak_password"
+        error.code === "captcha_failed"
+          ? "La vérification anti-robot a échoué. Cochez-la de nouveau puis réessayez."
+          : error.code === "weak_password"
           ? "Mot de passe trop simple : mélangez lettres, chiffres et caractères spéciaux."
           : error.code === "over_email_send_rate_limit" || error.status === 429
             ? "Trop d'inscriptions en peu de temps. Réessayez dans quelques minutes."
@@ -107,8 +116,9 @@ export default function Inscription() {
             <a href="/legal/traitement" target="_blank" rel="noreferrer" className="underline">accord de traitement des données</a>.
           </span>
         </label>
+        <AntiRobot key={essai} onJeton={setJeton} />
         {erreur && <p role="alert" className="text-sm text-[#b42318]">{erreur}</p>}
-        <button type="submit" disabled={envoi || !accepte} className={`${classeBouton} w-full justify-center py-3 disabled:opacity-60`}>
+        <button type="submit" disabled={envoi || !accepte || (ANTI_ROBOT_ACTIF && !jeton)} className={`${classeBouton} w-full justify-center py-3 disabled:opacity-60`}>
           {envoi ? "Patientez…" : "Commencer mon essai gratuit"}
         </button>
         <p className="text-center text-sm text-ardoise">
