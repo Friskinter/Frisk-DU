@@ -144,7 +144,7 @@ export function etatFds(p: Pick<Produit, "fds" | "fdsDate">, aujourdhui: string)
 export const etatsFds: Record<EtatFds, { libelle: string; couleur: string; texte: string }> = {
   manquante: { libelle: "FDS manquante", couleur: "#d03b3b", texte: "#ffffff" },
   ancienne: { libelle: "FDS à actualiser", couleur: "#fab219", texte: "#0b0b0b" },
-  "a-jour": { libelle: "FDS à jour", couleur: "#0ca30c", texte: "#ffffff" },
+  "a-jour": { libelle: "FDS à jour", couleur: "#0ca30c", texte: "#0b0b0b" },
 };
 
 export function nouveauProduit(champs: Partial<Produit> = {}): Produit {

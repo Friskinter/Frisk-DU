@@ -60,7 +60,7 @@ export function Garde({ children }: { children: ReactNode }) {
           ) : (
             <>
               <p>Votre compte n&apos;est rattaché à aucune entreprise. Contactez Frisk pour activer votre accès.</p>
-              <button type="button" onClick={deconnecter} className="text-bronze underline">Se déconnecter</button>
+              <button type="button" onClick={deconnecter} className="text-bronze-fonce underline">Se déconnecter</button>
             </>
           )}
         </Message>
@@ -69,7 +69,7 @@ export function Garde({ children }: { children: ReactNode }) {
       return (
         <Message titre="Accès suspendu">
           <p>L&apos;accès de votre entreprise à Frisk DU est suspendu. Contactez Frisk pour le réactiver.</p>
-          <button type="button" onClick={deconnecter} className="text-bronze underline">Se déconnecter</button>
+          <button type="button" onClick={deconnecter} className="text-bronze-fonce underline">Se déconnecter</button>
         </Message>
       );
     case "base-a-mettre-a-jour":
@@ -129,7 +129,7 @@ function AcceptationConditions() {
       <ul className="space-y-1 text-left">
         {documentsLegaux.map((d) => (
           <li key={d.href}>
-            <a href={d.href} target="_blank" rel="noreferrer" className="text-bronze underline">{d.titre}</a>
+            <a href={d.href} target="_blank" rel="noreferrer" className="text-bronze-fonce underline">{d.titre}</a>
           </li>
         ))}
       </ul>

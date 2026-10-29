@@ -23,7 +23,7 @@ export default function Confidentialite() {
             <>
               <strong>Le client est responsable de traitement</strong> pour les données de ses salariés et intervenants qu&apos;il saisit
               dans son espace (noms, postes, tailles d&apos;EPI, signatures, formations, accidents, expositions). Frisk agit alors comme
-              sous-traitant, selon l&apos;<a href="/legal/traitement" className="text-bronze underline">accord de traitement des données</a>.
+              sous-traitant, selon l&apos;<a href="/legal/traitement" className="text-bronze-fonce underline">accord de traitement des données</a>.
             </>,
           ]}
         />

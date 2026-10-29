@@ -129,7 +129,7 @@ export default function PageReglages() {
           </label>
         </Carte>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Liste
             titre="Services"
             aide="Utilisés pour les salariés et les bilans d'EPI."
@@ -164,18 +164,19 @@ export default function PageReglages() {
               <tbody>
                 {donnees.salaries.map((s) => (
                   <tr key={s.id} className="border-t border-pierre/60">
-                    <td className="px-2 py-1.5"><input value={s.nom} placeholder="Nom" onChange={(e) => majSalarie(s.id, { nom: e.target.value })} className={classeChamp} /></td>
+                    <td className="px-2 py-1.5"><input aria-label="Nom du salarié" value={s.nom} placeholder="Nom" onChange={(e) => majSalarie(s.id, { nom: e.target.value })} className={classeChamp} /></td>
                     <td className="px-2 py-1.5">
-                      <select value={s.service} onChange={(e) => majSalarie(s.id, { service: e.target.value })} className={classeChamp}>
+                      <select aria-label={`Service de ${s.nom || "ce salarié"}`} value={s.service} onChange={(e) => majSalarie(s.id, { service: e.target.value })} className={classeChamp}>
                         <option value="">—</option>
                         {donnees.services.map((x) => <option key={x}>{x}</option>)}
                       </select>
                     </td>
-                    <td className="px-2 py-1.5"><input value={s.poste} onChange={(e) => majSalarie(s.id, { poste: e.target.value })} className={classeChamp} /></td>
+                    <td className="px-2 py-1.5"><input aria-label={`Poste de ${s.nom || "ce salarié"}`} value={s.poste} onChange={(e) => majSalarie(s.id, { poste: e.target.value })} className={classeChamp} /></td>
                     {categoriesTailles.map((c) => (
                       <td key={c} className="px-2 py-1.5">
                         <input
                           value={s.tailles[c] ?? ""}
+                          aria-label={`Taille ${c} de ${s.nom || "ce salarié"}`}
                           onChange={(e) => majSalarie(s.id, { tailles: { ...s.tailles, [c]: e.target.value } })}
                           className={`${classeChamp} w-20`}
                         />
@@ -194,7 +195,7 @@ export default function PageReglages() {
               + Ajouter un salarié
             </button>
             {modifiable && (
-              <Link href="/import?type=salaries" className="text-sm text-bronze underline">
+              <Link href="/import?type=salaries" className="text-sm text-bronze-fonce underline">
                 Importer une liste depuis Excel
               </Link>
             )}

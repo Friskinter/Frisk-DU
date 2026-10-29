@@ -137,24 +137,24 @@ export default function PageBilans() {
 
       {/* Barre de filtres façon Power BI */}
       <div className="mb-4 flex flex-wrap items-center gap-2 rounded-sm border border-pierre/70 bg-white p-3">
-        <select value={periode} onChange={(e) => setPeriode(e.target.value)} className={`${classeChamp} max-w-48`}>
+        <select aria-label="Période" value={periode} onChange={(e) => setPeriode(e.target.value)} className={`${classeChamp} max-w-48`}>
           {periodes.map((p) => (
             <option key={p.valeur} value={p.valeur}>{p.libelle}</option>
           ))}
         </select>
-        <select value={filtres.service} onChange={(e) => setFiltres({ ...filtres, service: e.target.value })} className={`${classeChamp} max-w-44`}>
+        <select aria-label="Filtrer par service" value={filtres.service} onChange={(e) => setFiltres({ ...filtres, service: e.target.value })} className={`${classeChamp} max-w-44`}>
           <option value="">Tous les services</option>
           {donnees.services.map((s) => <option key={s}>{s}</option>)}
         </select>
-        <select value={filtres.categorie} onChange={(e) => setFiltres({ ...filtres, categorie: e.target.value })} className={`${classeChamp} max-w-44`}>
+        <select aria-label="Filtrer par catégorie" value={filtres.categorie} onChange={(e) => setFiltres({ ...filtres, categorie: e.target.value })} className={`${classeChamp} max-w-44`}>
           <option value="">Toutes catégories</option>
           {[...new Set(donnees.articles.map((a) => a.categorie))].map((c) => <option key={c}>{c}</option>)}
         </select>
-        <select value={filtres.articleId} onChange={(e) => setFiltres({ ...filtres, articleId: e.target.value, taille: "" })} className={`${classeChamp} max-w-56`}>
+        <select aria-label="Filtrer par article" value={filtres.articleId} onChange={(e) => setFiltres({ ...filtres, articleId: e.target.value, taille: "" })} className={`${classeChamp} max-w-56`}>
           <option value="">Tous les articles</option>
           {donnees.articles.map((a) => <option key={a.id} value={a.id}>{a.nom}</option>)}
         </select>
-        <select value={filtres.salarieId} onChange={(e) => setFiltres({ ...filtres, salarieId: e.target.value })} className={`${classeChamp} max-w-44`}>
+        <select aria-label="Filtrer par salarié" value={filtres.salarieId} onChange={(e) => setFiltres({ ...filtres, salarieId: e.target.value })} className={`${classeChamp} max-w-44`}>
           <option value="">Tous les salariés</option>
           {donnees.salaries.map((s) => <option key={s.id} value={s.id}>{s.nom}</option>)}
         </select>
@@ -201,7 +201,7 @@ export default function PageBilans() {
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Carte titre={`Évolution mensuelle — ${mesure === "quantite" ? "quantités" : "coûts"}`} className="lg:col-span-2">
           <Colonnes donnees={mois} format={format} />
         </Carte>

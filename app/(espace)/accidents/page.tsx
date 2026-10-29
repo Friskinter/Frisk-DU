@@ -207,12 +207,12 @@ function Accidents() {
             Un seul risque ✕
           </Link>
         )}
-        <select value={type} onChange={(e) => setType(e.target.value)} className={`${classeChamp} max-w-64`}>
+        <select aria-label="Filtrer par type d’événement" value={type} onChange={(e) => setType(e.target.value)} className={`${classeChamp} max-w-64`}>
           <option value="">Tous les événements</option>
           <option value="accidents">Accidents (travail et trajet)</option>
           <option value="signalements">Presque-accidents et situations dangereuses</option>
         </select>
-        <select value={annee} onChange={(e) => setAnnee(e.target.value)} className={`${classeChamp} max-w-44`}>
+        <select aria-label="Filtrer par année" value={annee} onChange={(e) => setAnnee(e.target.value)} className={`${classeChamp} max-w-44`}>
           <option value="">Toutes les années</option>
           {annees.map((a) => (
             <option key={a}>{a}</option>
@@ -330,7 +330,7 @@ function LigneEvenement({
       </span>
       <span className="block">
         {estClos(e, donnees.actions) ? (
-          <Pastille couleur="#0ca30c" texte="#ffffff" icone="✓">Traité</Pastille>
+          <Pastille couleur="#0ca30c" texte="#0b0b0b" icone="✓">Traité</Pastille>
         ) : (
           <span className="flex flex-wrap gap-1">
             {pastilles.map((p) => (
@@ -347,7 +347,7 @@ function LigneEvenement({
           </span>
         )}
       </span>
-      <span className="hidden text-right text-bronze lg:block">{ouvert ? "▲" : "▼"}</span>
+      <span className="hidden text-right text-bronze-fonce lg:block">{ouvert ? "▲" : "▼"}</span>
     </button>
   );
 }
@@ -388,7 +388,7 @@ function FicheEvenement({
   const unites = [...new Set([...donnees.unites, ...donnees.duerp.map((l) => l.unite)].filter(Boolean))];
 
   return (
-    <div className="grid gap-3 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       <Section
         numero={1}
         titre="Les faits"
@@ -718,7 +718,7 @@ function ReportDuerp({ evenement: e, donnees, aujourdhui }: { evenement: Eveneme
       {!risque && (
         <p className="mt-2 text-xs text-ardoise">
           Le risque n&apos;apparaît pas dans le DUERP ? C&apos;est qu&apos;il n&apos;avait pas été identifié :{" "}
-          <button type="button" onClick={creerRisque} className="text-bronze underline disabled:no-underline disabled:text-gris">
+          <button type="button" onClick={creerRisque} className="text-bronze-fonce underline disabled:no-underline disabled:text-gris">
             l&apos;ajouter au DUERP
           </button>
           , puis complétez la ligne (activité, danger, mesures existantes).

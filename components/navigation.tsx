@@ -25,7 +25,7 @@ const liens = [
 ];
 
 const etatsEnregistrement: Record<Enregistrement, { texte: string; classe: string }> = {
-  enregistre: { texte: "✓ Enregistré", classe: "text-gris" },
+  enregistre: { texte: "✓ Enregistré", classe: "text-pierre/70" },
   "en-cours": { texte: "Enregistrement…", classe: "text-bronze-clair" },
   erreur: { texte: "⚠ Hors connexion, nouvel essai…", classe: "text-[#ec835a]" },
   refuse: { texte: "⚠ Modification refusée", classe: "text-[#ec835a]" },
@@ -60,7 +60,7 @@ export function Navigation() {
               ))}
             </select>
           ) : (
-            <p className="mt-1 truncate text-xs text-gris">{session.donnees?.entreprise ?? "…"}</p>
+            <p className="mt-1 truncate text-xs text-pierre/70">{session.donnees?.entreprise ?? "…"}</p>
           )}
         </div>
       </div>
@@ -115,7 +115,7 @@ export function Navigation() {
         {session.statut === "pret" && <p className={enregistrement.classe}>{enregistrement.texte}</p>}
         {/* Compte connecté : utile quand on passe d'un compte administrateur à un compte client. */}
         <div className="min-w-0 lg:mt-3">
-          <p className="hidden text-[10px] uppercase tracking-wider text-gris lg:block">Connecté en tant que</p>
+          <p className="hidden text-[10px] uppercase tracking-wider text-pierre/70 lg:block">Connecté en tant que</p>
           <p className="hidden truncate text-pierre lg:block" title={session.email}>{session.email}</p>
           {session.statut === "pret" && (
             <Link href="/compte" className="mr-2 text-[10px] text-bronze-clair underline">Mon compte</Link>
@@ -133,7 +133,7 @@ export function Navigation() {
         <button type="button" onClick={deconnecter} className="text-pierre underline hover:text-marbre lg:mt-2">
           Se déconnecter
         </button>
-        <p className="hidden flex-wrap gap-x-2 text-[10px] text-gris lg:mt-3 lg:flex">
+        <p className="hidden flex-wrap gap-x-2 text-[10px] text-pierre/70 lg:mt-3 lg:flex">
           {documentsLegaux.slice(0, 3).map((d) => (
             <Link key={d.href} href={d.href} className="hover:text-pierre hover:underline">{d.court}</Link>
           ))}

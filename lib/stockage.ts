@@ -8,7 +8,9 @@
 import { useSyncExternalStore } from "react";
 import { normaliser } from "./donnees";
 import { VERSION_CONDITIONS } from "./legal";
-import { donneesVides } from "./demo";
+import { CLE_DONNEES_TEST, CLE_ROLE_TEST, MODE_TEST } from "./mode-test";
+import { dateDuJour } from "./calculs";
+import { donneesDemo, donneesVides } from "./demo";
 import { rechargerVers } from "./navigation";
 import { appliquerOperations, calculerOperations, operationAutorisee, type Operation, type Role } from "./operations";
 import { supabaseNavigateur } from "./supabase/client";
@@ -17,6 +19,7 @@ import type { Donnees } from "./types";
 const CLE_ENTREPRISE = "frisk-du-entreprise";
 const DELAI_ENREGISTREMENT = 800;
 const DELAI_NOUVEL_ESSAI = 5000;
+const DELAI_RELECTURE = 500;
 const OPERATIONS_PAR_ENVOI = 200;
 // Version de la base attendue par cette version de Frisk DU (fonction frisk_version, migrations).
 export const VERSION_BASE = 10;
@@ -62,6 +65,7 @@ let session: Session = {
 let enAttente: Operation[] = [];
 let enCours: Operation[] = [];
 let minuteur: ReturnType<typeof setTimeout> | null = null;
+let relecture: ReturnType<typeof setTimeout> | null = null;
 let chargementLance = false;
 // Identifiant de cet onglet : permet d'ignorer nos propres modifications renvoyées en direct.
 let client = "";
@@ -101,6 +105,15 @@ export function peutModifier(role: Role, zone: "tout" | "epi") {
 async function charger() {
   // randomUUID n'existe qu'en connexion sécurisée (https ou localhost).
   client = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
+  if (MODE_TEST) {
+    const role = (localStorage.getItem(CLE_ROLE_TEST) ?? "responsable") as Role;
+    const donnees = localStorage.getItem(CLE_DONNEES_TEST);
+    publier({
+      statut: "pret", email: "test@frisk.fr", admin: false, role, entrepriseId: "00000000-0000-0000-0000-000000000000",
+      donnees: donnees ? normaliser(JSON.parse(donnees)) : donneesDemo(dateDuJour()),
+    });
+    return;
+  }
   const supabase = supabaseNavigateur();
   const { data: utilisateur } = await supabase.auth.getUser();
   const user = utilisateur.user;
@@ -228,9 +241,17 @@ function ecouterCollegues(entrepriseId: string) {
       "postgres_changes",
       { event: "UPDATE", schema: "public", table: "espaces", filter: `entreprise_id=eq.${entrepriseId}` },
       (evenement: { new: Record<string, unknown> }) => {
-        const ligne = evenement.new as { contenu?: Donnees; updated_client?: string | null };
-        if (ligne.updated_client === client || !ligne.contenu) return;
-        fusionner(ligne.contenu);
+        const ligne = evenement.new as { updated_client?: string | null };
+        if (ligne.updated_client === client) return;
+        // Realtime omet les colonnes trop volumineuses (signatures, gros DUERP) : on relit toujours
+        // la ligne plutôt que de se fier au contenu reçu. Plusieurs modifications rapprochées
+        // n'entraînent qu'une seule lecture.
+        if (relecture) clearTimeout(relecture);
+        relecture = setTimeout(async () => {
+          relecture = null;
+          const contenu = await lireContenu(entrepriseId);
+          if (contenu) fusionner(contenu);
+        }, DELAI_RELECTURE);
       },
     )
     .subscribe();
@@ -251,6 +272,11 @@ function planifierEnvoi(delai = DELAI_ENREGISTREMENT) {
 async function envoyer() {
   minuteur = null;
   if (enCours.length || !enAttente.length || !session.entrepriseId) return;
+  if (MODE_TEST) {
+    enAttente = [];
+    publier({ enregistrement: "enregistre" });
+    return;
+  }
   enCours = enAttente.slice(0, OPERATIONS_PAR_ENVOI);
   enAttente = enAttente.slice(OPERATIONS_PAR_ENVOI);
 
@@ -260,8 +286,10 @@ async function envoyer() {
     p_client: client,
   });
 
-  if (error?.code === "42501") {
-    // Droits insuffisants : on abandonne ces modifications et on revient à la version enregistrée.
+  if (error?.code === "42501" || error?.code === "22023") {
+    // Droits insuffisants ou modification rejetée par la base : la renvoyer échouerait toujours et
+    // bloquerait les suivantes. On l'abandonne et on revient à la version enregistrée.
+    if (error.code === "22023") console.error("Modification rejetée par la base", error.message, enCours);
     enCours = [];
     enAttente = [];
     publier({ enregistrement: "refuse" });

@@ -333,7 +333,7 @@ function Registre({ donnees, aujourdhui, onOuvrir }: { donnees: Donnees; aujourd
                   <td className="border-b border-pierre/60 px-3 py-2">{f.organisme}</td>
                   <td className="border-b border-pierre/60 px-3 py-2">
                     {f.attestation ? (
-                      <button type="button" onClick={() => ouvrirAttestation(f.attestation!.chemin)} className="text-bronze underline">
+                      <button type="button" onClick={() => ouvrirAttestation(f.attestation!.chemin)} className="text-bronze-fonce underline">
                         Ouvrir
                       </button>
                     ) : (
@@ -590,7 +590,7 @@ function FormulaireFormation({
           {!f.attestation && !modifiable && <span className="text-xs text-gris">Aucune attestation jointe.</span>}
           {f.attestation && (
             <>
-              <button type="button" onClick={() => ouvrirAttestation(f.attestation!.chemin)} className="text-bronze underline">
+              <button type="button" onClick={() => ouvrirAttestation(f.attestation!.chemin)} className="text-bronze-fonce underline">
                 📎 {f.attestation.nom}
               </button>
               <button type="button" onClick={() => maj({ attestation: undefined })} className={`text-xs text-ardoise underline ${modifiable ? "" : "hidden"}`}>

@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { MODE_TEST } from "@/lib/mode-test";
 import { supabaseClePublique, supabaseUrl } from "@/lib/supabase/config";
 
 // /api/alertes est appelée par le planificateur, sans session : elle vérifie son propre secret.
@@ -8,6 +9,7 @@ const pagesPubliques = ["/connexion", "/auth/", "/api/alertes", "/legal/"];
 
 // Rafraîchit la session Supabase et renvoie vers la connexion les visiteurs non connectés.
 export async function proxy(requete: NextRequest) {
+  if (MODE_TEST) return NextResponse.next();
   let reponse = NextResponse.next({ request: requete });
 
   const supabase = createServerClient(supabaseUrl, supabaseClePublique, {

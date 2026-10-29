@@ -127,7 +127,7 @@ export default function PageProduits() {
       </div>
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <select value={unite} onChange={(e) => setUnite(e.target.value)} className={`${classeChamp} max-w-60`}>
+        <select aria-label="Filtrer par unité de travail" value={unite} onChange={(e) => setUnite(e.target.value)} className={`${classeChamp} max-w-60`}>
           <option value="">Toutes les unités de travail</option>
           {unites.map((u) => (
             <option key={u}>{u}</option>
@@ -244,7 +244,7 @@ function LigneProduit({ produit: p, aujourdhui, ouvert, onBasculer }: { produit:
         <Pastille couleur={fds.couleur} texte={fds.texte}>{fds.libelle}</Pastille>
         {p.fdsDate && <span className="block text-xs text-gris">du {formaterDate(p.fdsDate)}</span>}
       </span>
-      <span className="hidden text-right text-bronze lg:block">{ouvert ? "▲" : "▼"}</span>
+      <span className="hidden text-right text-bronze-fonce lg:block">{ouvert ? "▲" : "▼"}</span>
     </button>
   );
 }
@@ -320,7 +320,7 @@ function FicheProduit({
     maj({ salariesExposes: p.salariesExposes.includes(id) ? p.salariesExposes.filter((x) => x !== id) : [...p.salariesExposes, id] });
 
   return (
-    <div className="grid gap-3 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       <Carte titre="Identification">
         <fieldset disabled={!modifiable} className="grid min-w-0 gap-3 sm:grid-cols-2">
           <label className="sm:col-span-2">
@@ -424,7 +424,7 @@ function FicheProduit({
                   x.preventDefault();
                   void ouvrirAttestation(p.fds!.chemin);
                 }}
-                className="text-bronze underline"
+                className="text-bronze-fonce underline"
               >
                 📎 {p.fds.nom}
               </a>
@@ -515,7 +515,7 @@ function FicheProduit({
                 <button
                   type="button"
                   onClick={() => modifier((d) => ({ ...d, duerp: d.duerp.map((l) => (l.id === risque.id ? { ...l, penibilite: "chimique", seuilPenibilite: l.seuilPenibilite === "non" ? "a-evaluer" : l.seuilPenibilite } : l)) }))}
-                  className="text-bronze underline disabled:hidden"
+                  className="text-bronze-fonce underline disabled:hidden"
                 >
                   Signaler le facteur de pénibilité « agents chimiques »
                 </button>
@@ -525,7 +525,7 @@ function FicheProduit({
           ) : (
             <p className="mt-2 text-xs text-ardoise">
               Le risque chimique doit être évalué dans le DUERP (art. R4412-5).{" "}
-              <button type="button" onClick={creerRisque} className="text-bronze underline disabled:text-gris disabled:no-underline">
+              <button type="button" onClick={creerRisque} className="text-bronze-fonce underline disabled:text-gris disabled:no-underline">
                 Créer la ligne dans le DUERP
               </button>
             </p>

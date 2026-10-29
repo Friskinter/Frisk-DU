@@ -131,7 +131,7 @@ export default function PageVerifications() {
       </div>
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <select value={famille} onChange={(e) => setFamille(e.target.value)} className={`${classeChamp} max-w-64`}>
+        <select aria-label="Filtrer par famille d’équipement" value={famille} onChange={(e) => setFamille(e.target.value)} className={`${classeChamp} max-w-64`}>
           <option value="">Toutes les familles</option>
           {familles.map((f) => (
             <option key={f.valeur} value={f.valeur}>{f.libelle}</option>
@@ -251,7 +251,7 @@ function LigneEquipement({
       <span className={`block text-xs ${aLever ? "font-semibold text-[#b42318]" : "text-gris"}`}>
         {aLever ? `${aLever} à lever` : "—"}
       </span>
-      <span className="hidden text-right text-bronze lg:block">{ouvert ? "▲" : "▼"}</span>
+      <span className="hidden text-right text-bronze-fonce lg:block">{ouvert ? "▲" : "▼"}</span>
     </button>
   );
 }
@@ -469,7 +469,7 @@ function FicheVerification({
               x.preventDefault();
               void ouvrirAttestation(v.rapport!.chemin);
             }}
-            className="text-bronze underline"
+            className="text-bronze-fonce underline"
           >
             📎 {v.rapport.nom}
           </a>
@@ -621,7 +621,7 @@ function Observations({
           })}
         </ul>
         {modifiable && (
-          <button type="button" onClick={onAjouter} className="mt-2 text-xs text-bronze underline">
+          <button type="button" onClick={onAjouter} className="mt-2 text-xs text-bronze-fonce underline">
             + Ajouter une observation
           </button>
         )}

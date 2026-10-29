@@ -9,7 +9,7 @@ export function Article({ numero, titre, children }: { numero?: string; titre: s
   return (
     <section className="mt-8">
       <h2 className="font-serif text-xl text-encre">
-        {numero && <span className="text-bronze">{numero}. </span>}
+        {numero && <span className="text-bronze-fonce">{numero}. </span>}
         {titre}
       </h2>
       <div className="mt-2 space-y-3">{children}</div>

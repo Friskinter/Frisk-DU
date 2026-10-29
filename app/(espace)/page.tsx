@@ -117,7 +117,7 @@ export default function TableauDeBord() {
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Carte titre="Matrice des risques (criticité brute)">
           <p className="mb-3 text-xs text-gris">Nombre de risques dans chaque case Gravité × Fréquence.</p>
           <div className="grid grid-cols-[auto_repeat(4,1fr)] gap-[2px] text-center text-sm">
@@ -175,7 +175,7 @@ export default function TableauDeBord() {
 
         <Carte
           titre="Priorités d'action"
-          actions={<Link href="/actions" className="text-xs text-bronze underline">Plan d&apos;actions</Link>}
+          actions={<Link href="/actions" className="text-xs text-bronze-fonce underline">Plan d&apos;actions</Link>}
         >
           {top.length === 0 ? (
             <p className="text-sm text-gris">Aucune action en attente.</p>
@@ -209,7 +209,7 @@ export default function TableauDeBord() {
 
         <Carte
           titre="Produits chimiques"
-          actions={<Link href="/produits" className="text-xs text-bronze underline">Inventaire</Link>}
+          actions={<Link href="/produits" className="text-xs text-bronze-fonce underline">Inventaire</Link>}
           className="lg:col-span-2"
         >
           <dl className="grid gap-3 text-sm sm:grid-cols-4">
@@ -229,7 +229,7 @@ export default function TableauDeBord() {
 
         <Carte
           titre="Vérifications périodiques"
-          actions={<Link href="/verifications" className="text-xs text-bronze underline">Équipements</Link>}
+          actions={<Link href="/verifications" className="text-xs text-bronze-fonce underline">Équipements</Link>}
           className="lg:col-span-2"
         >
           <dl className="grid gap-3 text-sm sm:grid-cols-4">
@@ -249,7 +249,7 @@ export default function TableauDeBord() {
 
         <Carte
           titre="Formations et habilitations"
-          actions={<Link href="/formations" className="text-xs text-bronze underline">Tableau des habilitations</Link>}
+          actions={<Link href="/formations" className="text-xs text-bronze-fonce underline">Tableau des habilitations</Link>}
           className="lg:col-span-2"
         >
           <dl className="grid gap-3 text-sm sm:grid-cols-4">
@@ -269,7 +269,7 @@ export default function TableauDeBord() {
 
         <Carte
           titre="Accidents et presque-accidents"
-          actions={<Link href="/accidents" className="text-xs text-bronze underline">Registre</Link>}
+          actions={<Link href="/accidents" className="text-xs text-bronze-fonce underline">Registre</Link>}
           className="lg:col-span-2"
         >
           <dl className="grid gap-3 text-sm sm:grid-cols-4">
@@ -289,7 +289,7 @@ export default function TableauDeBord() {
 
         <Carte
           titre="EPI à commander"
-          actions={<Link href="/epi" className="text-xs text-bronze underline">Gérer les stocks</Link>}
+          actions={<Link href="/epi" className="text-xs text-bronze-fonce underline">Gérer les stocks</Link>}
           className="lg:col-span-2"
         >
           {aCommander.length === 0 ? (

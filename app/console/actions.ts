@@ -69,8 +69,13 @@ export async function creerClient(nom: string, email: string, demo: boolean): Pr
   }
 
   const contenu = demo ? { ...donneesDemo(dateDuJour()), entreprise: nom } : { ...donneesVides(), entreprise: nom };
-  await admin.from("membres").insert({ user_id: utilisateur.id, entreprise_id: entreprise.id, email, role: "responsable" });
-  await admin.from("espaces").insert({ entreprise_id: entreprise.id, contenu });
+  const membre = await admin.from("membres").insert({ user_id: utilisateur.id, entreprise_id: entreprise.id, email, role: "responsable" });
+  const espace = membre.error ? null : await admin.from("espaces").insert({ entreprise_id: entreprise.id, contenu });
+  if (membre.error || espace?.error) {
+    // Pas de client à moitié créé : la suppression de l'entreprise retire aussi le rattachement.
+    await admin.from("entreprises").delete().eq("id", entreprise.id);
+    return { ok: false, message: "Le client n'a pas pu être créé entièrement. Réessayez dans un instant." };
+  }
 
   return {
     ok: true,

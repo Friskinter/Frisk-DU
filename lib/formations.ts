@@ -121,7 +121,7 @@ export const DELAI_RENOUVELLEMENT = 90; // jours
 export type EtatFormation = "valide" | "a-renouveler" | "expiree" | "permanente";
 
 export const etatsFormation: Record<EtatFormation, { libelle: string; couleur: string; texte: string }> = {
-  valide: { libelle: "Valide", couleur: "#0ca30c", texte: "#ffffff" },
+  valide: { libelle: "Valide", couleur: "#0ca30c", texte: "#0b0b0b" },
   permanente: { libelle: "Sans expiration", couleur: "#d9cfc1", texte: "#0c0b0a" },
   "a-renouveler": { libelle: "À renouveler", couleur: "#fab219", texte: "#0b0b0b" },
   expiree: { libelle: "Expirée", couleur: "#d03b3b", texte: "#ffffff" },

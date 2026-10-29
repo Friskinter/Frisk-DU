@@ -66,7 +66,7 @@ export function DoubleAuthentification({ recommandee, onChange }: { recommandee?
       titre="Double authentification"
       actions={
         facteur === undefined ? null : facteur ? (
-          <Pastille couleur="#0ca30c" texte="#ffffff" icone="✓">Activée</Pastille>
+          <Pastille couleur="#0ca30c" texte="#0b0b0b" icone="✓">Activée</Pastille>
         ) : (
           <Pastille couleur="#fab219" texte="#0b0b0b">Désactivée</Pastille>
         )

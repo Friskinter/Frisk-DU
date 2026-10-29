@@ -132,7 +132,7 @@ export const niveauxCriticite: NiveauCriticite[] = [
     libelle: "Faible",
     min: 0,
     couleur: "#0ca30c",
-    texte: "#ffffff",
+    texte: "#0b0b0b",
     delai: "Surveiller",
     definition:
       "Risque acceptable en l'état. On le surveille et on le réévalue lors de la mise à jour annuelle.",
@@ -189,7 +189,7 @@ export const principesPrevention: EchelonPrincipe[] = [
 
 export const efficacites: { valeur: Efficacite; libelle: string; couleur: string; texte: string }[] = [
   { valeur: "non-evaluee", libelle: "Non vérifiée", couleur: "#d9cfc1", texte: "#0c0b0a" },
-  { valeur: "efficace", libelle: "Efficace", couleur: "#0ca30c", texte: "#ffffff" },
+  { valeur: "efficace", libelle: "Efficace", couleur: "#0ca30c", texte: "#0b0b0b" },
   { valeur: "partielle", libelle: "Partiellement efficace", couleur: "#fab219", texte: "#0b0b0b" },
   { valeur: "inefficace", libelle: "Inefficace", couleur: "#d03b3b", texte: "#ffffff" },
 ];

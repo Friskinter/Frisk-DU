@@ -47,12 +47,16 @@ export async function GET(requete: Request) {
     let envoye = false;
     if (!apercu) {
       const { sujet, html, texte } = emailAlertes(e.nom, alertes, aujourdhui, urlApplication);
-      const reponse = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${cleResend}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ from: expediteur, to: destinataires, subject: sujet, html, text: texte }),
-      });
-      envoye = reponse.ok;
+      // Un e-mail par destinataire : les adresses des collègues ne sont pas dévoilées.
+      envoye = true;
+      for (const to of destinataires) {
+        const reponse = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${cleResend}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ from: expediteur, to, subject: sujet, html, text: texte }),
+        });
+        if (!reponse.ok) envoye = false;
+      }
     }
     rapport.push({ entreprise: e.nom, destinataires, alertes: alertes.length, envoye });
   }

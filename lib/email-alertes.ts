@@ -15,10 +15,10 @@ export function emailAlertes(entreprise: string, alertes: Alerte[], aujourdhui: 
       (a) => `
       <tr><td style="padding:12px 0;border-bottom:1px solid #ece6dc">
         <span style="display:inline-block;padding:2px 8px;border-radius:10px;background:${couleurs[a.gravite]};color:#fff;font-size:12px">${libelles[a.gravite]}</span>
-        <span style="color:#8a837a;font-size:12px">&nbsp;${echapper(a.categorie)}</span>
+        <span style="color:#6b645b;font-size:12px">&nbsp;${echapper(a.categorie)}</span>
         <div style="margin-top:6px;font-weight:bold">${echapper(a.titre)}</div>
         <div style="color:#3a3530">${echapper(a.detail)}</div>
-        <a href="${urlApplication}${a.lien}" style="color:#b08d57;font-size:13px">Ouvrir dans Frisk DU →</a>
+        <a href="${urlApplication}${a.lien}" style="color:#7f6235;font-size:13px">Ouvrir dans Frisk DU →</a>
       </td></tr>`,
     )
     .join("");
@@ -32,7 +32,7 @@ export function emailAlertes(entreprise: string, alertes: Alerte[], aujourdhui: 
       </td></tr>
       <tr><td style="padding:8px 24px 24px">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${lignes}</table>
-        <p style="margin-top:24px;font-size:12px;color:#8a837a">
+        <p style="margin-top:24px;font-size:12px;color:#6b645b">
           Vous recevez cet e-mail chaque lundi en tant qu'utilisateur de Frisk DU. Pour ne plus le recevoir,
           décochez l'option dans « Salariés &amp; réglages ».
         </p>

@@ -9,7 +9,7 @@ import type { SeuilPenibilite } from "@/lib/types";
 const styleSeuil: Record<SeuilPenibilite, { libelle: string; couleur: string; texte: string; icone: string }> = {
   oui: { libelle: "Seuil dépassé", couleur: "#d03b3b", texte: "#ffffff", icone: "!" },
   "a-evaluer": { libelle: "À évaluer", couleur: "#fab219", texte: "#0b0b0b", icone: "?" },
-  non: { libelle: "Sous le seuil", couleur: "#0ca30c", texte: "#ffffff", icone: "✓" },
+  non: { libelle: "Sous le seuil", couleur: "#0ca30c", texte: "#0b0b0b", icone: "✓" },
 };
 
 export default function PagePenibilite() {
@@ -71,7 +71,7 @@ export default function PagePenibilite() {
       {familles.map((famille) => (
         <section key={famille} className="mb-8">
           <h2 className="mb-3 font-serif text-xl">{famille}</h2>
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {facteursPenibilite
               .filter((f) => f.famille === famille)
               .map((f) => {
@@ -124,7 +124,7 @@ export default function PagePenibilite() {
 
       <p className="text-sm text-ardoise">
         Pour rattacher une situation à un facteur, renseignez les colonnes « Pénibilité » et « Seuil » du{" "}
-        <Link href="/duerp" className="text-bronze underline">
+        <Link href="/duerp" className="text-bronze-fonce underline">
           tableau DUERP
         </Link>
         .

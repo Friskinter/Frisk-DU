@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { BibliothequeRisques } from "@/components/bibliotheque-risques";
 import { actionEnRetard, actionsDuRisque, nouvelleAction } from "@/lib/actions";
 import { nouvelleLigne } from "@/lib/donnees";
@@ -37,7 +37,7 @@ import {
   statutsAction,
 } from "@/lib/referentiel";
 import { modifier, peutModifier, useDonnees, useSession } from "@/lib/stockage";
-import type { LigneDuerp } from "@/lib/types";
+import type { Action, LigneDuerp } from "@/lib/types";
 
 const cellule = "border-b border-r border-pierre/60 p-1 align-top";
 const champCellule =
@@ -61,6 +61,30 @@ const colonnes: { titre: string; aide: string; largeur: number }[] = [
 ];
 
 
+function dupliquer(ligne: LigneDuerp) {
+  modifier((d) => {
+    const duerp = [...d.duerp];
+    duerp.splice(d.duerp.findIndex((l) => l.id === ligne.id) + 1, 0, { ...ligne, id: nouvelId() });
+    return { ...d, duerp };
+  });
+}
+
+function supprimer(l: LigneDuerp, nbActions: number, nbEvenements: number) {
+  const avertissement =
+    (nbActions ? ` Ses ${nbActions} action(s) de prévention seront aussi supprimées.` : "") +
+    (nbEvenements ? ` ${nbEvenements} accident(s) ou presque-accident(s) devront être rattachés à un autre risque.` : "");
+  if (confirm(`Supprimer la ligne « ${l.danger || l.activite || "sans titre"} » ?${avertissement}`)) {
+    modifier((d) => ({
+      ...d,
+      duerp: d.duerp.filter((x) => x.id !== l.id),
+      actions: d.actions.filter((a) => a.risqueId !== l.id),
+      evenements: d.evenements.map((e) => (e.risqueId === l.id ? { ...e, risqueId: "", reevalueLe: "" } : e)),
+    }));
+  }
+}
+
+const aucuneAction: Action[] = [];
+
 function mettreAJour(id: string, champs: Partial<LigneDuerp>) {
   modifier((d) => ({
     ...d,
@@ -82,6 +106,27 @@ export default function PageDuerp() {
   const [versions, setVersions] = useState(false);
   const [ajoutes, setAjoutes] = useState(0);
 
+  // Actions et accidents de chaque risque, recalculés seulement quand ces listes changent.
+  const actions = donnees?.actions;
+  const evenements = donnees?.evenements;
+  const actionsParRisque = useMemo(() => {
+    const parRisque = new Map<string, Action[]>();
+    for (const a of actions ?? []) parRisque.set(a.risqueId, [...(parRisque.get(a.risqueId) ?? []), a]);
+    return parRisque;
+  }, [actions]);
+  const evenementsParRisque = useMemo(() => {
+    const parRisque = new Map<string, number>();
+    for (const e of evenements ?? []) if (e.risqueId) parRisque.set(e.risqueId, (parRisque.get(e.risqueId) ?? 0) + 1);
+    return parRisque;
+  }, [evenements]);
+  const ajouterAction = useCallback(
+    (l: LigneDuerp) => {
+      modifier((d) => ({ ...d, actions: [...d.actions, nouvelleAction(l.id)] }));
+      router.push(`/actions?risque=${l.id}`);
+    },
+    [router],
+  );
+
   if (!donnees) return <Chargement />;
 
   const aujourdhui = dateDuJour();
@@ -100,39 +145,8 @@ export default function PageDuerp() {
   );
   if (tri) lignes = [...lignes].sort((a, b) => risqueResiduel(b) - risqueResiduel(a));
 
-  const ajouter = (apres?: LigneDuerp) =>
-    modifier((d) => {
-      const nouvelle = apres
-        ? { ...apres, id: nouvelId() }
-        : nouvelleLigne(unite || unitesConnues[0] || "");
-      const index = apres ? d.duerp.findIndex((l) => l.id === apres.id) + 1 : d.duerp.length;
-      const duerp = [...d.duerp];
-      duerp.splice(index, 0, nouvelle);
-      return { ...d, duerp };
-    });
-
-  const supprimer = (l: LigneDuerp) => {
-    const nbActions = actionsDuRisque(donnees.actions, l).length;
-    const nbEvenements = donnees.evenements.filter((e) => e.risqueId === l.id).length;
-    const avertissement =
-      (nbActions ? ` Ses ${nbActions} action(s) de prévention seront aussi supprimées.` : "") +
-      (nbEvenements ? ` ${nbEvenements} accident(s) ou presque-accident(s) devront être rattachés à un autre risque.` : "");
-    if (confirm(`Supprimer la ligne « ${l.danger || l.activite || "sans titre"} » ?${avertissement}`)) {
-      modifier((d) => ({
-        ...d,
-        duerp: d.duerp.filter((x) => x.id !== l.id),
-        actions: d.actions.filter((a) => a.risqueId !== l.id),
-        evenements: d.evenements.map((e) => (e.risqueId === l.id ? { ...e, risqueId: "", reevalueLe: "" } : e)),
-      }));
-    }
-  };
-
-  const evenementsLigne = (l: LigneDuerp) => donnees.evenements.filter((e) => e.risqueId === l.id).length;
-
-  const ajouterAction = (l: LigneDuerp) => {
-    modifier((d) => ({ ...d, actions: [...d.actions, nouvelleAction(l.id)] }));
-    router.push(`/actions?risque=${l.id}`);
-  };
+  const ajouter = () =>
+    modifier((d) => ({ ...d, duerp: [...d.duerp, nouvelleLigne(unite || unitesConnues[0] || "")] }));
 
   const exporter = () =>
     telechargerCsv(`DUERP-${donnees.entreprise}-${aujourdhui}.csv`, [
@@ -235,17 +249,18 @@ export default function PageDuerp() {
         <input
           type="search"
           placeholder="Rechercher…"
+          aria-label="Rechercher un risque"
           value={recherche}
           onChange={(e) => setRecherche(e.target.value)}
           className={`${classeChamp} max-w-60`}
         />
-        <select value={unite} onChange={(e) => setUnite(e.target.value)} className={`${classeChamp} max-w-56`}>
+        <select aria-label="Filtrer par unité" value={unite} onChange={(e) => setUnite(e.target.value)} className={`${classeChamp} max-w-56`}>
           <option value="">Toutes les unités</option>
           {unitesConnues.map((u) => (
             <option key={u}>{u}</option>
           ))}
         </select>
-        <select value={niveau} onChange={(e) => setNiveau(e.target.value)} className={`${classeChamp} max-w-48`}>
+        <select aria-label="Filtrer par niveau" value={niveau} onChange={(e) => setNiveau(e.target.value)} className={`${classeChamp} max-w-48`}>
           <option value="">Tous les niveaux</option>
           {niveauxCriticite.map((n) => (
             <option key={n.code} value={n.code}>
@@ -294,171 +309,22 @@ export default function PageDuerp() {
               </tr>
             </thead>
             <tbody>
-              {lignes.map((l) => {
-                const actionsLigne = actionsDuRisque(donnees.actions, l);
-                const facteur = facteursPenibilite.find((f) => f.code === l.penibilite);
-                return (
-                  <tr key={l.id} className="hover:bg-ivoire">
-                    <td className={cellule}>
-                      <input list="liste-unites" value={l.unite} onChange={(e) => mettreAJour(l.id, { unite: e.target.value })} className={champCellule} />
-                    </td>
-                    <td className={cellule}>
-                      <textarea rows={2} value={l.activite} onChange={(e) => mettreAJour(l.id, { activite: e.target.value })} className={`${champCellule} resize-y`} />
-                    </td>
-                    <td className={cellule}>
-                      <input list="liste-dangers" value={l.danger} onChange={(e) => mettreAJour(l.id, { danger: e.target.value })} className={champCellule} />
-                    </td>
-                    <td className={cellule}>
-                      <textarea rows={2} value={l.risque} onChange={(e) => mettreAJour(l.id, { risque: e.target.value })} className={`${champCellule} resize-y`} />
-                    </td>
-                    <td className={cellule}>
-                      <input type="number" min={0} value={l.effectif} onChange={(e) => mettreAJour(l.id, { effectif: Math.max(0, Number(e.target.value)) })} className={`${champCellule} tabular-nums`} />
-                    </td>
-                    <td className={cellule}>
-                      <select
-                        value={l.gravite}
-                        title={grilleGravite[l.gravite - 1]?.definition}
-                        onChange={(e) => mettreAJour(l.id, { gravite: Number(e.target.value) })}
-                        className={champCellule}
-                      >
-                        {grilleGravite.map((g) => (
-                          <option key={g.valeur} value={g.valeur}>
-                            {g.valeur} – {g.libelle}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className={cellule}>
-                      <select
-                        value={l.frequence}
-                        title={grilleFrequence[l.frequence - 1]?.definition}
-                        onChange={(e) => mettreAJour(l.id, { frequence: Number(e.target.value) })}
-                        className={champCellule}
-                      >
-                        {grilleFrequence.map((f) => (
-                          <option key={f.valeur} value={f.valeur}>
-                            {f.valeur} – {f.libelle}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className={`${cellule} px-2 py-2`}>
-                      <PastilleCriticite score={criticiteBrute(l)} />
-                    </td>
-                    <td className={cellule}>
-                      <textarea rows={2} value={l.mesures} onChange={(e) => mettreAJour(l.id, { mesures: e.target.value })} className={`${champCellule} resize-y`} />
-                    </td>
-                    <td className={cellule}>
-                      <select
-                        value={l.maitrise}
-                        title={grilleMaitrise.find((m) => m.valeur === l.maitrise)?.definition}
-                        onChange={(e) => mettreAJour(l.id, { maitrise: e.target.value as LigneDuerp["maitrise"] })}
-                        className={champCellule}
-                      >
-                        {grilleMaitrise.map((m) => (
-                          <option key={m.valeur} value={m.valeur}>
-                            {m.libelle} (×{m.coefficient})
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className={`${cellule} px-2 py-2`}>
-                      <PastilleCriticite score={risqueResiduel(l)} />
-                    </td>
-                    <td className={cellule}>
-                      <select
-                        value={l.penibilite}
-                        title={facteur?.seuil}
-                        onChange={(e) =>
-                          mettreAJour(l.id, {
-                            penibilite: e.target.value,
-                            seuilPenibilite: e.target.value ? l.seuilPenibilite : "non",
-                          })
-                        }
-                        className={champCellule}
-                      >
-                        <option value="">Aucun facteur</option>
-                        {facteursPenibilite.map((f) => (
-                          <option key={f.code} value={f.code}>
-                            {f.libelle}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className={cellule}>
-                      <select
-                        value={l.seuilPenibilite}
-                        disabled={!l.penibilite}
-                        onChange={(e) => mettreAJour(l.id, { seuilPenibilite: e.target.value as LigneDuerp["seuilPenibilite"] })}
-                        className={`${champCellule} disabled:text-gris`}
-                      >
-                        {seuilsPenibilite.map((s) => (
-                          <option key={s.valeur} value={s.valeur}>
-                            {s.libelle}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className={`${cellule} px-2 py-1.5`}>
-                      <ul className="space-y-1">
-                        {actionsLigne.map((a) => {
-                          const retard = actionEnRetard(a, aujourdhui);
-                          return (
-                            <li key={a.id} className="flex items-start gap-1.5 text-xs">
-                              <span
-                                aria-hidden
-                                className="mt-1 h-2 w-2 shrink-0 rounded-full"
-                                style={{ background: a.statut === "fait" ? "#0ca30c" : retard ? "#d03b3b" : a.statut === "en-cours" ? "#fab219" : "#d9cfc1" }}
-                              />
-                              <span className="min-w-0">
-                                <span className={a.statut === "fait" ? "text-gris line-through" : ""}>{a.intitule || "Action sans intitulé"}</span>
-                                {a.echeance && a.statut !== "fait" && (
-                                  <span className={retard ? "font-semibold text-[#b42318]" : "text-gris"}>
-                                    {" "}· {retard ? "en retard, " : ""}
-                                    {formaterDate(a.echeance)}
-                                  </span>
-                                )}
-                              </span>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                      <span className="mt-1 flex gap-3 text-xs print:hidden">
-                        <button type="button" onClick={() => ajouterAction(l)} className="text-bronze underline disabled:hidden">
-                          + Action
-                        </button>
-                        {actionsLigne.length > 0 && (
-                          <Link href={`/actions?risque=${l.id}`} className="text-ardoise underline">
-                            Gérer ({actionsLigne.length})
-                          </Link>
-                        )}
-                        {evenementsLigne(l) > 0 && (
-                          <Link href={`/accidents?risque=${l.id}`} className="text-[#b42318] underline" title="Accidents et presque-accidents rattachés à ce risque">
-                            ⚑ {evenementsLigne(l)}
-                          </Link>
-                        )}
-                      </span>
-                    </td>
-                    <td className="border-b border-pierre/60 p-1 align-top whitespace-nowrap print:hidden">
-                      <Link href={`/journal?element=${l.id}`} title="Historique des modifications de la ligne" className="rounded-sm px-2 py-1 text-ardoise hover:bg-marbre">
-                        ◷
-                      </Link>
-                      <button type="button" title="Dupliquer la ligne" onClick={() => ajouter(l)} className="rounded-sm px-2 py-1 text-ardoise hover:bg-marbre">
-                        ⧉
-                      </button>
-                      <button type="button" title="Supprimer la ligne" onClick={() => supprimer(l)} className="rounded-sm px-2 py-1 text-ardoise hover:bg-marbre hover:text-[#b42318]">
-                        ✕
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+              {lignes.map((l) => (
+                <LigneRisque
+                  key={l.id}
+                  l={l}
+                  actionsLigne={actionsParRisque.get(l.id) ?? aucuneAction}
+                  evenements={evenementsParRisque.get(l.id) ?? 0}
+                  aujourdhui={aujourdhui}
+                  onAjouterAction={ajouterAction}
+                />
+              ))}
             </tbody>
           </table>
           <button
             type="button"
             onClick={() => ajouter()}
-            className="sticky left-0 block w-full px-4 py-3 text-left text-sm text-bronze hover:bg-marbre/60 print:hidden"
+            className="sticky left-0 block w-full px-4 py-3 text-left text-sm text-bronze-fonce hover:bg-marbre/60 print:hidden"
           >
             + Ajouter une ligne{unite ? ` dans « ${unite} »` : ""}
           </button>
@@ -470,3 +336,181 @@ export default function PageDuerp() {
     </div>
   );
 }
+
+// Une ligne du tableau, redessinée seulement quand elle change : la saisie reste fluide même
+// avec plusieurs centaines de risques.
+const LigneRisque = memo(function LigneRisque({
+  l,
+  actionsLigne,
+  evenements,
+  aujourdhui,
+  onAjouterAction,
+}: {
+  l: LigneDuerp;
+  actionsLigne: Action[];
+  evenements: number;
+  aujourdhui: string;
+  onAjouterAction: (l: LigneDuerp) => void;
+}) {
+  const facteur = facteursPenibilite.find((f) => f.code === l.penibilite);
+  return (
+    <tr className="hover:bg-ivoire">
+      <td className={cellule}>
+        <input list="liste-unites" aria-label="Unité de travail" value={l.unite} onChange={(e) => mettreAJour(l.id, { unite: e.target.value })} className={champCellule} />
+      </td>
+      <td className={cellule}>
+        <textarea rows={2} aria-label="Activité ou situation" value={l.activite} onChange={(e) => mettreAJour(l.id, { activite: e.target.value })} className={`${champCellule} resize-y`} />
+      </td>
+      <td className={cellule}>
+        <input list="liste-dangers" aria-label="Danger" value={l.danger} onChange={(e) => mettreAJour(l.id, { danger: e.target.value })} className={champCellule} />
+      </td>
+      <td className={cellule}>
+        <textarea rows={2} aria-label="Risque ou dommage" value={l.risque} onChange={(e) => mettreAJour(l.id, { risque: e.target.value })} className={`${champCellule} resize-y`} />
+      </td>
+      <td className={cellule}>
+        <input type="number" min={0} aria-label="Effectif exposé" value={l.effectif} onChange={(e) => mettreAJour(l.id, { effectif: Math.max(0, Number(e.target.value)) })} className={`${champCellule} tabular-nums`} />
+      </td>
+      <td className={cellule}>
+        <select
+          value={l.gravite}
+          aria-label="Gravité"
+          title={grilleGravite[l.gravite - 1]?.definition}
+          onChange={(e) => mettreAJour(l.id, { gravite: Number(e.target.value) })}
+          className={champCellule}
+        >
+          {grilleGravite.map((g) => (
+            <option key={g.valeur} value={g.valeur}>
+              {g.valeur} – {g.libelle}
+            </option>
+          ))}
+        </select>
+      </td>
+      <td className={cellule}>
+        <select
+          value={l.frequence}
+          aria-label="Fréquence"
+          title={grilleFrequence[l.frequence - 1]?.definition}
+          onChange={(e) => mettreAJour(l.id, { frequence: Number(e.target.value) })}
+          className={champCellule}
+        >
+          {grilleFrequence.map((f) => (
+            <option key={f.valeur} value={f.valeur}>
+              {f.valeur} – {f.libelle}
+            </option>
+          ))}
+        </select>
+      </td>
+      <td className={`${cellule} px-2 py-2`}>
+        <PastilleCriticite score={criticiteBrute(l)} />
+      </td>
+      <td className={cellule}>
+        <textarea rows={2} aria-label="Mesures existantes" value={l.mesures} onChange={(e) => mettreAJour(l.id, { mesures: e.target.value })} className={`${champCellule} resize-y`} />
+      </td>
+      <td className={cellule}>
+        <select
+          value={l.maitrise}
+          aria-label="Maîtrise"
+          title={grilleMaitrise.find((m) => m.valeur === l.maitrise)?.definition}
+          onChange={(e) => mettreAJour(l.id, { maitrise: e.target.value as LigneDuerp["maitrise"] })}
+          className={champCellule}
+        >
+          {grilleMaitrise.map((m) => (
+            <option key={m.valeur} value={m.valeur}>
+              {m.libelle} (×{m.coefficient})
+            </option>
+          ))}
+        </select>
+      </td>
+      <td className={`${cellule} px-2 py-2`}>
+        <PastilleCriticite score={risqueResiduel(l)} />
+      </td>
+      <td className={cellule}>
+        <select
+          value={l.penibilite}
+          aria-label="Facteur de pénibilité"
+          title={facteur?.seuil}
+          onChange={(e) =>
+            mettreAJour(l.id, {
+              penibilite: e.target.value,
+              seuilPenibilite: e.target.value ? l.seuilPenibilite : "non",
+            })
+          }
+          className={champCellule}
+        >
+          <option value="">Aucun facteur</option>
+          {facteursPenibilite.map((f) => (
+            <option key={f.code} value={f.code}>
+              {f.libelle}
+            </option>
+          ))}
+        </select>
+      </td>
+      <td className={cellule}>
+        <select
+          value={l.seuilPenibilite}
+          aria-label="Seuil de pénibilité"
+          disabled={!l.penibilite}
+          onChange={(e) => mettreAJour(l.id, { seuilPenibilite: e.target.value as LigneDuerp["seuilPenibilite"] })}
+          className={`${champCellule} disabled:text-gris`}
+        >
+          {seuilsPenibilite.map((s) => (
+            <option key={s.valeur} value={s.valeur}>
+              {s.libelle}
+            </option>
+          ))}
+        </select>
+      </td>
+      <td className={`${cellule} px-2 py-1.5`}>
+        <ul className="space-y-1">
+          {actionsLigne.map((a) => {
+            const retard = actionEnRetard(a, aujourdhui);
+            return (
+              <li key={a.id} className="flex items-start gap-1.5 text-xs">
+                <span
+                  aria-hidden
+                  className="mt-1 h-2 w-2 shrink-0 rounded-full"
+                  style={{ background: a.statut === "fait" ? "#0ca30c" : retard ? "#d03b3b" : a.statut === "en-cours" ? "#fab219" : "#d9cfc1" }}
+                />
+                <span className="min-w-0">
+                  <span className={a.statut === "fait" ? "text-gris line-through" : ""}>{a.intitule || "Action sans intitulé"}</span>
+                  {a.echeance && a.statut !== "fait" && (
+                    <span className={retard ? "font-semibold text-[#b42318]" : "text-gris"}>
+                      {" "}· {retard ? "en retard, " : ""}
+                      {formaterDate(a.echeance)}
+                    </span>
+                  )}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+        <span className="mt-1 flex gap-3 text-xs print:hidden">
+          <button type="button" onClick={() => onAjouterAction(l)} className="text-bronze-fonce underline disabled:hidden">
+            + Action
+          </button>
+          {actionsLigne.length > 0 && (
+            <Link href={`/actions?risque=${l.id}`} className="text-ardoise underline">
+              Gérer ({actionsLigne.length})
+            </Link>
+          )}
+          {evenements > 0 && (
+            <Link href={`/accidents?risque=${l.id}`} className="text-[#b42318] underline" title="Accidents et presque-accidents rattachés à ce risque">
+              ⚑ {evenements}
+            </Link>
+          )}
+        </span>
+      </td>
+      <td className="border-b border-pierre/60 p-1 align-top whitespace-nowrap print:hidden">
+        <Link href={`/journal?element=${l.id}`} title="Historique des modifications de la ligne" className="rounded-sm px-2 py-1 text-ardoise hover:bg-marbre">
+          ◷
+        </Link>
+        <button type="button" title="Dupliquer la ligne" onClick={() => dupliquer(l)} className="rounded-sm px-2 py-1 text-ardoise hover:bg-marbre">
+          ⧉
+        </button>
+        <button type="button" title="Supprimer la ligne" onClick={() => supprimer(l, actionsLigne.length, evenements)} className="rounded-sm px-2 py-1 text-ardoise hover:bg-marbre hover:text-[#b42318]">
+          ✕
+        </button>
+      </td>
+    </tr>
+  );
+});

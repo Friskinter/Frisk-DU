@@ -81,7 +81,7 @@ export default function Cgu() {
         />
         <p>
           Les traitements de données personnelles effectués pour le compte du client sont régis par l&apos;
-          <a href="/legal/traitement" className="text-bronze underline">accord de traitement des données</a>, qui fait partie des présentes conditions.
+          <a href="/legal/traitement" className="text-bronze-fonce underline">accord de traitement des données</a>, qui fait partie des présentes conditions.
         </p>
       </Article>
 
