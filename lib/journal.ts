@@ -41,6 +41,8 @@ export const zones: Record<string, string> = {
   produits: "Produits chimiques",
   interventions: "Entreprises extérieures",
   protocoles: "Protocoles de sécurité",
+  grilles: "Grilles de visite",
+  visites: "Visites et audits",
   salaries: "Salariés",
   articles: "Catalogue EPI",
   mouvements: "Mouvements d'EPI",
@@ -284,6 +286,12 @@ export function libelleElement(e: EntreeJournal, donnees: Donnees): string {
       return `Plan de prévention : ${donnees.interventions?.find((x) => x.id === e.element_id)?.entreprise || source.entreprise || "entreprise extérieure"}`;
     case "protocoles":
       return `Protocole de sécurité : ${donnees.protocoles?.find((x) => x.id === e.element_id)?.transporteur || source.transporteur || "transporteur"}`;
+    case "grilles":
+      return `Grille : ${donnees.grilles?.find((x) => x.id === e.element_id)?.nom || source.nom || "grille de visite"}`;
+    case "visites": {
+      const v = { ...source, ...(donnees.visites?.find((x) => x.id === e.element_id) ?? {}) } as Record<string, unknown>;
+      return `Visite ${v.date ? `du ${formaterDate(String(v.date))} ` : ""}: ${v.grille || "grille"}${v.unite ? ` (${v.unite})` : ""}`;
+    }
     case "equipements":
       return String(donnees.equipements?.find((x) => x.id === e.element_id)?.nom || source.nom || "Équipement");
     case "verifications": {

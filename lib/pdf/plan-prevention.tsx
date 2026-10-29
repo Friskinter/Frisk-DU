@@ -42,7 +42,7 @@ export function Champ({ cle, children }: { cle: string; children: ReactNode }) {
 export function Section({ titre, children }: { titre: string; children: ReactNode }) {
   return (
     <View>
-      <Text style={s.titreSection} minPresenceAhead={40}>{titre}</Text>
+      <Text style={s.titreSection} minPresenceAhead={70}>{titre}</Text>
       {children}
     </View>
   );

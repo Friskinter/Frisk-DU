@@ -15,7 +15,7 @@ import { actionEnRetard, actionsDuRisque, effectifDeclare, estPapripact, nouvell
 import { dateDuJour, formatEuros, formaterDate, risqueResiduel, telechargerCsv } from "@/lib/calculs";
 import { efficacites, principesPrevention, statutsAction } from "@/lib/referentiel";
 import { modifier, peutModifier, useDonnees, useSession } from "@/lib/stockage";
-import type { Action, Evenement, Formation, LigneDuerp } from "@/lib/types";
+import type { Action, Evenement, Formation, LigneDuerp, Visite } from "@/lib/types";
 
 const cellule = "border-b border-pierre/60 p-1 align-top";
 const champ =
@@ -66,6 +66,10 @@ function PlanActions() {
     // Sans filtre, on montre aussi les risques sans action pour pouvoir en ajouter.
     .filter((g) => g.actions.length || (!filtresActifs && (risqueFiltre || risqueResiduel(g.risque) >= 4)));
 
+  // Actions dont le risque n'existe pas (créées depuis une visite, risque supprimé…) : regroupées à part.
+  const idsRisques = new Set(donnees.duerp.map((l) => l.id));
+  const orphelines = risqueFiltre ? [] : donnees.actions.filter((a) => !idsRisques.has(a.risqueId)).filter(garder);
+
   const toutes = donnees.actions;
   const realisees = toutes.filter((a) => a.statut === "fait");
   const enRetard = toutes.filter((a) => actionEnRetard(a, aujourdhui));
@@ -92,11 +96,11 @@ function PlanActions() {
     const risqueDe = new Map(donnees.duerp.map((l) => [l.id, l]));
     telechargerCsv(`${papripact ? "Programme annuel de prevention" : "Plan d'actions"} - ${donnees.entreprise} - ${aujourdhui}.csv`, [
       ["Unité de travail", "Risque", "Risque résiduel", "Action", "Type de mesure", "Responsable", "Échéance", "Coût HT", "Ressources", "Indicateur", "Statut", "Réalisée le", "Efficacité", "Constat"],
-      ...risques.flatMap((g) =>
+      ...[...risques, { risque: null, actions: orphelines }].flatMap((g) =>
         g.actions.map((a) => {
-          const l = risqueDe.get(a.risqueId)!;
+          const l = risqueDe.get(a.risqueId);
           return [
-            l.unite, l.danger || l.risque, risqueResiduel(l), a.intitule,
+            l?.unite ?? "", l ? l.danger || l.risque : "Non rattachée à un risque", l ? risqueResiduel(l) : "", a.intitule,
             principesPrevention.find((p) => p.valeur === a.principe)?.libelle ?? "",
             a.responsable, formaterDate(a.echeance), a.cout ?? "", a.ressources, a.indicateur,
             statutsAction.find((s) => s.valeur === a.statut)?.libelle ?? "", formaterDate(a.realiseeLe),
@@ -199,7 +203,7 @@ function PlanActions() {
         ))}
       </datalist>
 
-      {risques.length === 0 ? (
+      {risques.length === 0 && orphelines.length === 0 ? (
         <p className="rounded-sm border border-pierre/70 bg-white p-6 text-center text-sm text-gris">
           Aucune action ne correspond à ces critères.
         </p>
@@ -227,12 +231,26 @@ function PlanActions() {
                     actions={actions}
                     aujourdhui={aujourdhui}
                     evenements={donnees.evenements}
+                    visites={donnees.visites}
                     formations={donnees.formations}
                     onAjouter={() => ajouter(l)}
                     onSupprimer={supprimer}
                     onStatut={changerStatut}
                   />
                 ))}
+                {orphelines.length > 0 && (
+                  <GroupeRisque
+                    risque={null}
+                    risquesDuerp={donnees.duerp}
+                    actions={orphelines}
+                    aujourdhui={aujourdhui}
+                    evenements={donnees.evenements}
+                    visites={donnees.visites}
+                    formations={donnees.formations}
+                    onSupprimer={supprimer}
+                    onStatut={changerStatut}
+                  />
+                )}
               </tbody>
             </table>
           </div>
@@ -244,26 +262,39 @@ function PlanActions() {
 
 function GroupeRisque({
   risque: l,
+  risquesDuerp = [],
   actions,
   aujourdhui,
   evenements,
+  visites,
   formations,
   onAjouter,
   onSupprimer,
   onStatut,
 }: {
-  risque: LigneDuerp;
+  risque: LigneDuerp | null; // null : actions non rattachées à un risque du DUERP
+  risquesDuerp?: LigneDuerp[];
   actions: Action[];
   aujourdhui: string;
   evenements: Evenement[];
+  visites: Visite[];
   formations: Formation[];
-  onAjouter: () => void;
+  onAjouter?: () => void;
   onSupprimer: (a: Action) => void;
   onStatut: (a: Action, statut: Action["statut"]) => void;
 }) {
-  const seulementEpi = actions.length > 0 && actions.every((a) => a.principe === "epi") && risqueResiduel(l) >= 8;
+  const seulementEpi = !!l && actions.length > 0 && actions.every((a) => a.principe === "epi") && risqueResiduel(l) >= 8;
   return (
     <>
+      {!l && (
+        <tr className="bg-ivoire">
+          <td colSpan={8} className="border-b border-pierre/60 px-3 py-2">
+            <span className="font-medium">Actions non rattachées à un risque du DUERP</span>
+            <span className="ml-2 text-xs text-gris">Rattachez-les au risque concerné pour qu&apos;elles figurent dans le document unique.</span>
+          </td>
+        </tr>
+      )}
+      {l && (
       <tr className="bg-ivoire">
         <td colSpan={8} className="border-b border-pierre/60 px-3 py-2">
           <div className="flex flex-wrap items-center gap-3">
@@ -279,6 +310,7 @@ function GroupeRisque({
           </div>
         </td>
       </tr>
+      )}
       {actions.length === 0 && (
         <tr>
           <td colSpan={8} className="border-b border-pierre/60 px-3 py-2 text-xs text-gris">Aucune action pour ce risque.</td>
@@ -288,6 +320,7 @@ function GroupeRisque({
         const retard = actionEnRetard(a, aujourdhui);
         const fait = a.statut === "fait";
         const origine = a.evenementId ? evenements.find((e) => e.id === a.evenementId) : undefined;
+        const visite = a.visiteId ? visites.find((v) => v.id === a.visiteId) : undefined;
         const formes = formations.filter((f) => f.actionId === a.id).length;
         return (
           <tr key={a.id}>
@@ -320,6 +353,24 @@ function GroupeRisque({
                 <Link href={`/accidents?evenement=${origine.id}`} className="block px-1.5 text-xs text-[#b42318] underline">
                   ⚑ Suite {origine.type === "presque-accident" || origine.type === "situation-dangereuse" ? "à l'événement" : "à l'accident"} du {formaterDate(origine.date)}
                 </Link>
+              )}
+              {visite && (
+                <Link href={`/visites?visite=${visite.id}`} className="block px-1.5 text-xs text-ardoise underline">
+                  ☑ Non-conformité relevée lors de la visite du {formaterDate(visite.date)}
+                </Link>
+              )}
+              {!l && (
+                <select
+                  aria-label="Rattacher au risque du DUERP"
+                  value=""
+                  onChange={(e) => e.target.value && mettreAJour(a.id, { risqueId: e.target.value })}
+                  className={`${champ} text-xs text-bronze-fonce`}
+                >
+                  <option value="">Rattacher à un risque du DUERP…</option>
+                  {risquesDuerp.map((r) => (
+                    <option key={r.id} value={r.id}>{[r.unite, r.danger || r.activite].filter(Boolean).join(" · ")}</option>
+                  ))}
+                </select>
               )}
             </td>
             <td className={cellule}>

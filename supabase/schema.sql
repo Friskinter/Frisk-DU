@@ -969,3 +969,21 @@ end;
 $$;
 revoke all on function public.signaler_evenement(text, jsonb) from public, anon, authenticated;
 grant execute on function public.signaler_evenement(text, jsonb) to service_role;
+
+-- ---------- Migration 014 : visites et audits ----------
+
+create or replace function public.frisk_version()
+returns integer
+language sql
+immutable
+set search_path = ''
+as $$ select 14; $$;
+grant execute on function public.frisk_version() to authenticated, anon;
+
+-- Nouvelles listes « grilles » et « visites », modifiables par le responsable.
+create or replace function public.collections_frisk()
+returns text[]
+language sql
+immutable
+set search_path = ''
+as $$ select array['duerp', 'actions', 'evenements', 'formations', 'exigences', 'equipements', 'verifications', 'produits', 'interventions', 'protocoles', 'grilles', 'visites', 'salaries', 'articles', 'mouvements']; $$;

@@ -5,10 +5,11 @@ import { nouvelEvenement } from "./evenements";
 import { ajouterMois, nouvelleExigence, nouvelleFormation } from "./formations";
 import { nouveauProduit } from "./produits";
 import { nouveauProtocole } from "./protocoles";
+import { actionPourNonConformite, grillesModeles, nouvelleVisite } from "./visites";
 import { nouveauRisqueIntervention, nouveauSuivi, nouvelleIntervention, risqueDuTravail, risquesCourants } from "./interventions";
 import { nouvelEquipement, nouvelleObservation, nouvelleVerification } from "./verifications";
 import { cle, decalerJours, nouvelId } from "./calculs";
-import type { Action, Article, Donnees, Intervention, Protocole, Evenement, Formation, LigneDuerp, Mouvement, PrincipePrevention, Salarie } from "./types";
+import type { Action, Article, Donnees, Intervention, Protocole, Visite, Evenement, Formation, LigneDuerp, Mouvement, PrincipePrevention, Salarie } from "./types";
 
 // Générateur pseudo-aléatoire déterministe pour des démos reproductibles.
 function aleatoire(graine: number) {
@@ -38,6 +39,8 @@ export function donneesVides(): Donnees {
     produits: [],
     interventions: [],
     protocoles: [],
+    grilles: [],
+    visites: [],
   };
 }
 
@@ -449,6 +452,20 @@ export function donneesDemo(aujourdhui: string): Donnees {
     }),
   ];
 
+  // Visite sécurité du mois dernier : deux non-conformités, dont une déjà confiée au plan d'actions.
+  const visite: Visite = nouvelleVisite(grillesModeles[0], aujourdhui, {
+    date: decalerJours(aujourdhui, -12), unite: "Zone de stockage", auditeur: "Responsable entrepôt", participants: "Karim (préparateur), Sophie D. (SST)",
+    synthese: "Entrepôt bien tenu dans l'ensemble. Deux points à corriger rapidement.", clotureeLe: decalerJours(aujourdhui, -12),
+  });
+  visite.reponses = visite.reponses.map((r, n) => ({ ...r, resultat: n === 0 || n === 10 ? "non-conforme" : n === 5 || n === 6 ? "sans-objet" : "conforme" }));
+  visite.reponses[0].commentaire = "Marquage effacé dans l'allée C, palettes en attente dans l'allée B";
+  visite.reponses[10].commentaire = "Trousse de l'accueil quais incomplète (pansements, gants)";
+  const actionVisite = { ...actionPourNonConformite(visite, visite.reponses[0], aujourdhui, risque("Circulation interne (chariots, piétons)")),
+    responsable: "Responsable entrepôt", principe: "collective" as const, statut: "en-cours" as const, echeance: decalerJours(aujourdhui, 18) };
+  visite.reponses[0].actionId = actionVisite.id;
+  actions.push(actionVisite);
+  const visites = [visite];
+
   const premier = evenements[0];
   actions.push(
     nouvelleAction(premier.risqueId, {
@@ -480,6 +497,8 @@ export function donneesDemo(aujourdhui: string): Donnees {
     produits,
     interventions,
     protocoles,
+    grilles: [],
+    visites,
     salaries,
     articles,
     mouvements,
