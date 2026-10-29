@@ -189,6 +189,11 @@ export default function PageDuerp() {
             <button type="button" className={classeBoutonSecondaire} onClick={() => setVersions(true)}>
               🗄 Versions
             </button>
+            {modifiable && (
+              <Link href="/duerp-express" className={classeBoutonSecondaire}>
+                ⚡ DUERP express
+              </Link>
+            )}
             <button type="button" className={`${classeBoutonSecondaire} disabled:opacity-50`} disabled={!modifiable} onClick={() => setBibliotheque(true)}>
               📚 Bibliothèque de risques
             </button>
@@ -230,12 +235,16 @@ export default function PageDuerp() {
         <div className="mb-6 rounded-sm border border-bronze/60 bg-white p-6 text-center">
           <p className="font-serif text-xl">Votre document unique est vide</p>
           <p className="mx-auto mt-2 max-w-xl text-sm text-ardoise">
-            Démarrez à partir de la bibliothèque : choisissez votre métier, cochez les situations qui vous concernent, et
-            les risques sont ajoutés au tableau, déjà rédigés.
+            Le DUERP express vous guide en quelques minutes : choisissez votre métier, vos unités de travail, cochez les
+            risques qui vous concernent et les mesures déjà en place. Votre document unique et votre plan d&apos;actions sont
+            préremplis, à ajuster ensuite.
           </p>
-          <button type="button" className={`${classeBouton} mt-4`} onClick={() => setBibliotheque(true)}>
-            📚 Ouvrir la bibliothèque de risques
-          </button>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <Link href="/duerp-express" className={classeBouton}>⚡ Démarrer le DUERP express</Link>
+            <button type="button" className={classeBoutonSecondaire} onClick={() => setBibliotheque(true)}>
+              📚 Bibliothèque de risques
+            </button>
+          </div>
         </div>
       )}
 

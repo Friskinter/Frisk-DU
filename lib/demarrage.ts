@@ -47,9 +47,9 @@ export function etapesDemarrage(d: Donnees, contexte: { versions?: number; lienA
     {
       code: "risques",
       titre: "Évaluer les premiers risques",
-      aide: "Partez de la bibliothèque de risques par métier, ou importez votre ancien document unique depuis Excel.",
-      lien: "/duerp",
-      bouton: "Ouvrir le DUERP",
+      aide: "Le DUERP express préremplit votre document unique et votre plan d'actions d'après votre métier, en quelques minutes. Vous pouvez aussi importer votre ancien document unique depuis Excel.",
+      lien: "/duerp-express",
+      bouton: "DUERP express",
       faite: d.duerp.length >= RISQUES_MINIMUM,
     },
     {
