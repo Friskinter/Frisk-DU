@@ -219,6 +219,35 @@ export type SuiviIntervention = {
   observations: string;
 };
 
+// Accueil sécurité d'un nouvel arrivant (art. R4141-2 et suivants du Code du travail).
+export type Accueil = {
+  id: string;
+  salarieId: string; // "" : personne absente de la liste des salariés (intérimaire, stagiaire…)
+  nom: string; // nom de la personne quand elle n'est pas dans la liste
+  contrat: "cdi" | "cdd" | "interim" | "stage" | "apprentissage" | "autre";
+  poste: string;
+  unite: string; // unité de travail : ses risques du DUERP figurent sur la fiche d'accueil
+  arriveeLe: string;
+  accueilLe: string; // "" tant que l'accueil n'a pas eu lieu
+  animateur: string;
+  points: string[]; // codes des points abordés (lib/accueils.ts)
+  posteARisque: boolean; // poste présentant des risques particuliers : formation renforcée (art. L4154-2)
+  complement: string;
+  signatureId?: string; // signature du nouvel arrivant (Donnees.signatures)
+};
+
+// Causerie sécurité (« quart d'heure sécurité ») avec émargement des participants.
+export type Causerie = {
+  id: string;
+  date: string;
+  theme: string;
+  animateur: string;
+  duree: number; // minutes
+  messages: string; // messages clés transmis
+  remarques: string; // questions et remontées des participants
+  participants: { id: string; salarieId: string; nom: string; signatureId?: string }[];
+};
+
 // Visites et audits terrain : une grille de points à contrôler, remplie sur place.
 export type PointGrille = { id: string; theme: string; question: string };
 
@@ -340,6 +369,8 @@ export type Donnees = {
   protocoles: Protocole[];
   grilles: GrilleAudit[];
   visites: Visite[];
+  accueils: Accueil[];
+  causeries: Causerie[];
   salaries: Salarie[];
   articles: Article[];
   mouvements: Mouvement[];

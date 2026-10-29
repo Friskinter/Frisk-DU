@@ -43,6 +43,8 @@ export const zones: Record<string, string> = {
   protocoles: "Protocoles de sécurité",
   grilles: "Grilles de visite",
   visites: "Visites et audits",
+  accueils: "Accueils sécurité",
+  causeries: "Causeries sécurité",
   salaries: "Salariés",
   articles: "Catalogue EPI",
   mouvements: "Mouvements d'EPI",
@@ -291,6 +293,14 @@ export function libelleElement(e: EntreeJournal, donnees: Donnees): string {
     case "visites": {
       const v = { ...source, ...(donnees.visites?.find((x) => x.id === e.element_id) ?? {}) } as Record<string, unknown>;
       return `Visite ${v.date ? `du ${formaterDate(String(v.date))} ` : ""}: ${v.grille || "grille"}${v.unite ? ` (${v.unite})` : ""}`;
+    }
+    case "accueils": {
+      const a = { ...source, ...(donnees.accueils?.find((x) => x.id === e.element_id) ?? {}) } as Record<string, unknown>;
+      return `Accueil sécurité : ${salarie(a.salarieId) || a.nom || "nouvel arrivant"}`;
+    }
+    case "causeries": {
+      const c = { ...source, ...(donnees.causeries?.find((x) => x.id === e.element_id) ?? {}) } as Record<string, unknown>;
+      return `Causerie ${c.date ? `du ${formaterDate(String(c.date))} ` : ""}: ${c.theme || "thème à préciser"}`;
     }
     case "equipements":
       return String(donnees.equipements?.find((x) => x.id === e.element_id)?.nom || source.nom || "Équipement");

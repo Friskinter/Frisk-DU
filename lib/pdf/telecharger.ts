@@ -144,3 +144,24 @@ export async function telechargerRapportVisite(donnees: Donnees, visiteId: strin
     `Rapport de visite - ${visite.grille} - ${visite.date}.pdf`,
   );
 }
+
+export async function telechargerFicheAccueil(donnees: Donnees, accueilId: string) {
+  const { FicheAccueil } = await import("./accueil");
+  const { nomArrivant } = await import("@/lib/accueils");
+  const accueil = donnees.accueils.find((a) => a.id === accueilId);
+  if (!accueil) return;
+  await enregistrerPdf(
+    createElement(FicheAccueil, { donnees, accueil, aujourdhui: dateDuJour(), logo: logo() }),
+    `Accueil securite - ${nomArrivant(accueil, donnees)}.pdf`,
+  );
+}
+
+export async function telechargerEmargement(donnees: Donnees, causerieId: string) {
+  const { FeuilleEmargement } = await import("./accueil");
+  const causerie = donnees.causeries.find((c) => c.id === causerieId);
+  if (!causerie) return;
+  await enregistrerPdf(
+    createElement(FeuilleEmargement, { donnees, causerie, aujourdhui: dateDuJour(), logo: logo() }),
+    `Causerie - ${causerie.theme || "securite"} - ${causerie.date}.pdf`,
+  );
+}

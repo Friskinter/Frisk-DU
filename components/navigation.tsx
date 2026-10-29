@@ -18,6 +18,7 @@ const liens = [
   { href: "/verifications", label: "Vérifications", icone: "◎" },
   { href: "/produits", label: "Produits chimiques", icone: "⚗" },
   { href: "/visites", label: "Visites et audits", icone: "☑" },
+  { href: "/accueil", label: "Accueil et causeries", icone: "✎" },
   { href: "/entreprises-exterieures", label: "Entreprises extérieures", icone: "⇄" },
   { href: "/penibilite", label: "Pénibilité", icone: "⚠" },
   { href: "/epi", label: "EPI & stocks", icone: "⛑" },
