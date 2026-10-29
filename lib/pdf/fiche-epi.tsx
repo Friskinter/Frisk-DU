@@ -3,6 +3,8 @@
 import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { formaterDate } from "@/lib/calculs";
 import type { Donnees } from "@/lib/types";
+import type { Marque } from "@/lib/identite";
+import { LogoDocument, MentionFrisk } from "./marque";
 
 const c = { encre: "#0c0b0a", ardoise: "#3a3530", gris: "#8a837a", bronze: "#b08d57", marbre: "#ece6dc", pierre: "#d9cfc1", ivoire: "#f7f4ef" };
 
@@ -30,12 +32,12 @@ export function FicheEpi({
   donnees,
   salarieId,
   aujourdhui,
-  logo,
+  marque,
 }: {
   donnees: Donnees;
   salarieId: string;
   aujourdhui: string;
-  logo: string;
+  marque: Marque;
 }) {
   const salarie = donnees.salaries.find((x) => x.id === salarieId)!;
   const remises = donnees.mouvements
@@ -49,13 +51,12 @@ export function FicheEpi({
       <Page size="A4" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View>
-            <Text style={{ fontSize: 8, letterSpacing: 2, color: c.bronze, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
+            <Text style={{ fontSize: 8, letterSpacing: 2, color: marque.accent, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
             <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4 }}>
               Fiche de remise des équipements de protection individuelle
             </Text>
           </View>
-          {/* eslint-disable-next-line jsx-a11y/alt-text -- composant PDF, sans attribut alt */}
-          <Image src={logo} style={{ width: 40, height: 40, marginLeft: 16 }} />
+          <LogoDocument marque={marque} style={{ marginLeft: 16 }} />
         </View>
 
         <View style={[s.table, { marginTop: 18 }]}>
@@ -128,6 +129,7 @@ export function FicheEpi({
           <Text>{donnees.entreprise} · Fiche EPI · {salarie.nom}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
         </View>
+        <MentionFrisk marque={marque} />
       </Page>
     </Document>
   );

@@ -1,15 +1,17 @@
 // Rapport d'une visite ou d'un audit terrain, au format PDF.
 
-import { Document, Image, Page, Text, View } from "@react-pdf/renderer";
+import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { formaterDate } from "@/lib/calculs";
 import { statutsAction } from "@/lib/referentiel";
 import type { Donnees, Visite } from "@/lib/types";
 import { bilanVisite, grouperParTheme, resultatsPoint } from "@/lib/visites";
 import { Champ, Section, c, s } from "./plan-prevention";
+import type { Marque } from "@/lib/identite";
+import { LogoDocument, MentionFrisk } from "./marque";
 
 const couleurResultat = { conforme: "#0b6b0b", "non-conforme": c.rouge, "sans-objet": c.gris, "": c.gris };
 
-export function RapportVisite({ donnees, visite: v, aujourdhui, logo }: { donnees: Donnees; visite: Visite; aujourdhui: string; logo: string }) {
+export function RapportVisite({ donnees, visite: v, aujourdhui, marque }: { donnees: Donnees; visite: Visite; aujourdhui: string; marque: Marque }) {
   const bilan = bilanVisite(v);
   const action = (id?: string) => (id ? donnees.actions.find((a) => a.id === id) : undefined);
   const nonConformes = v.reponses.filter((r) => r.resultat === "non-conforme");
@@ -18,12 +20,11 @@ export function RapportVisite({ donnees, visite: v, aujourdhui, logo }: { donnee
       <Page size="A4" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 8, letterSpacing: 2, color: c.bronze, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
+            <Text style={{ fontSize: 8, letterSpacing: 2, color: marque.accent, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
             <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4 }}>Rapport de visite</Text>
             <Text style={{ fontSize: 10, marginTop: 2 }}>{v.grille}{v.unite ? ` · ${v.unite}` : ""}</Text>
           </View>
-          {/* eslint-disable-next-line jsx-a11y/alt-text -- composant PDF, sans attribut alt */}
-          <Image src={logo} style={{ width: 40, height: 40, marginLeft: 16 }} />
+          <LogoDocument marque={marque} style={{ marginLeft: 16 }} />
         </View>
 
         <Section titre="1. La visite">
@@ -107,6 +108,7 @@ export function RapportVisite({ donnees, visite: v, aujourdhui, logo }: { donnee
           <Text>{donnees.entreprise} · Rapport de visite du {formaterDate(v.date)} · édité le {formaterDate(aujourdhui)}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
         </View>
+        <MentionFrisk marque={marque} />
       </Page>
     </Document>
   );

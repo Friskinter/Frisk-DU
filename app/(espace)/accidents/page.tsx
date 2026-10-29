@@ -177,7 +177,7 @@ function Accidents() {
       {guide && <Methode />}
       {signalement && (
         <div className="mb-4">
-          <LienSignalement entrepriseId={entrepriseId} entreprise={donnees.entreprise} modifiable={modifiable} />
+          <LienSignalement entrepriseId={entrepriseId} entreprise={donnees.entreprise} identite={donnees.identite} modifiable={modifiable} />
         </div>
       )}
 

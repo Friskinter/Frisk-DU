@@ -375,9 +375,16 @@ export type Donnees = {
   articles: Article[];
   mouvements: Mouvement[];
   signatures?: Record<string, Signature>;
+  identite?: Identite; // logo et couleur de l'entreprise (lib/identite.ts)
   preferences?: {
     alertesEmail?: boolean; // récapitulatif hebdomadaire par e-mail (activé par défaut)
     syntheses?: Record<string, string>; // synthèse de l'employeur du rapport annuel, par année
     assistantMasque?: boolean; // assistant de démarrage masqué par le responsable
   };
+};
+
+export type Identite = {
+  logo?: string; // image PNG en data URL, redimensionnée dans le navigateur
+  couleur?: string; // « #rrggbb », choisie par le client
+  site?: string; // site web dont le logo et la couleur ont été tirés
 };

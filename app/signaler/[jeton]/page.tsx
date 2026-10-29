@@ -3,11 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Suspense, useEffect, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useState, type CSSProperties, type FormEvent } from "react";
+import { Logo } from "@/components/identite-visuelle";
 import { classeBouton, classeBoutonSecondaire, classeChamp } from "@/components/ui";
 import { dateDuJour } from "@/lib/calculs";
+import { variablesCouleur } from "@/lib/identite";
 import { PHOTOS_MAX, TAILLE_ENVOI_MAX, TAILLE_PHOTO_MAX, TYPES_SIGNALES, type FormulaireSignalement } from "@/lib/signalement";
-import type { TypeEvenement } from "@/lib/types";
+import type { Identite, TypeEvenement } from "@/lib/types";
 
 // Formulaire de signalement ouvert par le QR code de l'entreprise : sans compte, pensé pour le téléphone.
 
@@ -70,11 +72,13 @@ function Signalement() {
   const [autreLieu, setAutreLieu] = useState(false);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [envoi, setEnvoi] = useState<{ id: string; enCours: boolean; erreur: string }>({ id: "", enCours: false, erreur: "" });
+  const [identite, setIdentite] = useState<Identite>();
 
   useEffect(() => {
     fetch(`/api/signalement?jeton=${encodeURIComponent(jeton)}`)
       .then(async (r) => {
         const corps = await r.json();
+        if (r.ok) setIdentite(corps.identite);
         setEtat(r.ok ? { etape: "formulaire", entreprise: corps.entreprise, unites: corps.unites } : { etape: "invalide", message: corps.erreur });
       })
       .catch(() => setEtat({ etape: "invalide", message: "Pas de connexion. Réessayez dans un instant." }));
@@ -143,13 +147,23 @@ function Signalement() {
   const accident = f.type === "accident-travail";
 
   return (
-    <div className="min-h-screen bg-ivoire">
+    <div className="min-h-screen bg-ivoire" style={(variablesCouleur(identite) ?? undefined) as CSSProperties | undefined}>
       <header className="bg-encre px-4 py-3 text-pierre">
         <div className="mx-auto flex max-w-xl items-center gap-3">
-          <Image src="/logo-frisk.png" alt="" width={32} height={32} className="h-8 w-8 rounded-sm" />
+          {identite?.logo ? (
+            <Logo identite={identite} />
+          ) : (
+            <Image src="/logo-frisk.png" alt="" width={32} height={32} className="h-8 w-8 rounded-sm" />
+          )}
           <div className="min-w-0">
-            <p className="font-serif text-sm tracking-[0.2em] text-marbre">FRISK <span className="text-bronze-clair">DU</span></p>
-            {"entreprise" in etat && <p className="truncate text-xs text-pierre/80">{etat.entreprise}</p>}
+            {identite?.logo ? (
+              "entreprise" in etat && <p className="truncate text-sm text-marbre">{etat.entreprise}</p>
+            ) : (
+              <>
+                <p className="font-serif text-sm tracking-[0.2em] text-marbre">FRISK <span className="text-bronze-clair">DU</span></p>
+                {"entreprise" in etat && <p className="truncate text-xs text-pierre/80">{etat.entreprise}</p>}
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -319,6 +333,12 @@ function Signalement() {
               <Link href="/legal/confidentialite" className="underline">Confidentialité</Link>
             </p>
           </form>
+        )}
+        {identite?.logo && (
+          <p className="mt-8 flex items-center justify-center gap-1.5 text-[11px] text-gris">
+            <Image src="/logo-frisk.png" alt="" width={14} height={14} className="h-3.5 w-3.5 rounded-[2px]" />
+            Réalisé avec Frisk DU
+          </p>
         )}
       </main>
     </div>

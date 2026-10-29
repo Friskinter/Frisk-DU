@@ -2,7 +2,8 @@
 
 import { createElement, type ReactElement } from "react";
 import { dateDuJour } from "@/lib/calculs";
-import type { Donnees } from "@/lib/types";
+import { marqueDocuments } from "@/lib/identite";
+import type { Donnees, Identite } from "@/lib/types";
 import type { LigneHistorique } from "./document-unique";
 
 // Sans accents ni caractères interdits : certains navigateurs ignorent sinon le nom proposé.
@@ -30,11 +31,12 @@ async function enregistrerPdf(document: ReactElement, nom: string) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
-const logo = () => `${window.location.origin}/logo-frisk.png`;
+// Logo et couleur de l'entreprise (sinon ceux de Frisk), et logo de Frisk pour la mention en bas de page.
+const marque = (identite: Identite | undefined) => marqueDocuments(identite, `${window.location.origin}/logo-frisk.png`);
 
 // Sans version : document de travail à la date du jour. Avec version : la version figée, telle qu'enregistrée.
 export async function telechargerDocumentUnique(
-  donnees: Pick<Donnees, "entreprise" | "fiche" | "duerp"> & { actions?: Donnees["actions"] },
+  donnees: Pick<Donnees, "entreprise" | "fiche" | "duerp"> & { actions?: Donnees["actions"]; identite?: Identite },
   version?: { numero: number; date: string; historique: LigneHistorique[] },
 ) {
   const { DocumentUnique } = await import("./document-unique");
@@ -43,7 +45,7 @@ export async function telechargerDocumentUnique(
     createElement(DocumentUnique, {
       donnees,
       aujourdhui: date,
-      logo: logo(),
+      marque: marque(donnees.identite),
       numero: version?.numero,
       historique: version?.historique,
     }),
@@ -58,7 +60,7 @@ export async function telechargerFicheEpi(donnees: Donnees, salarieId: string) {
   const aujourdhui = dateDuJour();
   const nom = donnees.salaries.find((s) => s.id === salarieId)?.nom ?? "salarie";
   await enregistrerPdf(
-    createElement(FicheEpi, { donnees, salarieId, aujourdhui, logo: logo() }),
+    createElement(FicheEpi, { donnees, salarieId, aujourdhui, marque: marque(donnees.identite) }),
     `Fiche EPI - ${nom} - ${aujourdhui}.pdf`,
   );
 }
@@ -67,7 +69,7 @@ export async function telechargerRegistreBenins(donnees: Donnees) {
   const { RegistreBenins } = await import("./registre-benins");
   const aujourdhui = dateDuJour();
   await enregistrerPdf(
-    createElement(RegistreBenins, { donnees, aujourdhui, logo: logo() }),
+    createElement(RegistreBenins, { donnees, aujourdhui, marque: marque(donnees.identite) }),
     `Registre des accidents benins - ${donnees.entreprise} - ${aujourdhui}.pdf`,
   );
 }
@@ -76,7 +78,7 @@ export async function telechargerEtatFormations(donnees: Donnees) {
   const { EtatFormations } = await import("./etat-formations");
   const aujourdhui = dateDuJour();
   await enregistrerPdf(
-    createElement(EtatFormations, { donnees, aujourdhui, logo: logo() }),
+    createElement(EtatFormations, { donnees, aujourdhui, marque: marque(donnees.identite) }),
     `Formations et habilitations - ${donnees.entreprise} - ${aujourdhui}.pdf`,
   );
 }
@@ -85,7 +87,7 @@ export async function telechargerRegistreSecurite(donnees: Donnees) {
   const { RegistreSecurite } = await import("./registre-securite");
   const aujourdhui = dateDuJour();
   await enregistrerPdf(
-    createElement(RegistreSecurite, { donnees, aujourdhui, logo: logo() }),
+    createElement(RegistreSecurite, { donnees, aujourdhui, marque: marque(donnees.identite) }),
     `Registre de securite - ${donnees.entreprise} - ${aujourdhui}.pdf`,
   );
 }
@@ -94,7 +96,7 @@ export async function telechargerInventaireProduits(donnees: Donnees) {
   const { InventaireProduits } = await import("./produits");
   const aujourdhui = dateDuJour();
   await enregistrerPdf(
-    createElement(InventaireProduits, { donnees, aujourdhui, logo: logo() }),
+    createElement(InventaireProduits, { donnees, aujourdhui, marque: marque(donnees.identite) }),
     `Inventaire des produits chimiques - ${donnees.entreprise} - ${aujourdhui}.pdf`,
   );
 }
@@ -103,7 +105,7 @@ export async function telechargerNoticesDePoste(donnees: Donnees) {
   const { NoticesDePoste } = await import("./produits");
   const aujourdhui = dateDuJour();
   await enregistrerPdf(
-    createElement(NoticesDePoste, { donnees, aujourdhui, logo: logo() }),
+    createElement(NoticesDePoste, { donnees, aujourdhui, marque: marque(donnees.identite) }),
     `Notices de poste - ${donnees.entreprise} - ${aujourdhui}.pdf`,
   );
 }
@@ -114,7 +116,7 @@ export async function telechargerPlanPrevention(donnees: Donnees, interventionId
   if (!intervention) return;
   const aujourdhui = dateDuJour();
   await enregistrerPdf(
-    createElement(PlanPrevention, { donnees, intervention, aujourdhui, logo: logo() }),
+    createElement(PlanPrevention, { donnees, intervention, aujourdhui, marque: marque(donnees.identite) }),
     `Plan de prevention - ${intervention.entreprise || "entreprise exterieure"} - ${aujourdhui}.pdf`,
   );
 }
@@ -125,14 +127,14 @@ export async function telechargerProtocole(donnees: Donnees, protocoleId: string
   if (!protocole) return;
   const aujourdhui = dateDuJour();
   await enregistrerPdf(
-    createElement(ProtocoleSecurite, { donnees, protocole, aujourdhui, logo: logo() }),
+    createElement(ProtocoleSecurite, { donnees, protocole, aujourdhui, marque: marque(donnees.identite) }),
     `Protocole de securite - ${protocole.transporteur || "transporteur"} - ${aujourdhui}.pdf`,
   );
 }
 
-export async function telechargerAfficheSignalement(entreprise: string, lien: string, qr: string) {
+export async function telechargerAfficheSignalement(entreprise: string, lien: string, qr: string, identite: Identite | undefined) {
   const { AfficheSignalement } = await import("./affiche-signalement");
-  await enregistrerPdf(createElement(AfficheSignalement, { entreprise, lien, qr, logo: logo() }), `Affiche signalement - ${entreprise}.pdf`);
+  await enregistrerPdf(createElement(AfficheSignalement, { entreprise, lien, qr, marque: marque(identite) }), `Affiche signalement - ${entreprise}.pdf`);
 }
 
 export async function telechargerRapportVisite(donnees: Donnees, visiteId: string) {
@@ -140,7 +142,7 @@ export async function telechargerRapportVisite(donnees: Donnees, visiteId: strin
   const visite = donnees.visites.find((v) => v.id === visiteId);
   if (!visite) return;
   await enregistrerPdf(
-    createElement(RapportVisite, { donnees, visite, aujourdhui: dateDuJour(), logo: logo() }),
+    createElement(RapportVisite, { donnees, visite, aujourdhui: dateDuJour(), marque: marque(donnees.identite) }),
     `Rapport de visite - ${visite.grille} - ${visite.date}.pdf`,
   );
 }
@@ -151,7 +153,7 @@ export async function telechargerFicheAccueil(donnees: Donnees, accueilId: strin
   const accueil = donnees.accueils.find((a) => a.id === accueilId);
   if (!accueil) return;
   await enregistrerPdf(
-    createElement(FicheAccueil, { donnees, accueil, aujourdhui: dateDuJour(), logo: logo() }),
+    createElement(FicheAccueil, { donnees, accueil, aujourdhui: dateDuJour(), marque: marque(donnees.identite) }),
     `Accueil securite - ${nomArrivant(accueil, donnees)}.pdf`,
   );
 }
@@ -161,7 +163,7 @@ export async function telechargerEmargement(donnees: Donnees, causerieId: string
   const causerie = donnees.causeries.find((c) => c.id === causerieId);
   if (!causerie) return;
   await enregistrerPdf(
-    createElement(FeuilleEmargement, { donnees, causerie, aujourdhui: dateDuJour(), logo: logo() }),
+    createElement(FeuilleEmargement, { donnees, causerie, aujourdhui: dateDuJour(), marque: marque(donnees.identite) }),
     `Causerie - ${causerie.theme || "securite"} - ${causerie.date}.pdf`,
   );
 }
@@ -172,7 +174,7 @@ export async function telechargerRapportAnnuel(donnees: Donnees, annee: number) 
   const aujourdhui = dateDuJour();
   const rapport = calculerRapport(donnees, annee, aujourdhui);
   await enregistrerPdf(
-    createElement(RapportAnnuel, { donnees, rapport, synthese: donnees.preferences?.syntheses?.[annee] ?? "", aujourdhui, logo: logo() }),
+    createElement(RapportAnnuel, { donnees, rapport, synthese: donnees.preferences?.syntheses?.[annee] ?? "", aujourdhui, marque: marque(donnees.identite) }),
     `Rapport annuel SST ${annee} - ${donnees.entreprise}.pdf`,
   );
 }

@@ -1,9 +1,11 @@
 // État des formations et habilitations par salarié, au format PDF (utile lors d'un contrôle).
 
-import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { formaterDate } from "@/lib/calculs";
 import { etatFormation, etatsFormation, formationsEnVigueur, formationsManquantes, libelleFormation, typeFormation } from "@/lib/formations";
 import type { Donnees } from "@/lib/types";
+import type { Marque } from "@/lib/identite";
+import { LogoDocument, MentionFrisk } from "./marque";
 
 const c = { encre: "#0c0b0a", ardoise: "#3a3530", gris: "#8a837a", bronze: "#b08d57", marbre: "#ece6dc", pierre: "#d9cfc1", ivoire: "#f7f4ef", rouge: "#b42318" };
 
@@ -26,7 +28,7 @@ const colonnes = [
   { titre: "Organisme", largeur: "22%" },
 ];
 
-export function EtatFormations({ donnees, aujourdhui, logo }: { donnees: Donnees; aujourdhui: string; logo: string }) {
+export function EtatFormations({ donnees, aujourdhui, marque }: { donnees: Donnees; aujourdhui: string; marque: Marque }) {
   const enVigueur = formationsEnVigueur(donnees.formations);
   const manquantes = formationsManquantes(donnees, aujourdhui).filter((m) => !m.expiree);
   const salaries = [...donnees.salaries]
@@ -43,12 +45,11 @@ export function EtatFormations({ donnees, aujourdhui, logo }: { donnees: Donnees
       <Page size="A4" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
           <View>
-            <Text style={{ fontSize: 8, letterSpacing: 2, color: c.bronze, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
+            <Text style={{ fontSize: 8, letterSpacing: 2, color: marque.accent, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
             <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4 }}>État des formations et habilitations</Text>
             <Text style={{ fontSize: 8, color: c.ardoise, marginTop: 4 }}>Situation au {formaterDate(aujourdhui)} · dernière session suivie pour chaque formation</Text>
           </View>
-          {/* eslint-disable-next-line jsx-a11y/alt-text -- composant PDF, sans attribut alt */}
-          <Image src={logo} style={{ width: 40, height: 40, marginLeft: 16 }} />
+          <LogoDocument marque={marque} style={{ marginLeft: 16 }} />
         </View>
 
         {salaries.length === 0 && <Text style={{ marginTop: 18, color: c.gris }}>Aucune formation enregistrée.</Text>}
@@ -96,6 +97,7 @@ export function EtatFormations({ donnees, aujourdhui, logo }: { donnees: Donnees
           <Text>{donnees.entreprise} · Formations et habilitations · édité le {formaterDate(aujourdhui)}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
         </View>
+        <MentionFrisk marque={marque} />
       </Page>
     </Document>
   );

@@ -7,9 +7,10 @@ import { telechargerAfficheSignalement } from "@/lib/pdf/telecharger";
 import { lienSignalement } from "@/lib/signalement";
 import { MODE_TEST } from "@/lib/mode-test";
 import { supabaseNavigateur } from "@/lib/supabase/client";
+import type { Identite } from "@/lib/types";
 
 // Lien de signalement des salariés (QR code) : activation, affiche, changement, désactivation.
-export function LienSignalement({ entrepriseId, entreprise, modifiable }: { entrepriseId: string; entreprise: string; modifiable: boolean }) {
+export function LienSignalement({ entrepriseId, entreprise, identite, modifiable }: { entrepriseId: string; entreprise: string; identite: Identite | undefined; modifiable: boolean }) {
   const [jeton, setJeton] = useState<string | null | undefined>(MODE_TEST ? "0".repeat(64) : undefined);
   const [qr, setQr] = useState("");
   const [erreur, setErreur] = useState("");
@@ -72,7 +73,7 @@ export function LienSignalement({ entrepriseId, entreprise, modifiable }: { entr
           <div className="min-w-0 space-y-3">
             <p className="break-all rounded-sm bg-marbre/60 p-2 text-xs text-ardoise">{lien}</p>
             <div className="flex flex-wrap gap-2">
-              <button type="button" className={classeBouton} disabled={!qr} onClick={() => telechargerAfficheSignalement(entreprise, lien, qr)}>
+              <button type="button" className={classeBouton} disabled={!qr} onClick={() => telechargerAfficheSignalement(entreprise, lien, qr, identite)}>
                 ⬇ Affiche à imprimer (PDF)
               </button>
               <button type="button" className={classeBoutonSecondaire} onClick={copier}>

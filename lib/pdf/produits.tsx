@@ -1,9 +1,11 @@
 // Inventaire des produits chimiques et notices de poste, au format PDF.
 
-import { Document, Image, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import { formaterDate } from "@/lib/calculs";
 import { classementCmr, etatFds, etatsFds, libelleMention, pictogrammesDe } from "@/lib/produits";
 import type { Donnees, Produit } from "@/lib/types";
+import type { Marque } from "@/lib/identite";
+import { LogoDocument, MentionFrisk } from "./marque";
 
 const c = { encre: "#0c0b0a", ardoise: "#3a3530", gris: "#8a837a", bronze: "#b08d57", marbre: "#ece6dc", pierre: "#d9cfc1", ivoire: "#f7f4ef", rouge: "#b42318" };
 
@@ -19,16 +21,15 @@ const s = StyleSheet.create({
   texte: { fontSize: 9, lineHeight: 1.4 },
 });
 
-function EnTete({ entreprise, titre, sousTitre, logo }: { entreprise: string; titre: string; sousTitre: string; logo: string }) {
+function EnTete({ entreprise, titre, sousTitre, marque }: { entreprise: string; titre: string; sousTitre: string; marque: Marque }) {
   return (
     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 8, letterSpacing: 2, color: c.bronze, textTransform: "uppercase" }}>{entreprise}</Text>
+        <Text style={{ fontSize: 8, letterSpacing: 2, color: marque.accent, textTransform: "uppercase" }}>{entreprise}</Text>
         <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4 }}>{titre}</Text>
         <Text style={{ fontSize: 8, color: c.ardoise, marginTop: 4, lineHeight: 1.35 }}>{sousTitre}</Text>
       </View>
-      {/* eslint-disable-next-line jsx-a11y/alt-text -- composant PDF, sans attribut alt */}
-      <Image src={logo} style={{ width: 40, height: 40, marginLeft: 16 }} />
+      <LogoDocument marque={marque} style={{ marginLeft: 16 }} />
     </View>
   );
 }
@@ -48,7 +49,7 @@ const colonnes = [
   { titre: "Exposés", largeur: "16%" },
 ];
 
-export function InventaireProduits({ donnees, aujourdhui, logo }: { donnees: Donnees; aujourdhui: string; logo: string }) {
+export function InventaireProduits({ donnees, aujourdhui, marque }: { donnees: Donnees; aujourdhui: string; marque: Marque }) {
   const produits = donnees.produits.filter((p) => p.actif).sort((a, b) => a.unite.localeCompare(b.unite, "fr") || a.nom.localeCompare(b.nom, "fr"));
   const nom = (id: string) => donnees.salaries.find((x) => x.id === id)?.nom ?? "";
   return (
@@ -58,7 +59,7 @@ export function InventaireProduits({ donnees, aujourdhui, logo }: { donnees: Don
           entreprise={donnees.entreprise}
           titre="Inventaire des produits chimiques"
           sousTitre={`Situation au ${formaterDate(aujourdhui)}. Évaluation du risque chimique : art. R4412-5 et suivants du Code du travail ; fiches de données de sécurité tenues à disposition des salariés.`}
-          logo={logo}
+          marque={marque}
         />
         <View style={[s.table, { marginTop: 14 }]}>
           <View style={s.entete} fixed>
@@ -92,13 +93,14 @@ export function InventaireProduits({ donnees, aujourdhui, logo }: { donnees: Don
           <Text>{donnees.entreprise} · Inventaire des produits chimiques · édité le {formaterDate(aujourdhui)}</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
         </View>
+        <MentionFrisk marque={marque} />
       </Page>
     </Document>
   );
 }
 
 // Une notice par unité de travail, à afficher près du lieu d'utilisation (art. R4412-39).
-export function NoticesDePoste({ donnees, aujourdhui, logo }: { donnees: Donnees; aujourdhui: string; logo: string }) {
+export function NoticesDePoste({ donnees, aujourdhui, marque }: { donnees: Donnees; aujourdhui: string; marque: Marque }) {
   const produits = donnees.produits.filter((p) => p.actif);
   const unites = [...new Set(produits.map((p) => p.unite || "Unité non précisée"))].sort((a, b) => a.localeCompare(b, "fr"));
   return (
@@ -109,7 +111,7 @@ export function NoticesDePoste({ donnees, aujourdhui, logo }: { donnees: Donnees
             entreprise={donnees.entreprise}
             titre={`Notice de poste · ${unite}`}
             sousTitre="Produits chimiques utilisés à ce poste : dangers, protections et conduite à tenir. À afficher près du lieu d'utilisation."
-            logo={logo}
+            marque={marque}
           />
           {produits
             .filter((p) => (p.unite || "Unité non précisée") === unite)
@@ -149,7 +151,8 @@ export function NoticesDePoste({ donnees, aujourdhui, logo }: { donnees: Donnees
             <Text>{donnees.entreprise} · Notice de poste · {unite} · {formaterDate(aujourdhui)}</Text>
             <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} / ${totalPages}`} />
           </View>
-        </Page>
+          <MentionFrisk marque={marque} />
+      </Page>
       ))}
     </Document>
   );

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { IdentiteVisuelle } from "@/components/identite-visuelle";
 import {
   Carte,
   Chargement,
@@ -110,6 +111,8 @@ export default function PageReglages() {
             ))}
           </div>
         </Carte>
+
+        <IdentiteVisuelle entreprise={donnees.entreprise} identite={donnees.identite} />
 
         <Carte titre="Alertes par e-mail">
           <label className="flex items-start gap-3 text-sm">

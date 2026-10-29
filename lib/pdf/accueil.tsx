@@ -5,17 +5,18 @@ import { contrats, formationRenforcee, niveauRisque, nomArrivant, pointsAccueil,
 import { formaterDate, risqueResiduel } from "@/lib/calculs";
 import type { Accueil, Causerie, Donnees } from "@/lib/types";
 import { CadreSignature, Champ, Section, c, s } from "./plan-prevention";
+import type { Marque } from "@/lib/identite";
+import { LogoDocument, MentionFrisk } from "./marque";
 
-function EnTete({ donnees, titre, sousTitre, logo }: { donnees: Donnees; titre: string; sousTitre: string; logo: string }) {
+function EnTete({ donnees, titre, sousTitre, marque }: { donnees: Donnees; titre: string; sousTitre: string; marque: Marque }) {
   return (
     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 8, letterSpacing: 2, color: c.bronze, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
+        <Text style={{ fontSize: 8, letterSpacing: 2, color: marque.accent, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
         <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4 }}>{titre}</Text>
         <Text style={{ fontSize: 10, marginTop: 2 }}>{sousTitre}</Text>
       </View>
-      {/* eslint-disable-next-line jsx-a11y/alt-text -- composant PDF, sans attribut alt */}
-      <Image src={logo} style={{ width: 40, height: 40, marginLeft: 16 }} />
+      <LogoDocument marque={marque} style={{ marginLeft: 16 }} />
     </View>
   );
 }
@@ -29,14 +30,14 @@ function Pied({ texte }: { texte: string }) {
   );
 }
 
-export function FicheAccueil({ donnees, accueil: a, aujourdhui, logo }: { donnees: Donnees; accueil: Accueil; aujourdhui: string; logo: string }) {
+export function FicheAccueil({ donnees, accueil: a, aujourdhui, marque }: { donnees: Donnees; accueil: Accueil; aujourdhui: string; marque: Marque }) {
   const nom = nomArrivant(a, donnees);
   const risques = risquesDuPoste(donnees.duerp, a.unite);
   const signature = a.signatureId ? donnees.signatures?.[a.signatureId] : undefined;
   return (
     <Document title={`Accueil sécurité - ${nom}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
       <Page size="A4" style={s.page}>
-        <EnTete donnees={donnees} titre="Accueil sécurité" sousTitre={nom} logo={logo} />
+        <EnTete donnees={donnees} titre="Accueil sécurité" sousTitre={nom} marque={marque} />
         <Text style={{ fontSize: 8, color: c.ardoise, marginTop: 4 }}>
           Formation pratique et appropriée à la sécurité, à l&apos;arrivée dans l&apos;entreprise ou au changement de poste (art. R4141-1 et suivants du Code du travail).
         </Text>
@@ -107,17 +108,18 @@ export function FicheAccueil({ donnees, accueil: a, aujourdhui, logo }: { donnee
         </View>
 
         <Pied texte={`${donnees.entreprise} · Accueil sécurité de ${nom} · édité le ${formaterDate(aujourdhui)}`} />
+        <MentionFrisk marque={marque} />
       </Page>
     </Document>
   );
 }
 
-export function FeuilleEmargement({ donnees, causerie: x, aujourdhui, logo }: { donnees: Donnees; causerie: Causerie; aujourdhui: string; logo: string }) {
+export function FeuilleEmargement({ donnees, causerie: x, aujourdhui, marque }: { donnees: Donnees; causerie: Causerie; aujourdhui: string; marque: Marque }) {
   const nomParticipant = (p: Causerie["participants"][number]) => donnees.salaries.find((s) => s.id === p.salarieId)?.nom || p.nom || "Participant";
   return (
     <Document title={`Causerie - ${x.theme}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
       <Page size="A4" style={s.page}>
-        <EnTete donnees={donnees} titre="Causerie sécurité" sousTitre={x.theme || "Thème à préciser"} logo={logo} />
+        <EnTete donnees={donnees} titre="Causerie sécurité" sousTitre={x.theme || "Thème à préciser"} marque={marque} />
 
         <Section titre="1. La causerie">
           <Champ cle="Date">{x.date ? formaterDate(x.date) : ""}</Champ>
@@ -149,6 +151,7 @@ export function FeuilleEmargement({ donnees, causerie: x, aujourdhui, logo }: { 
         </Section>
 
         <Pied texte={`${donnees.entreprise} · Causerie du ${x.date ? formaterDate(x.date) : "?"} · édité le ${formaterDate(aujourdhui)}`} />
+        <MentionFrisk marque={marque} />
       </Page>
     </Document>
   );

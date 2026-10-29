@@ -22,6 +22,7 @@ import { normaliser } from "@/lib/donnees";
 import { libelleElement } from "@/lib/journal";
 import { FeuilleEmargement, FicheAccueil } from "@/lib/pdf/accueil";
 import type { Donnees } from "@/lib/types";
+import { marqueDocuments } from "@/lib/identite";
 
 const aujourdhui = "2026-10-28";
 const signatures: Donnees["signatures"] = { s1: { image: "data:image/png;base64,AA", date: aujourdhui, salarieId: "x" } };
@@ -103,12 +104,12 @@ describe("causeries sécurité", () => {
 
   it("PDF : fiche d'accueil et feuille d'émargement", async () => {
     const d = donneesDemo(aujourdhui);
-    const logo = `${process.cwd()}/public/logo-frisk.png`;
+    const marque = marqueDocuments(undefined, `${process.cwd()}/public/logo-frisk.png`);
     for (const accueil of d.accueils) {
-      const pdf = await renderToBuffer(createElement(FicheAccueil, { donnees: d, accueil, aujourdhui, logo }) as Parameters<typeof renderToBuffer>[0]);
+      const pdf = await renderToBuffer(createElement(FicheAccueil, { donnees: d, accueil, aujourdhui, marque }) as Parameters<typeof renderToBuffer>[0]);
       expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
     }
-    const pdf = await renderToBuffer(createElement(FeuilleEmargement, { donnees: d, causerie: d.causeries[0], aujourdhui, logo }) as Parameters<typeof renderToBuffer>[0]);
+    const pdf = await renderToBuffer(createElement(FeuilleEmargement, { donnees: d, causerie: d.causeries[0], aujourdhui, marque }) as Parameters<typeof renderToBuffer>[0]);
     expect(pdf.subarray(0, 4).toString()).toBe("%PDF");
   }, 30_000);
 });

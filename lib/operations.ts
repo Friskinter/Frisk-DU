@@ -7,7 +7,7 @@ import type { Donnees, Signature } from "./types";
 export const collections = ["duerp", "actions", "evenements", "formations", "exigences", "equipements", "verifications", "produits", "interventions", "protocoles", "grilles", "visites", "accueils", "causeries", "salaries", "articles", "mouvements"] as const;
 export type Collection = (typeof collections)[number];
 
-export const clesRacine = ["entreprise", "fiche", "services", "unites", "preferences"] as const;
+export const clesRacine = ["entreprise", "fiche", "services", "unites", "preferences", "identite"] as const;
 export type CleRacine = (typeof clesRacine)[number];
 
 export type Operation =

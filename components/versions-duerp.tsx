@@ -40,7 +40,7 @@ export function VersionsDuerp({ donnees, onFermer }: { donnees: Donnees; onFerme
       const historique = versions
         .filter((x) => x.numero <= v.numero)
         .map((x) => ({ numero: x.numero, date: x.created_at.slice(0, 10), motif: x.motif, auteur: x.auteur }));
-      await telechargerDocumentUnique(v.contenu, { numero: v.numero, date: v.created_at.slice(0, 10), historique });
+      await telechargerDocumentUnique({ ...v.contenu, identite: donnees.identite }, { numero: v.numero, date: v.created_at.slice(0, 10), historique });
     } finally {
       setTelechargement("");
     }
