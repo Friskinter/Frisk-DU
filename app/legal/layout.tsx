@@ -12,10 +12,10 @@ export default function LayoutLegal({ children }: { children: ReactNode }) {
           <Link href="/" className="flex items-center gap-3">
             <Image src="/logo-frisk.png" alt="" width={32} height={32} className="h-8 w-8 rounded-sm" />
             <span className="font-serif text-lg tracking-[0.2em] text-marbre">
-              FRISK <span className="text-bronze-clair">DU</span>
+              FRISK <span className="text-bronze-clair">PLATEFORME</span>
             </span>
           </Link>
-          <Link href="/" className="text-sm underline hover:text-marbre">Retour à Frisk DU</Link>
+          <Link href="/" className="text-sm underline hover:text-marbre">Retour à Frisk Plateforme</Link>
         </div>
       </header>
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">

@@ -2,7 +2,7 @@ import { decalerJours } from "../lib/calculs";
 import { donneesDemo } from "../lib/demo";
 import type { Donnees } from "../lib/types";
 
-// Un très gros client, pour vérifier que Frisk DU reste fluide : les éléments de démonstration
+// Un très gros client, pour vérifier que Frisk Plateforme reste fluide : les éléments de démonstration
 // sont recopiés jusqu'au volume voulu (les copies pointent vers les salariés, articles et risques
 // d'origine, qui restent présents).
 const volumes = {

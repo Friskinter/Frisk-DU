@@ -74,7 +74,7 @@ describe("signalement terrain", () => {
 
   it("e-mail aux responsables : type et lien seulement, texte échappé", () => {
     const { sujet, html, texte } = emailSignalement("<Atelier & Cie>", "Accident du travail", true, "https://du.frisk.fr/accidents?evenement=1");
-    expect(sujet).toBe("Frisk DU · <Atelier & Cie> : nouveau signalement (accident du travail)");
+    expect(sujet).toBe("Frisk Plateforme · <Atelier & Cie> : nouveau signalement (accident du travail)");
     expect(html).toContain("&lt;Atelier &amp; Cie&gt;");
     expect(html).not.toContain("<Atelier");
     expect(texte).toContain("déclaré à la CPAM dans les 48 heures");

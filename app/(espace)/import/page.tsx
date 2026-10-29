@@ -191,7 +191,7 @@ function Import() {
     <div className="space-y-4">
       <EnTetePage
         titre="Importer depuis Excel"
-        description="Reprenez un document unique ou une liste de salariés existants : Frisk DU reconnaît les colonnes, convertit les cotations sur sa grille et vous montre le résultat avant d'enregistrer."
+        description="Reprenez un document unique ou une liste de salariés existants : Frisk Plateforme reconnaît les colonnes, convertit les cotations sur sa grille et vous montre le résultat avant d'enregistrer."
       />
 
       <Carte titre="1. Fichier">
@@ -229,7 +229,7 @@ function Import() {
         </div>
         {erreur && <p className="mt-3 text-sm text-[#b42318]">{erreur}</p>}
         <p className="mt-3 text-xs text-gris">
-          Le fichier est lu dans votre navigateur : seules les lignes que vous importez sont enregistrées dans Frisk DU.
+          Le fichier est lu dans votre navigateur : seules les lignes que vous importez sont enregistrées dans Frisk Plateforme.
         </p>
       </Carte>
 
@@ -307,7 +307,7 @@ function Import() {
                   <tr>
                     <th className="border-b border-pierre/60 px-2 py-2">Colonne du fichier</th>
                     <th className="border-b border-pierre/60 px-2 py-2">Exemples</th>
-                    <th className="border-b border-pierre/60 px-2 py-2">Devient dans Frisk DU</th>
+                    <th className="border-b border-pierre/60 px-2 py-2">Devient dans Frisk Plateforme</th>
                   </tr>
                 </thead>
                 <tbody>

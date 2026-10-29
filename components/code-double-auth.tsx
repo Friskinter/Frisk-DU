@@ -27,7 +27,7 @@ export function CodeDoubleAuth({ onValide }: { onValide: () => void }) {
   return (
     <form onSubmit={valider} className="space-y-4 text-left">
       <p className="text-sm text-ardoise">
-        Ouvrez votre application d&apos;authentification et saisissez le code à 6 chiffres affiché pour Frisk DU.
+        Ouvrez votre application d&apos;authentification et saisissez le code à 6 chiffres affiché pour Frisk Plateforme.
       </p>
       <label className="block text-sm">
         Code de vérification

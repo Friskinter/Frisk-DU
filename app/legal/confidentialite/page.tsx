@@ -9,7 +9,7 @@ export default function Confidentialite() {
     <>
       <h1 className="font-serif text-3xl text-encre">Politique de confidentialité</h1>
       <p className="mt-2">
-        Cette politique explique comment les données personnelles sont traitées dans Frisk DU, conformément au règlement
+        Cette politique explique comment les données personnelles sont traitées dans Frisk Plateforme, conformément au règlement
         (UE) 2016/679 (RGPD) et à la loi « Informatique et libertés ».
       </p>
 
@@ -117,7 +117,7 @@ export default function Confidentialite() {
 
       <Article numero="6" titre="Cookies">
         <p>
-          Frisk DU dépose uniquement les cookies strictement nécessaires à la connexion (session d&apos;authentification) et mémorise dans
+          Frisk Plateforme dépose uniquement les cookies strictement nécessaires à la connexion (session d&apos;authentification) et mémorise dans
           le navigateur l&apos;établissement ouvert. Ces traceurs étant indispensables au service, ils ne nécessitent pas de consentement
           (article 82 de la loi « Informatique et libertés »). Aucun cookie de mesure d&apos;audience ou publicitaire n&apos;est utilisé.
         </p>

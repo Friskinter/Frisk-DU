@@ -8,7 +8,7 @@ import { supabaseNavigateur } from "@/lib/supabase/client";
 
 type AvisEnregistre = Avis & { statut: StatutAvis };
 
-// Avis du client sur Frisk DU, publié sur le site vitrine Frisk après relecture (lib/avis.ts).
+// Avis du client sur Frisk Plateforme, publié sur le site vitrine Frisk après relecture (lib/avis.ts).
 export function AvisClient({ entrepriseId, entreprise, email }: { entrepriseId: string; entreprise: string; email: string }) {
   const [enregistre, setEnregistre] = useState<AvisEnregistre | null | undefined>(MODE_TEST ? null : undefined);
   const [avis, setAvis] = useState<Avis>({ note: 0, texte: "", auteur: auteurPropose(email), fonction: "", entrepriseAffichee: "" });
@@ -64,9 +64,9 @@ export function AvisClient({ entrepriseId, entreprise, email }: { entrepriseId: 
   };
 
   return (
-    <Carte titre="Votre avis sur Frisk DU">
+    <Carte titre="Votre avis sur Frisk Plateforme">
       <p className="text-sm text-ardoise">
-        Votre retour aide d&apos;autres entreprises à choisir, et nous aide à améliorer Frisk DU. Il est relu par Frisk puis publié sur
+        Votre retour aide d&apos;autres entreprises à choisir, et nous aide à améliorer Frisk Plateforme. Il est relu par Frisk puis publié sur
         le site Frisk, qu&apos;il soit positif ou négatif.
       </p>
       {enregistre && (

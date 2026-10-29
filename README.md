@@ -1,4 +1,4 @@
-# Frisk DU
+# Frisk Plateforme
 
 Application de prévention des risques professionnels proposée par Frisk aux entreprises :
 
@@ -28,7 +28,7 @@ Application de prévention des risques professionnels proposée par Frisk aux en
    select id from auth.users where email = 'votre-email@exemple.fr';
    ```
 4. **Adresses autorisées** (pour les e-mails « mot de passe oublié ») :
-   *Authentication* > *URL Configuration* > *Site URL* = l'adresse de Frisk DU en ligne,
+   *Authentication* > *URL Configuration* > *Site URL* = l'adresse de Frisk Plateforme en ligne,
    et ajouter `http://localhost:3000/**` dans *Redirect URLs*.
 
 ## Lancer en local
@@ -101,7 +101,7 @@ détaille.
 - [ ] Créer le compte Resend et **vérifier le domaine d'envoi** (enregistrements DNS SPF et DKIM
       fournis par Resend), sinon les e-mails partent en courrier indésirable.
 - [ ] Noter la clé d'API (`RESEND_API_KEY`) et choisir l'expéditeur (`ALERTES_EXPEDITEUR`, ex.
-      `Frisk DU <alertes@frisk.fr>`).
+      `Frisk Plateforme <alertes@frisk.fr>`).
 
 ### 4. Stripe (paiement réel)
 
@@ -151,7 +151,7 @@ Dans cet ordre, sinon plus personne ne peut se connecter (voir [Protection anti-
 - [ ] Site vitrine Frisk : faire pointer le lien « Espace client » et les boutons d'essai gratuit vers
       l'adresse définitive.
 - [ ] Site vitrine Frisk : autoriser les moteurs de recherche (`INDEXATION_AUTORISEE = true` dans
-      son `next.config.ts`). Frisk DU, lui, reste toujours hors des moteurs.
+      son `next.config.ts`). Frisk Plateforme, lui, reste toujours hors des moteurs.
 - [ ] Supprimer les comptes et entreprises créés pendant les essais (console Frisk et Stripe).
 - [ ] Les jours suivants : surveiller la console (erreurs), Stripe (paiements, webhooks en échec) et
       Resend (e-mails refusés).
@@ -176,7 +176,7 @@ Les nouveaux clients s'inscrivent eux-mêmes sur `/inscription` et disposent de 
 abonnement à la fin de l'essai, l'espace passe en lecture seule. Dans Supabase :
 
 1. *Authentication > Sign In / Providers* : activer **Allow new users to sign up** et **Confirm email**.
-2. *Authentication > URL Configuration* : *Site URL* = l'adresse de Frisk DU, et ajouter
+2. *Authentication > URL Configuration* : *Site URL* = l'adresse de Frisk Plateforme, et ajouter
    `https://<adresse>/auth/callback` dans *Redirect URLs*.
 3. *Authentication > Emails* : traduire en français l'e-mail « Confirm signup ».
 
@@ -191,7 +191,7 @@ ligne) ou prolonger un essai.
 L'inscription, la connexion et « mot de passe oublié » affichent une vérification Cloudflare Turnstile
 (gratuite, le plus souvent sans action de l'utilisateur), contrôlée par Supabase.
 
-1. Sur dash.cloudflare.com : *Turnstile* > *Add widget*, ajouter le domaine de Frisk DU (et
+1. Sur dash.cloudflare.com : *Turnstile* > *Add widget*, ajouter le domaine de Frisk Plateforme (et
    `localhost` pour les essais), mode *Managed*. Noter la **clé du site** et la **clé secrète**.
 2. Dans Vercel : ajouter `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (clé du site), puis **redéployer**.
 3. **Une fois le déploiement en ligne**, dans Supabase : *Authentication* > *Attack Protection* >
@@ -205,7 +205,7 @@ se connecter. Pour revenir en arrière, désactiver d'abord l'option dans Supaba
 Tant que Stripe n'est pas configuré, la page Abonnement invite à contacter Frisk. Pour l'activer
 (possible d'abord en mode test, sans société créée) :
 
-1. Créer un compte sur stripe.com, puis un produit « Frisk DU » avec **six prix récurrents**, en euros,
+1. Créer un compte sur stripe.com, puis un produit « Frisk Plateforme » avec **six prix récurrents**, en euros,
    hors taxes, chacun avec sa **clé de recherche** (*lookup key*) :
 
    | Tranche | Mensuel | Annuel |

@@ -11,7 +11,7 @@ export default function Cgv() {
     <>
       <h1 className="font-serif text-3xl text-encre">Conditions générales de vente</h1>
       <p className="mt-2">
-        Les présentes conditions s&apos;appliquent aux abonnements à Frisk DU souscrits en ligne auprès de{" "}
+        Les présentes conditions s&apos;appliquent aux abonnements à Frisk Plateforme souscrits en ligne auprès de{" "}
         <Champ valeur={editeur.raisonSociale} nom="raison sociale" /> (« Frisk »). Elles complètent les conditions générales
         d&apos;utilisation. Le service est réservé aux professionnels (entreprises, associations, collectivités) : les dispositions du
         Code de la consommation relatives au droit de rétractation ne s&apos;appliquent pas.

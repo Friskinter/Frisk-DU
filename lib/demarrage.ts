@@ -1,4 +1,4 @@
-// Assistant de démarrage : les étapes pour mettre en place Frisk DU dans une nouvelle entreprise.
+// Assistant de démarrage : les étapes pour mettre en place Frisk Plateforme dans une nouvelle entreprise.
 // Chaque étape se coche d'elle-même d'après les données ; aucune saisie supplémentaire.
 
 import { risqueResiduel } from "./calculs";

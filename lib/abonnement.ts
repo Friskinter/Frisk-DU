@@ -4,7 +4,7 @@
 import type { Operation } from "./operations";
 
 export type StatutAbonnement = "essai" | "actif" | "impaye" | "termine";
-// complet : tout Frisk DU ; essai : fonctions de base ; lecture : consultation et export seulement.
+// complet : tout Frisk Plateforme ; essai : fonctions de base ; lecture : consultation et export seulement.
 export type Acces = "complet" | "essai" | "lecture";
 export type Periodicite = "mois" | "an";
 
@@ -63,7 +63,7 @@ export function operationPermiseEssai(op: Operation) {
   return (collectionsEssai as readonly string[]).includes(op.collection);
 }
 
-// Statut d'un abonnement Stripe, traduit pour Frisk DU (null : rien à changer).
+// Statut d'un abonnement Stripe, traduit pour Frisk Plateforme (null : rien à changer).
 export function statutDepuisStripe(statut: string): StatutAbonnement | null {
   if (statut === "active" || statut === "trialing") return "actif";
   if (statut === "past_due" || statut === "unpaid") return "impaye";
@@ -156,7 +156,7 @@ export function moduleAbonne(chemin: string) {
   return modulesAbonnes.find((m) => chemin === m.chemin || chemin.startsWith(`${m.chemin}/`));
 }
 
-// Abonnement Stripe, réduit à ce que Frisk DU enregistre (structure de l'API Stripe).
+// Abonnement Stripe, réduit à ce que Frisk Plateforme enregistre (structure de l'API Stripe).
 export type AbonnementStripe = {
   id: string;
   status: string;

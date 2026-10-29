@@ -159,7 +159,7 @@ export function devinerCorrespondance(entetes: Cellule[], type: TypeImport): Cor
   const candidats: { colonne: number; champ: Champ; score: number }[] = [];
   entetes.forEach((e, colonne) => {
     const n = normaliser(e);
-    // Colonnes calculées (criticité, risque résiduel…) : Frisk DU les recalcule.
+    // Colonnes calculées (criticité, risque résiduel…) : Frisk Plateforme les recalcule.
     if (!n || /\b(criticite|residuel(le)?|cotation|score|total|niveau de risque|indice)\b/.test(n)) return;
     for (const [champ, d] of champs) {
       const s = score(n, d.synonymes);

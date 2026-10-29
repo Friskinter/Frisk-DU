@@ -15,11 +15,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Frisk DU — Document unique, pénibilité et EPI",
-    template: "%s | Frisk DU",
+    default: "Frisk Plateforme — Document unique, pénibilité et EPI",
+    template: "%s | Frisk Plateforme",
   },
   description:
-    "Frisk DU : DUERP en tableau, pénibilité, suivi des EPI, stocks et bilans de consommation pour les TPE et PME.",
+    "Frisk Plateforme : DUERP en tableau, pénibilité, suivi des EPI, stocks et bilans de consommation pour les TPE et PME.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

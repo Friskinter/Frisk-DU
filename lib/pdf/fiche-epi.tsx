@@ -47,7 +47,7 @@ export function FicheEpi({
   const tailles = Object.entries(salarie.tailles).filter(([, v]) => v);
 
   return (
-    <Document title={`Fiche EPI - ${salarie.nom}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+    <Document title={`Fiche EPI - ${salarie.nom}`} author={donnees.entreprise} creator="Frisk Plateforme" producer="Frisk Plateforme" language="fr">
       <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>

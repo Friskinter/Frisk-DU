@@ -32,7 +32,7 @@ export async function commencerActivation() {
   for (const f of facteurs?.all ?? []) {
     if (f.factor_type === "totp" && f.status !== "verified") await supabase.auth.mfa.unenroll({ factorId: f.id });
   }
-  const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: `Frisk DU ${new Date().toISOString().slice(0, 10)}` });
+  const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: `Frisk Plateforme ${new Date().toISOString().slice(0, 10)}` });
   if (error || !data) return null;
   return { factorId: data.id, qrCode: data.totp.qr_code, cle: data.totp.secret };
 }

@@ -81,7 +81,7 @@ export default function PageReglages() {
 
   return (
     <div className="space-y-6">
-      <EnTetePage titre="Salariés & réglages" description="Les listes utilisées dans tout Frisk DU." />
+      <EnTetePage titre="Salariés & réglages" description="Les listes utilisées dans tout Frisk Plateforme." />
 
       {/* Réservé aux responsables : un fieldset désactivé grise tous les champs pour les autres rôles. */}
       <fieldset disabled={!modifiable} className="min-w-0 space-y-6">
@@ -145,7 +145,7 @@ export default function PageReglages() {
 
         {donnees.preferences?.assistantMasque && (
           <Carte titre="Assistant de démarrage">
-            <p className="mb-3 text-sm text-ardoise">L&apos;assistant « Bien démarrer avec Frisk DU » est masqué sur le tableau de bord.</p>
+            <p className="mb-3 text-sm text-ardoise">L&apos;assistant « Bien démarrer avec Frisk Plateforme » est masqué sur le tableau de bord.</p>
             <button
               type="button"
               className={classeBoutonSecondaire}

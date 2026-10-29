@@ -19,7 +19,7 @@ export async function GET(requete: Request) {
 
   const apercu = new URL(requete.url).searchParams.get("apercu") === "1";
   const cleResend = process.env.RESEND_API_KEY;
-  const expediteur = process.env.ALERTES_EXPEDITEUR; // ex. « Frisk DU <alertes@frisk.fr> »
+  const expediteur = process.env.ALERTES_EXPEDITEUR; // ex. « Frisk Plateforme <alertes@frisk.fr> »
   if (!apercu && (!cleResend || !expediteur)) {
     return Response.json({ erreur: "RESEND_API_KEY ou ALERTES_EXPEDITEUR manquante." }, { status: 500 });
   }

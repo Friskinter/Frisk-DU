@@ -100,7 +100,7 @@ export default function PageVerifications() {
     <div>
       <EnTetePage
         titre="Vérifications périodiques"
-        description="Extincteurs, installation électrique, appareils de levage, portes automatiques… Frisk DU propose la périodicité réglementaire, calcule la prochaine échéance et suit les observations des rapports jusqu'à leur levée."
+        description="Extincteurs, installation électrique, appareils de levage, portes automatiques… Frisk Plateforme propose la périodicité réglementaire, calcule la prochaine échéance et suit les observations des rapports jusqu'à leur levée."
         actions={
           <>
             <button type="button" className={classeBoutonSecondaire} onClick={() => telechargerRegistreSecurite(donnees)}>

@@ -39,7 +39,7 @@ const colonnes = [
 
 export function RegistreSecurite({ donnees, aujourdhui, marque }: { donnees: Donnees; aujourdhui: string; marque: Marque }) {
   return (
-    <Document title={`Registre de sécurité - ${donnees.entreprise}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+    <Document title={`Registre de sécurité - ${donnees.entreprise}`} author={donnees.entreprise} creator="Frisk Plateforme" producer="Frisk Plateforme" language="fr">
       <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" orientation="landscape" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -47,7 +47,7 @@ export function RegistreSecurite({ donnees, aujourdhui, marque }: { donnees: Don
             <Text style={{ fontSize: 8, letterSpacing: 2, color: marque.accent, textTransform: "uppercase" }}>{donnees.entreprise}</Text>
             <Text style={{ fontFamily: "Times-Roman", fontSize: 20, lineHeight: 1.2, marginTop: 4, color: marque.titre }}>Registre de sécurité · vérifications périodiques</Text>
             <Text style={{ fontSize: 8, color: c.ardoise, marginTop: 4 }}>
-              Situation au {formaterDate(aujourdhui)}. Les rapports de vérification sont conservés dans Frisk DU et tenus à la disposition de
+              Situation au {formaterDate(aujourdhui)}. Les rapports de vérification sont conservés dans Frisk Plateforme et tenus à la disposition de
               l&apos;inspection du travail (art. D4711-3 du Code du travail).
             </Text>
           </View>

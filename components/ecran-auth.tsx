@@ -10,7 +10,7 @@ export function EcranAuth({ titre, sousTitre, children }: { titre: string; sousT
         <div className="mb-8 flex flex-col items-center text-center">
           <Image src="/logo-frisk.png" alt="" width={56} height={56} className="h-14 w-14 rounded-sm" priority />
           <p className="mt-4 font-serif text-2xl tracking-[0.25em] text-marbre">
-            FRISK <span className="text-bronze-clair">DU</span>
+            FRISK <span className="text-bronze-clair">PLATEFORME</span>
           </p>
           <p className="mt-1 text-xs uppercase tracking-[0.2em] text-pierre/70">Document unique · Pénibilité · EPI</p>
         </div>

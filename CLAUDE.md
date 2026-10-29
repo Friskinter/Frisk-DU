@@ -1,6 +1,6 @@
 @AGENTS.md
 
-# Frisk DU
+# Frisk Plateforme
 
 Mémoire commune des sessions Claude Code sur ce projet (application sur le PC et claude.ai/code,
 plusieurs comptes). Ce qui est appris d'important et qui n'est pas déjà dans le code ou le README
@@ -11,7 +11,9 @@ s'ajoute ici, par une PR.
 - Application de prévention des risques professionnels de **Frisk** pour les TPE et PME : DUERP,
   pénibilité, EPI, accidents, formations, vérifications, signalement terrain, bilans. Détail et mise
   en place : [README.md](README.md).
-- Le site vitrine est un autre dépôt, `Friskinter/Frisk`, qui renvoie vers Frisk DU.
+- Anciennement **Frisk DU** : le dépôt (`Friskinter/Frisk-DU`), le dossier `frisk-du` et l'adresse
+  Vercel gardent ce nom. Dans les textes, toujours écrire « Frisk Plateforme ».
+- Le site vitrine est un autre dépôt, `Friskinter/Frisk`, qui renvoie vers Frisk Plateforme.
 - Hébergé sur Vercel, déployé automatiquement à chaque fusion dans `main`. **Pas encore ouvert au
   public** : la [liste de lancement](README.md#liste-de-lancement) dit ce qui reste à faire.
 

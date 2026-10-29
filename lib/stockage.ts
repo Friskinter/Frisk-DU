@@ -23,7 +23,7 @@ const DELAI_ENREGISTREMENT = 800;
 const DELAI_NOUVEL_ESSAI = 5000;
 const DELAI_RELECTURE = 500;
 const OPERATIONS_PAR_ENVOI = 200;
-// Version de la base attendue par cette version de Frisk DU (fonction frisk_version, migrations).
+// Version de la base attendue par cette version de Frisk Plateforme (fonction frisk_version, migrations).
 export const VERSION_BASE = 16;
 
 export type Statut =
@@ -121,7 +121,7 @@ export function useDonnees(): Donnees | null {
   return s.statut === "pret" ? s.donnees : null;
 }
 
-// L'utilisateur peut-il modifier cette partie de Frisk DU ?
+// L'utilisateur peut-il modifier cette partie de Frisk Plateforme ?
 export function peutModifier(role: Role, zone: "tout" | "epi") {
   if (role === "admin" || role === "responsable") return true;
   return zone === "epi" && role === "contributeur";

@@ -35,7 +35,7 @@ export function FicheAccueil({ donnees, accueil: a, aujourdhui, marque }: { donn
   const risques = risquesDuPoste(donnees.duerp, a.unite);
   const signature = a.signatureId ? donnees.signatures?.[a.signatureId] : undefined;
   return (
-    <Document title={`Accueil sécurité - ${nom}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+    <Document title={`Accueil sécurité - ${nom}`} author={donnees.entreprise} creator="Frisk Plateforme" producer="Frisk Plateforme" language="fr">
       <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" style={s.page}>
         <EnTete donnees={donnees} titre="Accueil sécurité" sousTitre={nom} marque={marque} />
@@ -120,7 +120,7 @@ export function FicheAccueil({ donnees, accueil: a, aujourdhui, marque }: { donn
 export function FeuilleEmargement({ donnees, causerie: x, aujourdhui, marque }: { donnees: Donnees; causerie: Causerie; aujourdhui: string; marque: Marque }) {
   const nomParticipant = (p: Causerie["participants"][number]) => donnees.salaries.find((s) => s.id === p.salarieId)?.nom || p.nom || "Participant";
   return (
-    <Document title={`Causerie - ${x.theme}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+    <Document title={`Causerie - ${x.theme}`} author={donnees.entreprise} creator="Frisk Plateforme" producer="Frisk Plateforme" language="fr">
       <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" style={s.page}>
         <EnTete donnees={donnees} titre="Causerie sécurité" sousTitre={x.theme || "Thème à préciser"} marque={marque} />

@@ -71,10 +71,10 @@ export function Navigation() {
         )}
         <div className="min-w-0">
           {identite?.logo ? (
-            <p className="sr-only">Frisk DU</p>
+            <p className="sr-only">Frisk Plateforme</p>
           ) : (
             <p className="font-serif text-lg leading-none tracking-[0.2em] text-marbre">
-              FRISK <span className="text-bronze-clair">DU</span>
+              FRISK <span className="mt-1 block text-[0.6rem] tracking-[0.35em] text-bronze-clair">PLATEFORME</span>
             </p>
           )}
           {session.espaces.length > 1 ? (
@@ -169,7 +169,7 @@ export function Navigation() {
         {identite?.logo && (
           <p className="hidden items-center gap-1.5 text-[10px] text-pierre/70 lg:mt-3 lg:flex">
             <Image src="/logo-frisk.png" alt="" width={14} height={14} className="h-3.5 w-3.5 rounded-[2px]" />
-            Réalisé avec Frisk DU
+            Réalisé avec Frisk Plateforme
           </p>
         )}
         <p className="hidden flex-wrap gap-x-2 text-[10px] text-pierre/70 lg:mt-3 lg:flex">

@@ -36,7 +36,7 @@ export function RegistreBenins({ donnees, aujourdhui, marque }: { donnees: Donne
     .sort((a, b) => `${a.date} ${a.heure}`.localeCompare(`${b.date} ${b.heure}`));
 
   return (
-    <Document title={`Registre des accidents bénins - ${donnees.entreprise}`} author={donnees.entreprise} creator="Frisk DU" producer="Frisk DU" language="fr">
+    <Document title={`Registre des accidents bénins - ${donnees.entreprise}`} author={donnees.entreprise} creator="Frisk Plateforme" producer="Frisk Plateforme" language="fr">
       <CouleurTitres.Provider value={marque.titre}>
       <Page size="A4" orientation="landscape" style={s.page}>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
