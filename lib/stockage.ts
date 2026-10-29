@@ -13,6 +13,7 @@ import { CLE_ABONNEMENT_TEST, CLE_DONNEES_TEST, CLE_ROLE_TEST, MODE_TEST } from 
 import { dateDuJour } from "./calculs";
 import { donneesDemo, donneesVides } from "./demo";
 import { rechargerVers } from "./navigation";
+import { gardeRelecture } from "./relecture";
 import { appliquerOperations, calculerOperations, operationAutorisee, type Operation, type Role } from "./operations";
 import { supabaseNavigateur } from "./supabase/client";
 import type { Donnees } from "./types";
@@ -84,6 +85,7 @@ let enAttente: Operation[] = [];
 let enCours: Operation[] = [];
 let minuteur: ReturnType<typeof setTimeout> | null = null;
 let relecture: ReturnType<typeof setTimeout> | null = null;
+const garde = gardeRelecture();
 let chargementLance = false;
 // Identifiant de cet onglet : permet d'ignorer nos propres modifications renvoyées en direct.
 let client = "";
@@ -297,7 +299,7 @@ function ecouterCollegues(entrepriseId: string) {
         if (relecture) clearTimeout(relecture);
         relecture = setTimeout(async () => {
           relecture = null;
-          const contenu = await lireContenu(entrepriseId);
+          const contenu = await garde.relire(() => lireContenu(entrepriseId));
           if (contenu) fusionner(contenu);
         }, DELAI_RELECTURE);
       },
@@ -307,7 +309,7 @@ function ecouterCollegues(entrepriseId: string) {
   // Au retour sur l'onglet (veille, perte de réseau), on relit la dernière version.
   document.addEventListener("visibilitychange", async () => {
     if (document.visibilityState !== "visible" || enCours.length) return;
-    const contenu = await lireContenu(entrepriseId);
+    const contenu = await garde.relire(() => lireContenu(entrepriseId));
     if (contenu) fusionner(contenu);
   });
 }
@@ -354,6 +356,7 @@ async function envoyer() {
     return;
   }
 
+  garde.confirmer();
   enCours = [];
   if (enAttente.length) planifierEnvoi(0);
   else if (!minuteur) publier({ enregistrement: "enregistre" });
