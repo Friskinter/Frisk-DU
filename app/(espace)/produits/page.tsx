@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { classeCible, idCible, useCible } from "@/lib/cible";
 import {
   Carte,
   Chargement,
@@ -38,9 +39,19 @@ function majProduit(id: string, champs: Partial<Produit>) {
 }
 
 export default function PageProduits() {
+  // useSearchParams (produit visé) doit être sous un Suspense avec le pré-rendu de Next.js.
+  return (
+    <Suspense fallback={<Chargement />}>
+      <Produits />
+    </Suspense>
+  );
+}
+
+function Produits() {
   const donnees = useDonnees();
   const { role, entrepriseId } = useSession();
-  const [ouvert, setOuvert] = useState("");
+  const cible = useCible("produit", !!donnees);
+  const [ouvert, setOuvert] = useState(cible);
   const [unite, setUnite] = useState("");
   const [cmrSeulement, setCmrSeulement] = useState(false);
   const [retires, setRetires] = useState(false);
@@ -161,7 +172,7 @@ export default function PageProduits() {
           </div>
           <ul>
             {liste.map((p) => (
-              <li key={p.id} className="border-b border-pierre/60 last:border-b-0">
+              <li key={p.id} id={idCible(p.id)} className={`border-b border-pierre/60 last:border-b-0 ${p.id === cible ? classeCible : ""}`}>
                 <LigneProduit produit={p} aujourdhui={aujourdhui} ouvert={ouvert === p.id} onBasculer={() => setOuvert(ouvert === p.id ? "" : p.id)} />
                 {ouvert === p.id && (
                   <div className="border-t border-pierre/60 bg-ivoire p-3 sm:p-4">

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { classeCible, idCible, useCible } from "@/lib/cible";
 import { Suspense, useState } from "react";
 import {
   Chargement,
@@ -38,6 +39,7 @@ function PlanActions() {
   const donnees = useDonnees();
   const { role } = useSession();
   const risqueFiltre = useSearchParams().get("risque") ?? "";
+  const cible = useCible("action", !!donnees);
   const [statut, setStatut] = useState("");
   const [principe, setPrincipe] = useState("");
   const [responsable, setResponsable] = useState("");
@@ -236,6 +238,7 @@ function PlanActions() {
                     onAjouter={() => ajouter(l)}
                     onSupprimer={supprimer}
                     onStatut={changerStatut}
+                    cible={cible}
                   />
                 ))}
                 {orphelines.length > 0 && (
@@ -249,6 +252,7 @@ function PlanActions() {
                     formations={donnees.formations}
                     onSupprimer={supprimer}
                     onStatut={changerStatut}
+                    cible={cible}
                   />
                 )}
               </tbody>
@@ -271,6 +275,7 @@ function GroupeRisque({
   onAjouter,
   onSupprimer,
   onStatut,
+  cible,
 }: {
   risque: LigneDuerp | null; // null : actions non rattachées à un risque du DUERP
   risquesDuerp?: LigneDuerp[];
@@ -282,6 +287,7 @@ function GroupeRisque({
   onAjouter?: () => void;
   onSupprimer: (a: Action) => void;
   onStatut: (a: Action, statut: Action["statut"]) => void;
+  cible: string; // action visée par l'adresse de la page
 }) {
   const seulementEpi = !!l && actions.length > 0 && actions.every((a) => a.principe === "epi") && risqueResiduel(l) >= 8;
   return (
@@ -323,7 +329,7 @@ function GroupeRisque({
         const visite = a.visiteId ? visites.find((v) => v.id === a.visiteId) : undefined;
         const formes = formations.filter((f) => f.actionId === a.id).length;
         return (
-          <tr key={a.id}>
+          <tr key={a.id} id={idCible(a.id)} className={a.id === cible ? classeCible : undefined}>
             <td className={cellule}>
               <textarea
                 rows={2}

@@ -51,7 +51,7 @@ export function calculerEcheances(d: Donnees, aujourdhui: string, horizon = HORI
       titre: a.intitule || "Action sans intitulé",
       detail: risque ? [risque.danger, risque.unite].filter(Boolean).join(" · ") : "",
       responsable: a.responsable,
-      lien: `/actions?risque=${a.risqueId}`,
+      lien: `/actions?action=${a.id}`,
     });
   }
 
@@ -67,7 +67,7 @@ export function calculerEcheances(d: Donnees, aujourdhui: string, horizon = HORI
       titre: `${libelleFormation(f)} à renouveler`,
       detail: salarie.nom || "Salarié sans nom",
       responsable: "",
-      lien: "/formations",
+      lien: `/formations?formation=${f.id}`,
     });
   }
 
@@ -82,7 +82,7 @@ export function calculerEcheances(d: Donnees, aujourdhui: string, horizon = HORI
       titre: `Vérification : ${e.nom || "équipement sans nom"}`,
       detail: [e.localisation, e.prestataire].filter(Boolean).join(" · "),
       responsable: "",
-      lien: "/verifications",
+      lien: `/verifications?equipement=${e.id}`,
     });
   }
 

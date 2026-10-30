@@ -92,4 +92,14 @@ describe("alertes", () => {
       ["actions-bientot", "2026-11-09"],
     ]);
   });
+
+  it("lien vers l'élément lui-même quand l'alerte n'en concerne qu'un", () => {
+    const risque = ligne();
+    const a1 = action(risque.id, { intitule: "A", echeance: "2026-09-01" });
+    const a2 = action(risque.id, { intitule: "B", echeance: "2026-09-02" });
+    const lien = (actions: (typeof a1)[]) =>
+      calculerAlertes(donnees({ duerp: [risque], actions }), aujourdhui, "2026-10-01").find((a) => a.id === "actions-retard")!.lien;
+    expect(lien([a1])).toBe(`/actions?action=${a1.id}`);
+    expect(lien([a1, a2])).toBe("/actions");
+  });
 });

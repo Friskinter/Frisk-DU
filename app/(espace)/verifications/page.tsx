@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { classeCible, idCible, useCible } from "@/lib/cible";
 import {
   Carte,
   Chargement,
@@ -51,9 +52,19 @@ const libellePeriodicite = (mois: number) =>
   mois % 12 === 0 ? (mois === 12 ? "1 an" : `${mois / 12} ans`) : `${mois} mois`;
 
 export default function PageVerifications() {
+  // useSearchParams (équipement visé) doit être sous un Suspense avec le pré-rendu de Next.js.
+  return (
+    <Suspense fallback={<Chargement />}>
+      <Verifications />
+    </Suspense>
+  );
+}
+
+function Verifications() {
   const donnees = useDonnees();
   const { role, entrepriseId } = useSession();
-  const [ouvert, setOuvert] = useState("");
+  const cible = useCible("equipement", !!donnees);
+  const [ouvert, setOuvert] = useState(cible);
   const [famille, setFamille] = useState("");
   const [aTraiter, setATraiter] = useState(false);
 
@@ -167,7 +178,7 @@ export default function PageVerifications() {
                 </div>
                 <ul>
                   {groupe.map((e) => (
-                    <li key={e.id} className="border-b border-pierre/60 last:border-b-0">
+                    <li key={e.id} id={idCible(e.id)} className={`border-b border-pierre/60 last:border-b-0 ${e.id === cible ? classeCible : ""}`}>
                       <LigneEquipement
                         equipement={e}
                         donnees={donnees}
