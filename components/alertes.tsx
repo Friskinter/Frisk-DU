@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { calculerAlertes, type Alerte } from "@/lib/alertes";
+import { formaterDate } from "@/lib/calculs";
 import { useSession } from "@/lib/stockage";
 import type { Donnees } from "@/lib/types";
 import { useVersions } from "@/lib/versions";
@@ -52,6 +53,11 @@ export function Alertes({ donnees, aujourdhui }: { donnees: Donnees; aujourdhui:
                   <span className="font-medium">{a.titre}</span>
                   <span className="text-gris"> · {a.categorie}</span>
                   <span className="mt-0.5 block text-ardoise">{a.detail}</span>
+                  {a.date && (
+                    <span className={`mt-0.5 block text-xs ${a.date < aujourdhui ? "text-[#b42318]" : "text-gris"}`}>
+                      {a.date < aujourdhui ? `En retard depuis le ${formaterDate(a.date)}` : `Prochaine échéance le ${formaterDate(a.date)}`}
+                    </span>
+                  )}
                 </span>
                 <span aria-hidden className="text-gris">→</span>
               </Link>
@@ -59,6 +65,28 @@ export function Alertes({ donnees, aujourdhui }: { donnees: Donnees; aujourdhui:
           );
         })}
       </ul>
+      <details className="border-t border-pierre/60 px-4 py-3 text-sm">
+        <summary className="cursor-pointer text-ardoise">Comment sont classées les priorités ?</summary>
+        <div className="mt-2 space-y-2 text-ardoise">
+          <p>
+            <strong>Urgent</strong> : une obligation n&apos;est pas respectée ou un danger n&apos;est pas maîtrisé (action en
+            retard, vérification dépassée, équipement non conforme, risque critique sans action, accident à déclarer,
+            formation exigée manquante, produit cancérogène sans mesures, intervention sans plan de prévention…).
+          </p>
+          <p>
+            <strong>À traiter</strong> : une échéance approche ou une information manque (action dans les 15 jours,
+            vérification dans les 30 jours, formation qui expire, fiche de sécurité absente, stock d&apos;EPI sous le seuil…).
+          </p>
+          <p>
+            <strong>À surveiller</strong> : un rappel ou une bonne pratique (recyclage à planifier dans les 3 mois, causerie à
+            organiser, efficacité d&apos;une action à vérifier…).
+          </p>
+          <p>
+            À niveau égal, le retard le plus ancien ou l&apos;échéance la plus proche passe en premier. Ces repères aident à
+            s&apos;organiser : ils ne constituent pas une évaluation de conformité réglementaire.
+          </p>
+        </div>
+      </details>
     </section>
   );
 }

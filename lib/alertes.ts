@@ -21,7 +21,13 @@ export type Alerte = {
   titre: string;
   detail: string;
   lien: string; // page de l'application où traiter l'alerte
+  // Date concernée (la plus ancienne en retard, ou la plus proche à venir), quand l'alerte en a une :
+  // à niveau égal, les alertes sont classées par cette date.
+  date?: string;
 };
+
+// Plus petite date d'une liste (AAAA-MM-JJ), ou undefined.
+const plusTot = (dates: (string | undefined)[]) => dates.filter((d): d is string => !!d).sort()[0];
 
 const liste = (elements: string[], max = 3) =>
   elements.slice(0, max).join(", ") + (elements.length > max ? ` et ${elements.length - max} autre(s)` : "");
@@ -63,7 +69,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const enRetard = actions.filter((a) => actionEnRetard(a, aujourdhui));
   if (enRetard.length) {
     alertes.push({
-      id: "actions-retard", gravite: "critique", categorie: "DUERP", lien: "/actions",
+      id: "actions-retard", gravite: "critique", categorie: "DUERP", lien: "/actions", date: plusTot(enRetard.map((a) => a.echeance)),
       titre: `${pluriel(enRetard.length, "action")} de prévention en retard`,
       detail: liste(enRetard.map((a) => `${a.intitule || "Action sans intitulé"} (${formaterDate(a.echeance)})`)),
     });
@@ -73,7 +79,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   );
   if (bientot.length) {
     alertes.push({
-      id: "actions-bientot", gravite: "importante", categorie: "DUERP", lien: "/actions",
+      id: "actions-bientot", gravite: "importante", categorie: "DUERP", lien: "/actions", date: plusTot(bientot.map((a) => a.echeance)),
       titre: `${pluriel(bientot.length, "action")} à échéance dans les 15 jours`,
       detail: liste(bientot.map((a) => `${a.intitule || "Action sans intitulé"} (${formaterDate(a.echeance)})`)),
     });
@@ -177,7 +183,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   );
   if (expirees.length) {
     alertes.push({
-      id: "formations-expirees", gravite: "importante", categorie: "Formations", lien: "/formations",
+      id: "formations-expirees", gravite: "importante", categorie: "Formations", lien: "/formations", date: plusTot(expirees.map((f) => f.expireLe)),
       titre: `${pluriel(expirees.length, "formation")} ou habilitation${expirees.length > 1 ? "s" : ""} expirée${expirees.length > 1 ? "s" : ""}`,
       detail: `À renouveler si le salarié en a toujours besoin : ${liste(expirees.map(nomFormation))}.`,
     });
@@ -186,7 +192,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const dansLeMois = aRenouveler.filter((f) => f.expireLe <= decalerJours(aujourdhui, 30));
   if (dansLeMois.length) {
     alertes.push({
-      id: "formations-30j", gravite: "importante", categorie: "Formations", lien: "/formations",
+      id: "formations-30j", gravite: "importante", categorie: "Formations", lien: "/formations", date: plusTot(dansLeMois.map((f) => f.expireLe)),
       titre: `${pluriel(dansLeMois.length, "formation")} expire${dansLeMois.length > 1 ? "nt" : ""} dans moins d'un mois`,
       detail: liste(dansLeMois.map(nomFormation)),
     });
@@ -194,7 +200,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const aPlanifier = aRenouveler.filter((f) => f.expireLe > decalerJours(aujourdhui, 30));
   if (aPlanifier.length) {
     alertes.push({
-      id: "formations-90j", gravite: "info", categorie: "Formations", lien: "/formations",
+      id: "formations-90j", gravite: "info", categorie: "Formations", lien: "/formations", date: plusTot(aPlanifier.map((f) => f.expireLe)),
       titre: `${pluriel(aPlanifier.length, "recyclage")} à planifier dans les 3 mois`,
       detail: liste(aPlanifier.map(nomFormation)),
     });
@@ -216,6 +222,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   if (enRetardVerif.length) {
     alertes.push({
       id: "verifications-retard", gravite: "critique", categorie: "Vérifications", lien: "/verifications",
+      date: plusTot(enRetardVerif.map((e) => derniereVerification(verifications, e.id)?.prochaine)),
       titre: `${pluriel(enRetardVerif.length, "vérification")} périodique${enRetardVerif.length > 1 ? "s" : ""} en retard`,
       detail: liste(enRetardVerif.map((e) => `${nomEquipement(e)} (${formaterDate(derniereVerification(verifications, e.id)!.prochaine)})`)),
     });
@@ -235,6 +242,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   if (bientotVerif.length) {
     alertes.push({
       id: "verifications-bientot", gravite: "importante", categorie: "Vérifications", lien: "/verifications",
+      date: plusTot(bientotVerif.map((e) => derniereVerification(verifications, e.id)?.prochaine)),
       titre: `${pluriel(bientotVerif.length, "vérification")} à faire dans les 30 jours`,
       detail: liste(bientotVerif.map((e) => `${nomEquipement(e)} (${formaterDate(derniereVerification(verifications, e.id)!.prochaine)})`)),
     });
@@ -461,6 +469,8 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
     });
   }
 
+  // Classement : niveau d'abord ; à niveau égal, la date concernée la plus ancienne (retard le plus long ou
+  // échéance la plus proche) ; les alertes sans date gardent ensuite l'ordre des règles.
   const ordre = { critique: 0, importante: 1, info: 2 };
-  return alertes.sort((a, b) => ordre[a.gravite] - ordre[b.gravite]);
+  return alertes.sort((a, b) => ordre[a.gravite] - ordre[b.gravite] || (a.date ?? "9999").localeCompare(b.date ?? "9999"));
 }
