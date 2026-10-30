@@ -16,6 +16,8 @@ s'ajoute ici, par une PR.
 - Le site vitrine est un autre dépôt, `Friskinter/Frisk`, qui renvoie vers Frisk Plateforme.
 - Hébergé sur Vercel, déployé automatiquement à chaque fusion dans `main`. **Pas encore ouvert au
   public** : la [liste de lancement](README.md#liste-de-lancement) dit ce qui reste à faire.
+  Elle couvre aussi le site vitrine : à la question « qu'est-ce qui reste ? », partir de cette liste,
+  vérifier ce qui a été fait depuis et la tenir à jour (cocher, ajouter) par une PR.
 
 ## Façon de travailler
 

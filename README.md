@@ -73,14 +73,17 @@ détaille.
 - [ ] Accepter les accords de traitement des données (DPA) de Supabase, Vercel, Stripe et Resend
       (proposés dans leurs tableaux de bord ou sur leurs sites).
 - [ ] Tenir le registre des traitements RGPD de Frisk (comptes clients, données des salariés des
-      clients, paiements).
+      clients, paiements, demandes reçues par le formulaire du site vitrine).
+- [ ] Mentions légales et politique de confidentialité **propres au site vitrine** (il collecte des
+      données par son formulaire de contact). Son pied de page renvoie pour l'instant aux pages de
+      Frisk Plateforme.
 
 ### 2. Supabase (base de production)
 
 - [ ] **Passer au plan payant** : en gratuit, un projet sans activité pendant une semaine est mis en
       pause et les sauvegardes quotidiennes ne sont pas incluses.
 - [ ] Vérifier que `supabase/schema.sql` et **toutes** les migrations de `supabase/migrations` ont
-      été exécutées (la dernière : `017_abonnements.sql`).
+      été exécutées (la dernière : `018_avis.sql`).
 - [ ] Compte administrateur Frisk créé (voir [Mise en place de Supabase](#mise-en-place-de-supabase-une-seule-fois))
       et **double authentification activée** dessus.
 - [ ] *Authentication > Sign In / Providers* : **Allow new users to sign up** et **Confirm email**
@@ -92,7 +95,7 @@ détaille.
       qu'aux essais : sans SMTP personnalisé, les confirmations d'inscription se perdent. Resend fournit
       un accès SMTP (même compte que les alertes).
 - [ ] *Authentication > Emails > Templates* : traduire en français « Confirm signup » et « Reset
-      password ».
+      password », avec le nom **Frisk Plateforme** (plus de « Frisk DU »).
 - [ ] *Authentication > Attack Protection* : activer la protection contre les mots de passe divulgués
       si le plan le permet. **Le captcha attend l'étape 6.**
 
@@ -107,15 +110,16 @@ détaille.
 
 - [ ] Activer le compte Stripe (informations de la société, compte bancaire).
 - [ ] **Refaire en mode réel** tout ce qui a été préparé en mode test : rien n'est copié d'un mode à
-      l'autre. Produit et six prix avec leurs clés de recherche, portail client, webhook (voir
-      [Paiement en ligne](#paiement-en-ligne-stripe)).
+      l'autre. Produit **« Frisk Plateforme »** (l'ancien nom « Frisk DU » est visible des clients sur
+      la page de paiement et les factures) et six prix avec leurs clés de recherche, qui gardent leur
+      nom `frisk_du_…`, portail client, webhook (voir [Paiement en ligne](#paiement-en-ligne-stripe)).
 - [ ] Noter la clé secrète réelle (`sk_live_…`) et le secret du webhook réel (`whsec_…`).
 - [ ] Facultatif mais conseillé : TVA (*Paramètres > Taxes*) et relances des impayés.
 
 ### 5. Vercel (hébergement)
 
-- [ ] Créer le projet à partir du dépôt GitHub. **Plan Pro** : le plan gratuit est réservé aux usages
-      non commerciaux.
+- [ ] Projets déjà créés (Frisk Plateforme : `frisk-du-ah45`, site vitrine : `frisk`). Passer au
+      **plan Pro** : le plan gratuit est réservé aux usages non commerciaux.
 - [ ] Brancher le nom de domaine définitif (*Settings > Domains*) ; le HTTPS est automatique.
 - [ ] Ajouter les variables d'environnement (voir [Mise en ligne](#mise-en-ligne-vercel)) :
       `SUPABASE_SECRET_KEY`, `URL_APPLICATION` (adresse définitive), `CRON_SECRET` (longue
@@ -132,7 +136,25 @@ Dans cet ordre, sinon plus personne ne peut se connecter (voir [Protection anti-
       s'affiche sur `/inscription` et `/connexion`.
 - [ ] Supabase : *Attack Protection* > activer le captcha (Turnstile, clé secrète).
 
-### 7. Essais en conditions réelles
+### 7. Site vitrine (dépôt `Friskinter/Frisk`)
+
+- [ ] **Valider les prix de Frisk Conseil** dans `lib/offres.ts` : ceux en ligne sont des exemples
+      (marqués « à remplacer »). Ne publier que des tarifs réels.
+- [ ] Confirmer les horaires et le délai de réponse affichés sur la page Contact
+      (`app/contact/page.tsx`).
+- [ ] Formulaire de contact : dans le projet Vercel du site vitrine, ajouter `RESEND_API_KEY`,
+      `CONTACT_EXPEDITEUR` (adresse du domaine vérifié chez Resend) et `CONTACT_DESTINATAIRE`, puis
+      redéployer. Sans elles, le formulaire affiche « envoi impossible ».
+- [ ] Domaine définitif : mettre à jour `urlEspaceClient` (`lib/offres.ts`, adresse de Frisk
+      Plateforme) et `URL_SITE` (`lib/site.ts`, adresse du site vitrine).
+- [ ] Évolutions de la plateforme : n'en annoncer que de réellement prévues, présentées comme « à
+      venir » et jamais comme disponibles.
+- [ ] Facultatif : afficher les prix de Frisk Plateforme sur la page `/plateforme` (il faudrait rendre
+      publique la route `/api/abonnement/tarifs` de l'application).
+- [ ] Mesure Lighthouse (performance, accessibilité, référencement) sur l'accueil et les pages
+      Conseil, Plateforme et Contact.
+
+### 8. Essais en conditions réelles
 
 - [ ] **Inscription** avec une vraie adresse : e-mail de confirmation reçu (en français, pas en
       indésirables), espace ouvert, essai de 7 jours affiché.
@@ -144,12 +166,16 @@ Dans cet ordre, sinon plus personne ne peut se connecter (voir [Protection anti-
 - [ ] **Alertes** : aperçu sans envoi, qui liste les e-mails qui partiraient :
       `curl -H "Authorization: Bearer <CRON_SECRET>" "https://<adresse>/api/alertes?apercu=1"`
 - [ ] **PDF** : document unique, rapport annuel, registre des accidents.
+- [ ] **Site vitrine** : les quatre objets du formulaire de contact (devis, rendez-vous, question sur
+      la plateforme, autre) arrivent par e-mail, « Répondre » écrit bien au demandeur.
+- [ ] **Avis clients** : déposer un avis depuis *Mon compte*, le publier dans la console, le voir sur la
+      page Plateforme du site vitrine (quelques minutes de cache).
 - [ ] Console Frisk > « Erreurs rencontrées » : rien d'anormal après ces essais.
 
-### 8. Ouverture
+### 9. Ouverture
 
-- [ ] Site vitrine Frisk : faire pointer le lien « Espace client » et les boutons d'essai gratuit vers
-      l'adresse définitive.
+- [ ] Frisk Plateforme hors des moteurs de recherche : en-tête `X-Robots-Tag: noindex` présent
+      (PR « Frisk DU hors des moteurs de recherche » à fusionner si ce n'est pas fait).
 - [ ] Site vitrine Frisk : autoriser les moteurs de recherche (`INDEXATION_AUTORISEE = true` dans
       son `next.config.ts`). Frisk Plateforme, lui, reste toujours hors des moteurs.
 - [ ] Supprimer les comptes et entreprises créés pendant les essais (console Frisk et Stripe).
