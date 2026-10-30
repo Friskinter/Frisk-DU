@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { BoutonDocumentUnique } from "@/components/bouton-document-unique";
 import { actionEnRetard, actionsDuRisque } from "@/lib/actions";
+import { ActiviteRecente } from "@/components/activite-recente";
 import { Alertes } from "@/components/alertes";
 import { AssistantDemarrage } from "@/components/assistant-demarrage";
+import { EcheancesAVenir } from "@/components/echeances-a-venir";
 import {
   BarresHorizontales,
   Carte,
@@ -17,10 +19,12 @@ import {
 import {
   calculerStocks,
   dateDuJour,
+  decalerJours,
   formaterDate,
   niveauDe,
   risqueResiduel,
 } from "@/lib/calculs";
+import { calculerEcheances } from "@/lib/echeances";
 import { calculerIndicateurs, estClos } from "@/lib/evenements";
 import { etatFormation, formationsEnVigueur, formationsManquantes } from "@/lib/formations";
 import { classementCmr, estCmr, etatFds } from "@/lib/produits";
@@ -56,6 +60,9 @@ export default function TableauDeBord() {
   const etatsEquipements = donnees.equipements.map((e) => etatEquipement(donnees.verifications, e, aujourdhui));
   const produitsActifs = donnees.produits.filter((p) => p.actif);
   const observationsALever = observationsOuvertes(donnees.equipements, donnees.verifications, actions).length;
+  const echeances30 = calculerEcheances(donnees, aujourdhui).filter((e) => !e.enRetard && e.date <= decalerJours(aujourdhui, 30)).length;
+  const formationsARenouveler = etatsFormations.filter((e) => e === "expiree" || e === "a-renouveler").length;
+  const verificationsAFaire = etatsEquipements.filter((e) => e === "en-retard" || e === "a-prevoir").length;
 
   const parNiveau = niveauxCriticite.map((n) => ({
     ...n,
@@ -98,26 +105,36 @@ export default function TableauDeBord() {
       <AssistantDemarrage donnees={donnees} />
       <Alertes donnees={donnees} aujourdhui={aujourdhui} />
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Indicateur libelle="Risques évalués" valeur={risques.length} detail={`${new Set(risques.map((l) => l.unite)).size} unités de travail`} />
+      {/* Indicateurs calculés sur les données de l'entreprise : un état des lieux, pas une mesure de conformité. */}
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Indicateur
-          libelle="Risques prioritaires"
-          valeur={prioritaires.length}
-          detail="niveau important ou critique"
-          alerte={prioritaires.length > 0}
+          libelle="Risques évalués"
+          valeur={risques.length}
+          detail={`dont ${prioritaires.length} prioritaire${prioritaires.length > 1 ? "s" : ""} · ${new Set(risques.map((l) => l.unite)).size} unités`}
         />
         <Indicateur
-          libelle="Actions réalisées"
-          valeur={actions.length ? `${Math.round((realisees.length / actions.length) * 100)} %` : "—"}
-          detail={`${realisees.length} sur ${actions.length} actions`}
+          libelle="Actions en cours"
+          valeur={actions.length - realisees.length}
+          detail={`${realisees.length} réalisée${realisees.length > 1 ? "s" : ""} sur ${actions.length}`}
+        />
+        <Indicateur libelle="Actions en retard" valeur={enRetard.length} detail="échéance dépassée" alerte={enRetard.length > 0} />
+        <Indicateur libelle="Échéances à 30 jours" valeur={echeances30} detail="actions, formations, vérifications…" />
+        <Indicateur
+          libelle="Formations à renouveler"
+          valeur={formationsARenouveler}
+          detail="expirées ou dans les 3 mois"
+          alerte={etatsFormations.includes("expiree")}
         />
         <Indicateur
-          libelle="Actions en retard"
-          valeur={enRetard.length}
-          detail="échéance dépassée"
-          alerte={enRetard.length > 0}
+          libelle="Vérifications à faire"
+          valeur={verificationsAFaire}
+          detail="en retard ou dans les 60 jours"
+          alerte={etatsEquipements.includes("en-retard")}
         />
       </div>
+
+      <EcheancesAVenir donnees={donnees} aujourdhui={aujourdhui} />
+      <ActiviteRecente donnees={donnees} />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Carte titre="Matrice des risques (criticité brute)">

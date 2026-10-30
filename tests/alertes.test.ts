@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { calculerAlertes } from "@/lib/alertes";
 import { donneesDemo } from "@/lib/demo";
-import { action, article, donnees, ligne, mouvement } from "./aides";
+import { action, article, donnees, equipement, ligne, mouvement, verification } from "./aides";
 
 const aujourdhui = "2026-10-28";
 const ids = (d: Parameters<typeof calculerAlertes>[0], v?: string | null) =>
@@ -74,5 +74,22 @@ describe("alertes", () => {
     const gravites = calculerAlertes(donneesDemo(aujourdhui), aujourdhui, "2025-01-01").map((a) => a.gravite);
     const ordre = { critique: 0, importante: 1, info: 2 };
     expect(gravites).toEqual([...gravites].sort((a, b) => ordre[a] - ordre[b]));
+  });
+
+  it("à niveau égal, la date la plus proche passe en premier", () => {
+    const risque = ligne();
+    const chariot = equipement({ nom: "Chariot", periodicite: 12 });
+    const d = donnees({
+      duerp: [risque],
+      // Action dans 12 jours, vérification dans 5 jours : toutes deux « à traiter ».
+      actions: [action(risque.id, { intitule: "Garde-corps", echeance: "2026-11-09" })],
+      equipements: [chariot],
+      verifications: [verification(chariot, { date: "2025-11-02", prochaine: "2026-11-02" })],
+    });
+    const aTraiter = calculerAlertes(d, aujourdhui, "2026-10-01").filter((a) => a.gravite === "importante");
+    expect(aTraiter.map((a) => [a.id, a.date])).toEqual([
+      ["verifications-bientot", "2026-11-02"],
+      ["actions-bientot", "2026-11-09"],
+    ]);
   });
 });
