@@ -26,6 +26,11 @@ export type Alerte = {
   date?: string;
 };
 
+// Lien vers l'élément lui-même quand l'alerte n'en concerne qu'un (la page le met en évidence),
+// sinon vers la page du module.
+const lienUnique = (page: string, parametre: string, ids: string[]) =>
+  new Set(ids).size === 1 ? `${page}?${parametre}=${ids[0]}` : page;
+
 // Plus petite date d'une liste (AAAA-MM-JJ), ou undefined.
 const plusTot = (dates: (string | undefined)[]) => dates.filter((d): d is string => !!d).sort()[0];
 
@@ -69,7 +74,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const enRetard = actions.filter((a) => actionEnRetard(a, aujourdhui));
   if (enRetard.length) {
     alertes.push({
-      id: "actions-retard", gravite: "critique", categorie: "DUERP", lien: "/actions", date: plusTot(enRetard.map((a) => a.echeance)),
+      id: "actions-retard", gravite: "critique", categorie: "DUERP", lien: lienUnique("/actions", "action", enRetard.map((a) => a.id)), date: plusTot(enRetard.map((a) => a.echeance)),
       titre: `${pluriel(enRetard.length, "action")} de prévention en retard`,
       detail: liste(enRetard.map((a) => `${a.intitule || "Action sans intitulé"} (${formaterDate(a.echeance)})`)),
     });
@@ -79,7 +84,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   );
   if (bientot.length) {
     alertes.push({
-      id: "actions-bientot", gravite: "importante", categorie: "DUERP", lien: "/actions", date: plusTot(bientot.map((a) => a.echeance)),
+      id: "actions-bientot", gravite: "importante", categorie: "DUERP", lien: lienUnique("/actions", "action", bientot.map((a) => a.id)), date: plusTot(bientot.map((a) => a.echeance)),
       titre: `${pluriel(bientot.length, "action")} à échéance dans les 15 jours`,
       detail: liste(bientot.map((a) => `${a.intitule || "Action sans intitulé"} (${formaterDate(a.echeance)})`)),
     });
@@ -183,7 +188,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   );
   if (expirees.length) {
     alertes.push({
-      id: "formations-expirees", gravite: "importante", categorie: "Formations", lien: "/formations", date: plusTot(expirees.map((f) => f.expireLe)),
+      id: "formations-expirees", gravite: "importante", categorie: "Formations", lien: lienUnique("/formations", "formation", expirees.map((f) => f.id)), date: plusTot(expirees.map((f) => f.expireLe)),
       titre: `${pluriel(expirees.length, "formation")} ou habilitation${expirees.length > 1 ? "s" : ""} expirée${expirees.length > 1 ? "s" : ""}`,
       detail: `À renouveler si le salarié en a toujours besoin : ${liste(expirees.map(nomFormation))}.`,
     });
@@ -192,7 +197,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const dansLeMois = aRenouveler.filter((f) => f.expireLe <= decalerJours(aujourdhui, 30));
   if (dansLeMois.length) {
     alertes.push({
-      id: "formations-30j", gravite: "importante", categorie: "Formations", lien: "/formations", date: plusTot(dansLeMois.map((f) => f.expireLe)),
+      id: "formations-30j", gravite: "importante", categorie: "Formations", lien: lienUnique("/formations", "formation", dansLeMois.map((f) => f.id)), date: plusTot(dansLeMois.map((f) => f.expireLe)),
       titre: `${pluriel(dansLeMois.length, "formation")} expire${dansLeMois.length > 1 ? "nt" : ""} dans moins d'un mois`,
       detail: liste(dansLeMois.map(nomFormation)),
     });
@@ -200,7 +205,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const aPlanifier = aRenouveler.filter((f) => f.expireLe > decalerJours(aujourdhui, 30));
   if (aPlanifier.length) {
     alertes.push({
-      id: "formations-90j", gravite: "info", categorie: "Formations", lien: "/formations", date: plusTot(aPlanifier.map((f) => f.expireLe)),
+      id: "formations-90j", gravite: "info", categorie: "Formations", lien: lienUnique("/formations", "formation", aPlanifier.map((f) => f.id)), date: plusTot(aPlanifier.map((f) => f.expireLe)),
       titre: `${pluriel(aPlanifier.length, "recyclage")} à planifier dans les 3 mois`,
       detail: liste(aPlanifier.map(nomFormation)),
     });
@@ -213,7 +218,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const nonConformes = equipements.filter((e) => derniereVerification(verifications, e.id)?.resultat === "non-conforme");
   if (nonConformes.length) {
     alertes.push({
-      id: "verifications-non-conformes", gravite: "critique", categorie: "Vérifications", lien: "/verifications",
+      id: "verifications-non-conformes", gravite: "critique", categorie: "Vérifications", lien: lienUnique("/verifications", "equipement", nonConformes.map((e) => e.id)),
       titre: `${pluriel(nonConformes.length, "équipement")} non conforme${nonConformes.length > 1 ? "s" : ""} lors de la dernière vérification`,
       detail: `Remettre en conformité ou retirer du service : ${liste(nonConformes.map(nomEquipement))}.`,
     });
@@ -221,7 +226,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const enRetardVerif = equipements.filter((e) => etatEquipement(verifications, e, aujourdhui) === "en-retard");
   if (enRetardVerif.length) {
     alertes.push({
-      id: "verifications-retard", gravite: "critique", categorie: "Vérifications", lien: "/verifications",
+      id: "verifications-retard", gravite: "critique", categorie: "Vérifications", lien: lienUnique("/verifications", "equipement", enRetardVerif.map((e) => e.id)),
       date: plusTot(enRetardVerif.map((e) => derniereVerification(verifications, e.id)?.prochaine)),
       titre: `${pluriel(enRetardVerif.length, "vérification")} périodique${enRetardVerif.length > 1 ? "s" : ""} en retard`,
       detail: liste(enRetardVerif.map((e) => `${nomEquipement(e)} (${formaterDate(derniereVerification(verifications, e.id)!.prochaine)})`)),
@@ -230,7 +235,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const jamais = equipements.filter((e) => etatEquipement(verifications, e, aujourdhui) === "jamais");
   if (jamais.length) {
     alertes.push({
-      id: "verifications-jamais", gravite: "importante", categorie: "Vérifications", lien: "/verifications",
+      id: "verifications-jamais", gravite: "importante", categorie: "Vérifications", lien: lienUnique("/verifications", "equipement", jamais.map((e) => e.id)),
       titre: `${pluriel(jamais.length, "équipement")} sans vérification enregistrée`,
       detail: `Saisissez la dernière vérification (date et rapport) : ${liste(jamais.map(nomEquipement))}.`,
     });
@@ -241,7 +246,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   });
   if (bientotVerif.length) {
     alertes.push({
-      id: "verifications-bientot", gravite: "importante", categorie: "Vérifications", lien: "/verifications",
+      id: "verifications-bientot", gravite: "importante", categorie: "Vérifications", lien: lienUnique("/verifications", "equipement", bientotVerif.map((e) => e.id)),
       date: plusTot(bientotVerif.map((e) => derniereVerification(verifications, e.id)?.prochaine)),
       titre: `${pluriel(bientotVerif.length, "vérification")} à faire dans les 30 jours`,
       detail: liste(bientotVerif.map((e) => `${nomEquipement(e)} (${formaterDate(derniereVerification(verifications, e.id)!.prochaine)})`)),
@@ -264,7 +269,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const cmrADocumenter = produits.filter((p) => estCmr(p) && (!p.substitution.trim() || !p.salariesExposes.length));
   if (cmrADocumenter.length) {
     alertes.push({
-      id: "chimie-cmr", gravite: "critique", categorie: "Produits chimiques", lien: "/produits",
+      id: "chimie-cmr", gravite: "critique", categorie: "Produits chimiques", lien: lienUnique("/produits", "produit", cmrADocumenter.map((p) => p.id)),
       titre: `${pluriel(cmrADocumenter.length, "produit")} CMR à documenter`,
       detail: `Recherche de substitution et liste des salariés exposés (suivi médical renforcé) : ${liste(cmrADocumenter.map(nomProduit))}.`,
     });
@@ -272,7 +277,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const sansFds = produits.filter((p) => etatFds(p, aujourdhui) === "manquante");
   if (sansFds.length) {
     alertes.push({
-      id: "chimie-fds-manquante", gravite: "importante", categorie: "Produits chimiques", lien: "/produits",
+      id: "chimie-fds-manquante", gravite: "importante", categorie: "Produits chimiques", lien: lienUnique("/produits", "produit", sansFds.map((p) => p.id)),
       titre: `${pluriel(sansFds.length, "produit")} sans fiche de données de sécurité`,
       detail: `Demandez la FDS au fournisseur (elle est gratuite et obligatoire) : ${liste(sansFds.map(nomProduit))}.`,
     });
@@ -280,7 +285,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const fdsAnciennes = produits.filter((p) => etatFds(p, aujourdhui) === "ancienne");
   if (fdsAnciennes.length) {
     alertes.push({
-      id: "chimie-fds-ancienne", gravite: "info", categorie: "Produits chimiques", lien: "/produits",
+      id: "chimie-fds-ancienne", gravite: "info", categorie: "Produits chimiques", lien: lienUnique("/produits", "produit", fdsAnciennes.map((p) => p.id)),
       titre: `${pluriel(fdsAnciennes.length, "FDS")} de plus de 3 ans`,
       detail: `Vérifiez auprès du fournisseur qu'il n'existe pas de version plus récente : ${liste(fdsAnciennes.map(nomProduit))}.`,
     });
@@ -434,7 +439,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const ruptures = stocks.filter((s) => s.etat === "rupture");
   if (ruptures.length) {
     alertes.push({
-      id: "stocks-rupture", gravite: "critique", categorie: "EPI", lien: "/epi",
+      id: "stocks-rupture", gravite: "critique", categorie: "EPI", lien: lienUnique("/epi", "article", ruptures.map((s) => s.article.id)),
       titre: `${pluriel(ruptures.length, "référence")} d'EPI en rupture`,
       detail: liste(ruptures.map((s) => `${s.article.nom} (${s.taille})`)),
     });
@@ -442,7 +447,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const sousTampon = stocks.filter((s) => s.etat === "sous-tampon");
   if (sousTampon.length) {
     alertes.push({
-      id: "stocks-tampon", gravite: "importante", categorie: "EPI", lien: "/epi",
+      id: "stocks-tampon", gravite: "importante", categorie: "EPI", lien: lienUnique("/epi", "article", sousTampon.map((s) => s.article.id)),
       titre: `${pluriel(sousTampon.length, "référence")} d'EPI sous le stock tampon`,
       detail: `À commander : ${liste(sousTampon.map((s) => `${s.aCommander} ${s.article.nom} (${s.taille})`))}`,
     });
@@ -453,7 +458,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   if (nonSignees.length) {
     const salaries = new Set(nonSignees.map((m) => m.salarieId)).size;
     alertes.push({
-      id: "epi-non-signes", gravite: "info", categorie: "EPI", lien: "/epi",
+      id: "epi-non-signes", gravite: "info", categorie: "EPI", lien: "/epi?onglet=fiches",
       titre: `${pluriel(nonSignees.length, "remise")} d'EPI non signée${nonSignees.length > 1 ? "s" : ""}`,
       detail: `Sur les 3 derniers mois, pour ${pluriel(salaries, "salarié")}. À faire signer depuis « Fiches salariés ».`,
     });

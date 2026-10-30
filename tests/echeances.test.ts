@@ -29,7 +29,7 @@ describe("prochaines échéances", () => {
       ["intervention", "2026-12-01"],
     ]);
     const a = echeances.find((e) => e.type === "action")!;
-    expect(a).toMatchObject({ titre: "Garde-corps", detail: "Chute de hauteur · Quai", responsable: "Julie", lien: `/actions?risque=${risque.id}`, enRetard: false });
+    expect(a).toMatchObject({ titre: "Garde-corps", detail: "Chute de hauteur · Quai", responsable: "Julie", lien: `/actions?action=${d.actions[0].id}`, enRetard: false });
     expect(echeances.find((e) => e.type === "formation")!.detail).toBe("Pierre M.");
   });
 

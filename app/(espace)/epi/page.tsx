@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { classeCible, idCible, useCible } from "@/lib/cible";
 import { FichesSalaries } from "@/components/fiches-epi";
 import { PaveSignature } from "@/components/signature";
 import {
@@ -51,9 +53,19 @@ function ajouterMouvement(m: Omit<Mouvement, "id">, signature?: string) {
 }
 
 export default function PageEpi() {
+  // useSearchParams (onglet et article visés) doit être sous un Suspense avec le pré-rendu de Next.js.
+  return (
+    <Suspense fallback={<Chargement />}>
+      <Epi />
+    </Suspense>
+  );
+}
+
+function Epi() {
   const donnees = useDonnees();
   const { role } = useSession();
-  const [onglet, setOnglet] = useState<Onglet>("stocks");
+  const ongletDemande = useSearchParams().get("onglet");
+  const [onglet, setOnglet] = useState<Onglet>(onglets.some((o) => o.valeur === ongletDemande) ? (ongletDemande as Onglet) : "stocks");
   // Responsable : tout ; contributeur : remises, réceptions et signatures ; lecteur : consultation.
   const catalogue = peutModifier(role, "tout");
   const saisie = peutModifier(role, "epi");
@@ -101,6 +113,7 @@ export default function PageEpi() {
 // ---------- Stocks & commandes ----------
 
 function Stocks({ donnees, catalogue, saisie }: { donnees: Donnees; catalogue: boolean; saisie: boolean }) {
+  const cible = useCible("article", true);
   const [categorie, setCategorie] = useState("");
   const [seulementACommander, setSeulementACommander] = useState(false);
   const aujourdhui = dateDuJour();
@@ -206,7 +219,12 @@ function Stocks({ donnees, catalogue, saisie }: { donnees: Donnees; catalogue: b
             {lignes.map((s) => {
               const e = etatsStock[s.etat];
               return (
-                <tr key={`${s.article.id}-${s.taille}`} className="border-t border-pierre/60">
+                <tr
+                  key={`${s.article.id}-${s.taille}`}
+                  // La première taille de l'article visé reçoit l'identifiant de défilement ; toutes sont mises en évidence.
+                  id={lignes.find((x) => x.article.id === s.article.id) === s ? idCible(s.article.id) : undefined}
+                  className={`border-t border-pierre/60 ${s.article.id === cible ? classeCible : ""}`}
+                >
                   <td className="px-3 py-2">
                     <p className="font-medium">{s.article.nom}</p>
                     <p className="text-xs text-gris">

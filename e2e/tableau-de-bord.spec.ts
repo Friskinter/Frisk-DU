@@ -22,7 +22,10 @@ test("le tableau de bord montre indicateurs, priorités datées et prochaines é
 
   await echeances.getByLabel("Type d'échéance").selectOption("action");
   await lignes.first().getByRole("link").click();
-  await expect(page).toHaveURL(/\/actions\?risque=/);
+  await expect(page).toHaveURL(/\/actions\?action=/);
+  // L'action visée est mise en évidence dans le plan d'actions.
+  const actionId = new URL(page.url()).searchParams.get("action")!;
+  await expect(page.locator(`#cible-${actionId}`)).toHaveClass(/outline-bronze/);
 
   await ouvrir(page, "/");
   await verifierAccessibilite(page);

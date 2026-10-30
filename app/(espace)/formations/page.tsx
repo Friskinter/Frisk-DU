@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState, type ReactNode } from "react";
+import { classeCible, idCible, useCible } from "@/lib/cible";
 import {
   Chargement,
   EnTetePage,
@@ -53,9 +55,20 @@ function PastilleEtat({ formation, aujourdhui, children }: { formation: Formatio
 }
 
 export default function PageFormations() {
+  // useSearchParams (formation visée) doit être sous un Suspense avec le pré-rendu de Next.js.
+  return (
+    <Suspense fallback={<Chargement />}>
+      <Formations />
+    </Suspense>
+  );
+}
+
+function Formations() {
   const donnees = useDonnees();
   const { role, entrepriseId } = useSession();
-  const [onglet, setOnglet] = useState<Onglet>("tableau");
+  // Formation visée par l'adresse : on ouvre directement le registre.
+  const [onglet, setOnglet] = useState<Onglet>(useSearchParams().get("formation") ? "registre" : "tableau");
+  const cible = useCible("formation", !!donnees && onglet === "registre");
   const [edition, setEdition] = useState<Edition>(null);
 
   if (!donnees) return <Chargement />;
@@ -113,6 +126,7 @@ export default function PageFormations() {
           <button
             key={o.valeur}
             type="button"
+            aria-pressed={onglet === o.valeur}
             onClick={() => setOnglet(o.valeur)}
             className={`-mb-px border-b-2 px-3 py-2 text-sm ${onglet === o.valeur ? "border-bronze font-medium text-encre" : "border-transparent text-ardoise hover:text-encre"}`}
           >
@@ -122,7 +136,7 @@ export default function PageFormations() {
       </div>
 
       {onglet === "tableau" && <Tableau donnees={donnees} aujourdhui={aujourdhui} modifiable={modifiable} onOuvrir={ouvrir} />}
-      {onglet === "registre" && <Registre donnees={donnees} aujourdhui={aujourdhui} onOuvrir={ouvrir} />}
+      {onglet === "registre" && <Registre donnees={donnees} aujourdhui={aujourdhui} onOuvrir={ouvrir} cible={cible} />}
       {onglet === "postes" && <Postes donnees={donnees} modifiable={modifiable} />}
 
       {edition && "formation" in edition && (
@@ -270,7 +284,17 @@ function Tableau({
 
 // ---------- Registre : toutes les sessions, y compris celles remplacées par un recyclage ----------
 
-function Registre({ donnees, aujourdhui, onOuvrir }: { donnees: Donnees; aujourdhui: string; onOuvrir: (f: Formation) => void }) {
+function Registre({
+  donnees,
+  aujourdhui,
+  onOuvrir,
+  cible,
+}: {
+  donnees: Donnees;
+  aujourdhui: string;
+  onOuvrir: (f: Formation) => void;
+  cible: string; // formation visée par l'adresse de la page
+}) {
   const [salarie, setSalarie] = useState("");
   const [type, setType] = useState("");
   const [etat, setEtat] = useState("");
@@ -319,7 +343,7 @@ function Registre({ donnees, aujourdhui, onOuvrir }: { donnees: Donnees; aujourd
             </thead>
             <tbody>
               {lignes.map(({ f, remplacee }) => (
-                <tr key={f.id} className={remplacee ? "text-gris" : ""}>
+                <tr key={f.id} id={idCible(f.id)} className={`${remplacee ? "text-gris" : ""} ${f.id === cible ? classeCible : ""}`}>
                   <td className="border-b border-pierre/60 px-3 py-2">{nom.get(f.salarieId)}</td>
                   <td className="border-b border-pierre/60 px-3 py-2">
                     {libelleFormation(f)}
