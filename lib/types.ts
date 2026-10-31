@@ -41,6 +41,9 @@ export type Action = {
   intitule: string;
   principe: PrincipePrevention;
   responsable: string;
+  // Utilisateur de l'espace à qui l'action est confiée (son adresse e-mail) : elle apparaît dans sa page
+  // « Mes actions » et dans son récapitulatif du lundi. Le responsable en texte libre reste possible.
+  responsableEmail?: string;
   echeance: string; // AAAA-MM-JJ
   statut: StatutAction;
   cout: number | null; // € HT estimés

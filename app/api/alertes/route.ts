@@ -1,6 +1,7 @@
 import { dateDuJour } from "@/lib/calculs";
 import { normaliser } from "@/lib/donnees";
 import { emailRecapitulatif } from "@/lib/email-alertes";
+import { actionsARappeler } from "@/lib/mes-actions";
 import { envoyerEmail, journaliserEnvois, signalerConfigurationManquante, type LigneEnvoi } from "@/lib/envoi-email";
 import { destinatairesAvecRole } from "@/lib/preferences-email";
 import { preparerRecapitulatif, recapitulatifVide } from "@/lib/recapitulatif";
@@ -59,15 +60,21 @@ export async function GET(requete: Request) {
       derniereVersion: dates.at(-1) ?? null,
       lienActif: !!e.jeton_signalement,
     });
-    if (recapitulatifVide(recap)) continue;
+    // Chacun reçoit aussi les actions qui lui sont confiées : il est écrit à une personne qui a une action
+    // à mener, même quand l'entreprise n'a rien d'autre à signaler cette semaine.
+    const normalisees = normaliser(donnees);
+    const parPersonne = pour
+      .map((p) => ({ ...p, actions: actionsARappeler(normalisees, p.email, aujourdhui) }))
+      .filter((p) => !recapitulatifVide(recap) || p.actions.length);
+    if (!parPersonne.length) continue;
 
     let envoye = false;
     if (!apercu && cleResend && expediteur) {
       // Un e-mail par destinataire : les adresses des collègues ne sont pas dévoilées, et le
       // contenu suit le rôle de chacun (détail complet pour les responsables).
       const journal: LigneEnvoi[] = [];
-      for (const { email: to, role } of pour) {
-        const { sujet, html, texte } = emailRecapitulatif(e.nom, recap, aujourdhui, urlApplication, role);
+      for (const { email: to, role, actions } of parPersonne) {
+        const { sujet, html, texte } = emailRecapitulatif(e.nom, recap, aujourdhui, urlApplication, role, actions);
         const resultat = await envoyerEmail(cleResend, { from: expediteur, to, subject: sujet, html, text: texte });
         journal.push({ type: "recapitulatif", entreprise_id: e.id, destinataire: to, ...resultat });
       }
@@ -76,7 +83,7 @@ export async function GET(requete: Request) {
     }
     rapport.push({
       entreprise: e.nom,
-      destinataires,
+      destinataires: parPersonne.map((p) => p.email),
       urgences: recap.urgences.length,
       echeances: recap.echeances.length,
       alertes: recap.autres.length,
