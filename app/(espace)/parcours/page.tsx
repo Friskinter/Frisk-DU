@@ -59,7 +59,7 @@ export default function PageParcours() {
           </div>
           {parcours.prochaine && (
             <div className="text-sm">
-              <p className="text-gris">Prochaine étape</p>
+              <p className="text-gris">{parcours.total - parcours.faites === 1 ? "Dernière étape" : "Prochaine étape"}</p>
               <Link href={parcours.prochaine.lien} className={`${classeBouton} mt-1`}>
                 {parcours.prochaine.titre} →
               </Link>

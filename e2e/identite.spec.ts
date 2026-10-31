@@ -14,6 +14,8 @@ test("le responsable dépose son logo : l'espace passe à ses couleurs", async (
   const carte = page.locator("section", { has: page.getByRole("heading", { name: "Identité visuelle" }) });
   const avant = await bronze(page);
 
+  // Bouton en français, quelle que soit la langue du navigateur.
+  await expect(carte.getByText("Choisir un fichier…")).toBeVisible();
   await carte.getByLabel("Ou déposez votre logo (PNG, JPEG ou SVG)").setInputFiles({ name: "logo.png", mimeType: "image/png", buffer: LOGO });
   await expect(carte.getByRole("status")).toHaveText(/Logo prêt/);
   // La couleur est tirée du logo (le bleu du rond).

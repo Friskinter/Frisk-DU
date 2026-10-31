@@ -137,6 +137,7 @@ export function IdentiteVisuelle({ entreprise, identite }: { entreprise: string;
             </fieldset>
           )}
 
+          {/* Bouton maison : celui du navigateur s'affiche dans sa langue (« Choose file » en anglais). */}
           <label className="block text-sm">
             Ou déposez votre logo (PNG, JPEG ou SVG)
             <input
@@ -146,8 +147,11 @@ export function IdentiteVisuelle({ entreprise, identite }: { entreprise: string;
                 void deposer(e.target.files?.[0]);
                 e.target.value = "";
               }}
-              className="mt-1 block w-full text-sm file:mr-3 file:rounded-sm file:border file:border-pierre file:bg-white file:px-3 file:py-1.5 file:text-sm"
+              className="peer sr-only"
             />
+            <span aria-hidden className={`${classeBoutonSecondaire} mt-1 cursor-pointer peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-bronze`}>
+              Choisir un fichier…
+            </span>
           </label>
 
           <div>

@@ -40,7 +40,12 @@ test.describe("nouvelle entreprise", () => {
 
 test("entreprise déjà en place : un rappel du parcours sur le tableau de bord", async ({ page }) => {
   await ouvrir(page, "/");
-  await expect(page.getByRole("link", { name: /Mon parcours QHSE : \d+ %/ })).toBeVisible();
+  const rappel = page.getByRole("link", { name: /Mon parcours QHSE : \d+ %/ });
+  await expect(rappel).toBeVisible();
+  // Une seule étape restante : elle est annoncée comme telle, pas comme « Prochaine étape ».
+  await expect(rappel).toContainText("Il vous reste 1 étape : décrire votre entreprise");
+  await rappel.click();
+  await expect(page.getByText("Dernière étape", { exact: true })).toBeVisible();
 });
 
 test.describe("lecture seule", () => {
