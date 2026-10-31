@@ -1,6 +1,6 @@
 import { dateDuJour } from "../lib/calculs";
 import { CLE_DONNEES_TEST } from "../lib/mode-test";
-import { expect, ouvrir, pages, test } from "./outils";
+import { expect, pages, test } from "./outils";
 import { donneesVolumineuses } from "./volume";
 
 // Gros client : 500 risques, 200 salariés, 8 000 mouvements d'EPI, 60 causeries signées (900 signatures),
@@ -28,7 +28,9 @@ for (const { chemin } of pages.filter((p) => !p.chemin.startsWith("/legal") && !
 }
 
 test("saisie fluide dans un DUERP de 500 risques", async ({ page }) => {
-  await ouvrir(page, "/duerp");
+  // Ce test mesure la saisie, pas le chargement (mesuré plus haut) : même délai d'attente de la page.
+  await page.goto("/duerp");
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("500 lignes sur 500")).toBeVisible();
   const champ = page.getByRole("combobox", { name: "Danger" }).first();
   await champ.click();
