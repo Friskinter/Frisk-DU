@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { formatNombre, niveauDe } from "@/lib/calculs";
 
 export const classeChamp =
@@ -20,14 +20,18 @@ export function Chargement() {
   );
 }
 
+// En-tête de page : l'action principale et une ou deux actions courantes restent visibles ;
+// les actions moins fréquentes (`plus`) sont rangées dans un menu « Plus ».
 export function EnTetePage({
   titre,
   description,
   actions,
+  plus,
 }: {
   titre: string;
   description?: string;
   actions?: ReactNode;
+  plus?: ReactNode;
 }) {
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -37,8 +41,29 @@ export function EnTetePage({
           <p className="mt-1 max-w-3xl text-sm text-ardoise">{description}</p>
         )}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      {(actions || plus) && (
+        <div className="flex flex-wrap gap-2">
+          {plus && <MenuPlus>{plus}</MenuPlus>}
+          {actions}
+        </div>
+      )}
     </div>
+  );
+}
+
+// Menu déroulant « Plus » : se referme après un choix.
+function MenuPlus({ children }: { children: ReactNode }) {
+  const menu = useRef<HTMLDetailsElement>(null);
+  return (
+    <details ref={menu} className="relative">
+      <summary className={`${classeBoutonSecondaire} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}>Plus ▾</summary>
+      <div
+        className="absolute left-0 z-30 mt-1 flex w-64 flex-col gap-1 rounded-sm border border-pierre/70 bg-white p-2 shadow-lg [&>*]:w-full [&>*]:justify-start [&>*]:text-left"
+        onClick={() => menu.current?.removeAttribute("open")}
+      >
+        {children}
+      </div>
+    </details>
   );
 }
 
@@ -78,9 +103,9 @@ export function Indicateur({
   alerte?: boolean;
 }) {
   return (
-    <div className="rounded-sm border border-pierre/70 bg-white p-4">
+    <div className="min-w-0 rounded-sm border border-pierre/70 bg-white p-3 sm:p-4">
       <p className="text-xs uppercase tracking-wider text-gris">{libelle}</p>
-      <p className={`mt-1 text-3xl font-semibold tabular-nums ${alerte ? "text-[#b42318]" : "text-encre"}`}>
+      <p className={`mt-1 text-2xl font-semibold tabular-nums sm:text-3xl ${alerte ? "text-[#b42318]" : "text-encre"}`}>
         {valeur}
       </p>
       {detail && <p className="mt-1 text-xs text-ardoise">{detail}</p>}

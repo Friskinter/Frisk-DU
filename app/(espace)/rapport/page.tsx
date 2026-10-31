@@ -109,7 +109,7 @@ export default function PageRapport() {
         <p className="mb-4 text-sm text-ardoise">Année en cours : les chiffres sont arrêtés au {formaterDate(r.reference)}.</p>
       )}
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Indicateur
           libelle="Accidents avec arrêt"
           valeur={a.avecArret}

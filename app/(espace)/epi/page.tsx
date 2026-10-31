@@ -144,7 +144,7 @@ function Stocks({ donnees, catalogue, saisie }: { donnees: Donnees; catalogue: b
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Indicateur
           libelle="Références à commander"
           valeur={aCommander.length}

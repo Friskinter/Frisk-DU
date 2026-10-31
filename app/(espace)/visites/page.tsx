@@ -194,7 +194,7 @@ function ListeVisites({
         </button>
       </div>
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Indicateur libelle="Visites (12 mois)" valeur={recentes.length} detail={recentes[0] ? `dernière le ${formaterDate([...recentes].sort((a, b) => b.date.localeCompare(a.date))[0].date)}` : "aucune visite"} />
         <Indicateur
           libelle="Conformité moyenne"

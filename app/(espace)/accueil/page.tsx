@@ -151,7 +151,7 @@ function Accueils({ donnees, modifiable, ouvertInitial }: { donnees: Donnees; mo
         </button>
       </div>
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Indicateur libelle="Accueils à faire" valeur={compter("a-faire")} detail="personnes arrivées sans accueil" alerte={compter("a-faire") > 0} />
         <Indicateur libelle="À faire signer" valeur={compter("a-signer")} detail="accueil fait, signature manquante" />
         <Indicateur libelle="Arrivées à venir" valeur={compter("a-venir")} detail="accueil à préparer" />
@@ -453,7 +453,7 @@ function Causeries({ donnees, modifiable, ouvertInitial }: { donnees: Donnees; m
         </button>
       </div>
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Indicateur libelle="Causeries (12 mois)" valeur={recentes.length} detail={liste[0] ? `dernière le ${formaterDate(liste[0].date)}` : "aucune causerie"} />
         <Indicateur libelle="Participations (12 mois)" valeur={recentes.reduce((t, c) => t + c.participants.length, 0)} detail="présences cumulées" />
         <Indicateur

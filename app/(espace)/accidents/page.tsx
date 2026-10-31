@@ -140,13 +140,10 @@ function Accidents() {
       <EnTetePage
         titre="Accidents et presque-accidents"
         description="Registre des accidents du travail, des presque-accidents et des situations dangereuses. Chaque événement est déclaré si besoin, analysé pour en comprendre les causes, puis reporté dans le DUERP."
-        actions={
+        plus={
           <>
             <button type="button" className={classeBoutonSecondaire} onClick={() => setGuide(!guide)}>
               {guide ? "Masquer la méthode" : "? Méthode"}
-            </button>
-            <button type="button" className={classeBoutonSecondaire} aria-expanded={signalement} onClick={() => setSignalement(!signalement)}>
-              📱 Signalement par les salariés
             </button>
             <button
               type="button"
@@ -159,6 +156,13 @@ function Accidents() {
             </button>
             <button type="button" className={classeBoutonSecondaire} onClick={exporter}>
               Exporter (Excel)
+            </button>
+          </>
+        }
+        actions={
+          <>
+            <button type="button" className={classeBoutonSecondaire} aria-expanded={signalement} onClick={() => setSignalement(!signalement)}>
+              📱 Signalement par les salariés
             </button>
             {modifiable && (
               <>
@@ -181,7 +185,7 @@ function Accidents() {
         </div>
       )}
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Indicateur
           libelle="Jours sans accident avec arrêt"
           valeur={indicateurs.joursSansAccident ?? "—"}
