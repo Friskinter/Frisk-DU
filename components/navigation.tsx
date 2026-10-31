@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { Logo } from "@/components/identite-visuelle";
+import { RechercheGlobale } from "@/components/recherche-globale";
 import { moduleAbonne } from "@/lib/abonnement";
 import { calculerAlertes } from "@/lib/alertes";
 import { variablesCouleur, variablesTheme } from "@/lib/identite";
@@ -122,6 +123,9 @@ export function Navigation() {
             <p className={identite?.logo ? "truncate text-sm text-marbre lg:whitespace-normal" : "mt-1 truncate text-xs text-pierre/70"}>{session.donnees?.entreprise ?? "…"}</p>
           )}
         </div>
+      </div>
+      <div className="px-4 pb-2 lg:px-3 lg:pb-3">
+        <RechercheGlobale donnees={session.donnees} />
       </div>
       {/* Sur ordinateur, le menu défile s'il dépasse la hauteur de l'écran (aucune entrée cachée). */}
       <nav className="flex gap-1 overflow-x-auto px-2 pb-2 lg:min-h-0 lg:flex-1 lg:flex-col lg:gap-0.5 lg:overflow-y-auto lg:px-3">
