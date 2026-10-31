@@ -13,25 +13,51 @@ import { libellesRoles } from "@/lib/operations";
 import { dateDuJour } from "@/lib/calculs";
 import { deconnecter, etablissementsDuGroupe, ouvrirEntreprise, useSession, type Enregistrement } from "@/lib/stockage";
 
-const liens = [
-  { href: "/", label: "Tableau de bord", icone: "▦" },
-  { href: "/parcours", label: "Mon parcours", icone: "➚" },
-  { href: "/duerp", label: "DUERP", icone: "☰" },
-  { href: "/actions", label: "Plan d'actions", icone: "✓" },
-  { href: "/accidents", label: "Accidents", icone: "⚑" },
-  { href: "/formations", label: "Formations", icone: "◆" },
-  { href: "/verifications", label: "Vérifications", icone: "◎" },
-  { href: "/produits", label: "Produits chimiques", icone: "⚗" },
-  { href: "/visites", label: "Visites et audits", icone: "☑" },
-  { href: "/accueil", label: "Accueil et causeries", icone: "✎" },
-  { href: "/entreprises-exterieures", label: "Entreprises extérieures", icone: "⇄" },
-  { href: "/penibilite", label: "Pénibilité", icone: "⚠" },
-  { href: "/epi", label: "EPI & stocks", icone: "⛑" },
-  { href: "/bilans", label: "Bilans", icone: "▤" },
-  { href: "/rapport", label: "Rapport annuel", icone: "▥" },
-  { href: "/journal", label: "Journal", icone: "◷" },
-  { href: "/reglages", label: "Salariés & réglages", icone: "⚙" },
-  { href: "/abonnement", label: "Abonnement", icone: "€" },
+// Menu regroupé par usage ; le dernier groupe (sans titre) rassemble l'administration de l'espace.
+const groupes: { titre: string; liens: { href: string; label: string; icone: string }[] }[] = [
+  {
+    titre: "Piloter",
+    liens: [
+      { href: "/", label: "Tableau de bord", icone: "▦" },
+      { href: "/parcours", label: "Mon parcours", icone: "➚" },
+      { href: "/bilans", label: "Bilans", icone: "▤" },
+      { href: "/rapport", label: "Rapport annuel", icone: "▥" },
+    ],
+  },
+  {
+    titre: "Évaluer",
+    liens: [
+      { href: "/duerp", label: "DUERP", icone: "☰" },
+      { href: "/actions", label: "Plan d'actions", icone: "✓" },
+      { href: "/penibilite", label: "Pénibilité", icone: "⚠" },
+      { href: "/produits", label: "Produits chimiques", icone: "⚗" },
+    ],
+  },
+  {
+    titre: "Suivre",
+    liens: [
+      { href: "/accidents", label: "Accidents", icone: "⚑" },
+      { href: "/verifications", label: "Vérifications", icone: "◎" },
+      { href: "/visites", label: "Visites et audits", icone: "☑" },
+      { href: "/entreprises-exterieures", label: "Entreprises extérieures", icone: "⇄" },
+    ],
+  },
+  {
+    titre: "Salariés",
+    liens: [
+      { href: "/formations", label: "Formations", icone: "◆" },
+      { href: "/accueil", label: "Accueil et causeries", icone: "✎" },
+      { href: "/epi", label: "EPI & stocks", icone: "⛑" },
+      { href: "/reglages", label: "Salariés & réglages", icone: "⚙" },
+    ],
+  },
+  {
+    titre: "",
+    liens: [
+      { href: "/journal", label: "Journal", icone: "◷" },
+      { href: "/abonnement", label: "Abonnement", icone: "€" },
+    ],
+  },
 ];
 
 // Couleur de l'entreprise : remplace les couleurs de Frisk dans toute la page (voir app/globals.css).
@@ -95,7 +121,8 @@ export function Navigation() {
           )}
         </div>
       </div>
-      <nav className="flex gap-1 overflow-x-auto px-2 pb-2 lg:flex-1 lg:flex-col lg:px-3">
+      {/* Sur ordinateur, le menu défile s'il dépasse la hauteur de l'écran (aucune entrée cachée). */}
+      <nav className="flex gap-1 overflow-x-auto px-2 pb-2 lg:min-h-0 lg:flex-1 lg:flex-col lg:gap-0.5 lg:overflow-y-auto lg:px-3">
         {etablissementsDuGroupe(session).length > 1 && (
           <Link
             href="/groupe"
@@ -107,34 +134,42 @@ export function Navigation() {
             Vue d&apos;ensemble
           </Link>
         )}
-        {liens.filter((l) => l.href !== "/abonnement" || session.roleCompte === "responsable" || session.admin).map((lien) => {
-          const actif = chemin === lien.href;
-          return (
-            <Link
-              key={lien.href}
-              href={lien.href}
-              className={`flex shrink-0 items-center gap-3 rounded-sm px-3 py-2 text-sm transition-colors ${
-                actif ? "bg-bronze text-encre" : "hover:bg-white/5 hover:text-marbre"
-              }`}
-            >
-              <span aria-hidden className="w-4 text-center">
-                {lien.icone}
-              </span>
-              {lien.label}
-              {essai && moduleAbonne(lien.href) && (
-                <span className="ml-auto text-xs" title="Inclus dans l'abonnement" aria-label="inclus dans l'abonnement">🔒</span>
-              )}
-              {lien.href === "/" && urgentes > 0 && (
-                <span
-                  className="ml-auto rounded-full bg-[#d03b3b] px-1.5 text-xs font-semibold text-white"
-                  title={`${urgentes} point(s) urgent(s) à traiter`}
+        {groupes.map((groupe) => (
+          // Sur téléphone, le menu est une seule ligne qui défile : les titres de groupe ne s'affichent que sur ordinateur.
+          <div key={groupe.titre || "administration"} className="contents lg:mt-3 lg:block lg:first:mt-0">
+            {groupe.titre && (
+              <p className="hidden px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-pierre lg:block">{groupe.titre}</p>
+            )}
+            {groupe.liens.filter((l) => l.href !== "/abonnement" || session.roleCompte === "responsable" || session.admin).map((lien) => {
+              const actif = chemin === lien.href;
+              return (
+                <Link
+                  key={lien.href}
+                  href={lien.href}
+                  className={`flex shrink-0 items-center gap-3 rounded-sm px-3 py-2 text-sm transition-colors lg:py-1.5 ${
+                    actif ? "bg-bronze text-encre" : "hover:bg-white/5 hover:text-marbre"
+                  }`}
                 >
-                  {urgentes}
-                </span>
-              )}
-            </Link>
-          );
-        })}
+                  <span aria-hidden className="w-4 text-center">
+                    {lien.icone}
+                  </span>
+                  {lien.label}
+                  {essai && moduleAbonne(lien.href) && (
+                    <span className="ml-auto text-xs" title="Inclus dans l'abonnement" aria-label="inclus dans l'abonnement">🔒</span>
+                  )}
+                  {lien.href === "/" && urgentes > 0 && (
+                    <span
+                      className="ml-auto rounded-full bg-[#d03b3b] px-1.5 text-xs font-semibold text-white"
+                      title={`${urgentes} point${urgentes > 1 ? "s" : ""} urgent${urgentes > 1 ? "s" : ""} à traiter`}
+                    >
+                      {urgentes}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
         {session.admin && (
           <Link
             href="/console"

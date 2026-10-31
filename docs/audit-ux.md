@@ -150,3 +150,4 @@ un message clair « Hors ligne : enregistré sur cet appareil ».
 | Proposition | État |
 |---|---|
 | 1. Tableau de bord | **Fait** (#58). Chiffres clés en haut. Les urgences, les nouveautés et les 5 points suivants sont affichés, avec « Voir les N autres ». Filtre par module. « dont N urgents » en face de la pastille du menu. Règle d'affichage : `alertesAffichees` (`lib/alertes.ts`). |
+| 6. Menu regroupé | **Fait** (#NN). Quatre groupes titrés sur ordinateur (Piloter, Évaluer, Suivre, Salariés), puis Journal et Abonnement. Sur téléphone, le menu reste une ligne qui défile, sans titres. Le menu défile désormais en hauteur : sur un écran de 900 pixels, « Salariés & réglages » et « Abonnement » étaient coupés et inaccessibles. |
