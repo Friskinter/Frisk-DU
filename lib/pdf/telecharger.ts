@@ -68,6 +68,18 @@ export async function telechargerFicheEpi(donnees: Donnees, salarieId: string) {
   );
 }
 
+export async function telechargerFicheSalarie(donnees: Donnees, salarieId: string) {
+  const { FicheSalariePdf } = await import("./fiche-salarie");
+  const { ficheSalarie } = await import("@/lib/salarie");
+  const aujourdhui = dateDuJour();
+  const fiche = ficheSalarie(donnees, salarieId, aujourdhui);
+  if (!fiche) return;
+  await enregistrerPdf(
+    createElement(FicheSalariePdf, { entreprise: donnees.entreprise, fiche, aujourdhui, marque: marque(donnees.identite) }),
+    `Fiche salarié - ${fiche.salarie.nom} - ${aujourdhui}.pdf`,
+  );
+}
+
 export async function telechargerRegistreBenins(donnees: Donnees) {
   const { RegistreBenins } = await import("./registre-benins");
   const aujourdhui = dateDuJour();

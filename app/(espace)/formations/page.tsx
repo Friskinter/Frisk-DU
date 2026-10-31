@@ -104,7 +104,7 @@ function Formations() {
                   className={classeBouton}
                   onClick={() => ouvrir(nouvelleFormation({ salarieId: donnees.salaries[0]?.id ?? "", obtenueLe: aujourdhui }), true)}
                   disabled={!donnees.salaries.length}
-                  title={donnees.salaries.length ? undefined : "Ajoutez d'abord les salariés dans « Salariés & réglages »"}
+                  title={donnees.salaries.length ? undefined : "Ajoutez d'abord les salariés dans la page « Salariés »"}
                 >
                   + Formation
                 </button>

@@ -11,14 +11,11 @@ import {
   classeBoutonSecondaire,
   classeChamp,
 } from "@/components/ui";
-import { dateDuJour, nouvelId, telecharger } from "@/lib/calculs";
-import { supprimerAttestation } from "@/lib/attestations";
+import { dateDuJour, telecharger } from "@/lib/calculs";
 import { donneesDemo, donneesVides } from "@/lib/demo";
 import { normaliser } from "@/lib/donnees";
 import { modifier, peutModifier, remplacer, useDonnees, useSession } from "@/lib/stockage";
-import type { Donnees, FicheEntreprise, Salarie } from "@/lib/types";
-
-const categoriesTailles = ["Mains", "Pieds", "Corps", "Haute visibilité"];
+import type { Donnees, FicheEntreprise } from "@/lib/types";
 
 const ficheVide: FicheEntreprise = { siret: "", adresse: "", activite: "", effectif: "", responsable: "" };
 
@@ -37,28 +34,6 @@ export default function PageReglages() {
   if (!donnees) return <Chargement />;
   const modifiable = peutModifier(role, "tout");
   const essai = abonnement.acces === "essai";
-
-  const majSalarie = (id: string, champs: Partial<Salarie>) =>
-    modifier((d) => ({ ...d, salaries: d.salaries.map((s) => (s.id === id ? { ...s, ...champs } : s)) }));
-
-  const ajouterSalarie = () =>
-    modifier((d) => ({
-      ...d,
-      salaries: [...d.salaries, { id: nouvelId(), nom: "", service: d.services[0] ?? "", poste: "", tailles: {} }],
-    }));
-
-  const supprimerSalarie = (s: Salarie) => {
-    const formations = donnees.formations.filter((f) => f.salarieId === s.id);
-    const avertissement = formations.length ? ` Ses ${formations.length} formation(s) et leurs attestations seront supprimées.` : "";
-    if (confirm(`Supprimer ${s.nom || "ce salarié"} ? Son historique d'EPI sera conservé.${avertissement}`)) {
-      modifier((d) => ({
-        ...d,
-        salaries: d.salaries.filter((x) => x.id !== s.id),
-        formations: d.formations.filter((f) => f.salarieId !== s.id),
-      }));
-      formations.forEach((f) => f.attestation && void supprimerAttestation(f.attestation.chemin));
-    }
-  };
 
   const sauvegarder = () =>
     telecharger(
@@ -81,7 +56,7 @@ export default function PageReglages() {
 
   return (
     <div className="space-y-6">
-      <EnTetePage titre="Salariés & réglages" description="Les listes utilisées dans tout Frisk Plateforme." />
+      <EnTetePage titre="Réglages" description="L&apos;entreprise, ses unités de travail, ses services et son identité visuelle. Les salariés ont leur propre page." />
 
       {/* Réservé aux responsables : un fieldset désactivé grise tous les champs pour les autres rôles. */}
       <fieldset disabled={!modifiable} className="min-w-0 space-y-6">
@@ -172,63 +147,7 @@ export default function PageReglages() {
           />
         </div>
 
-        <Carte titre={`Salariés (${donnees.salaries.length})`}>
-          <p className="mb-3 text-sm text-ardoise">
-            Les tailles renseignées ici sont proposées automatiquement lors de la remise d&apos;un EPI.
-          </p>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[56rem] text-sm">
-              <thead className="bg-marbre text-left text-xs uppercase tracking-wide text-ardoise">
-                <tr>
-                  <th className="px-2 py-2">Nom</th>
-                  <th className="px-2 py-2">Service</th>
-                  <th className="px-2 py-2">Poste</th>
-                  {categoriesTailles.map((c) => (
-                    <th key={c} className="px-2 py-2">Taille {c.toLowerCase()}</th>
-                  ))}
-                  <th className="px-2 py-2" />
-                </tr>
-              </thead>
-              <tbody>
-                {donnees.salaries.map((s) => (
-                  <tr key={s.id} className="border-t border-pierre/60">
-                    <td className="px-2 py-1.5"><input aria-label="Nom du salarié" value={s.nom} placeholder="Nom" onChange={(e) => majSalarie(s.id, { nom: e.target.value })} className={classeChamp} /></td>
-                    <td className="px-2 py-1.5">
-                      <select aria-label={`Service de ${s.nom || "ce salarié"}`} value={s.service} onChange={(e) => majSalarie(s.id, { service: e.target.value })} className={classeChamp}>
-                        <option value="">—</option>
-                        {donnees.services.map((x) => <option key={x}>{x}</option>)}
-                      </select>
-                    </td>
-                    <td className="px-2 py-1.5"><input aria-label={`Poste de ${s.nom || "ce salarié"}`} value={s.poste} onChange={(e) => majSalarie(s.id, { poste: e.target.value })} className={classeChamp} /></td>
-                    {categoriesTailles.map((c) => (
-                      <td key={c} className="px-2 py-1.5">
-                        <input
-                          value={s.tailles[c] ?? ""}
-                          aria-label={`Taille ${c} de ${s.nom || "ce salarié"}`}
-                          onChange={(e) => majSalarie(s.id, { tailles: { ...s.tailles, [c]: e.target.value } })}
-                          className={`${classeChamp} w-20`}
-                        />
-                      </td>
-                    ))}
-                    <td className="px-2 py-1.5 text-right">
-                      <button type="button" onClick={() => supprimerSalarie(s)} title="Supprimer" className="text-gris hover:text-[#b42318]">✕</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <button type="button" className={classeBoutonSecondaire} onClick={ajouterSalarie}>
-              + Ajouter un salarié
-            </button>
-            {modifiable && (
-              <Link href="/import?type=salaries" className="text-sm text-bronze-fonce underline">
-                Importer une liste depuis Excel
-              </Link>
-            )}
-          </div>
-        </Carte>
+
 
       </fieldset>
 

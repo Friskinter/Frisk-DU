@@ -384,7 +384,7 @@ function Saisie({ donnees, ouvrirCatalogue }: { donnees: Donnees; ouvrirCatalogu
               {!donnees.salaries.length && (
                 <span className="mt-1 block text-xs text-[#b42318]">
                   Aucun salarié enregistré : ajoutez-les dans{" "}
-                  <Link href="/reglages" className="underline">Salariés &amp; réglages</Link>.
+                  <Link href="/salaries" className="underline">Salariés</Link>.
                 </span>
               )}
             </label>

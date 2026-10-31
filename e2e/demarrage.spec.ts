@@ -18,7 +18,7 @@ test.describe("nouvelle entreprise", () => {
     await verifierAccessibilite(page);
 
     await assistant.getByRole("link", { name: "Remplir la fiche →" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Salariés & réglages" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Réglages" })).toBeVisible();
     await page.getByLabel("Adresse").fill("3 rue des Artisans, 69007 Lyon");
     await page.getByLabel("Effectif").fill("6 salariés");
     await page.getByLabel(/Responsable/).fill("Paul Morel, gérant");
@@ -31,7 +31,7 @@ test.describe("nouvelle entreprise", () => {
     await ouvrir(page, "/");
     await page.getByRole("button", { name: "Masquer l'assistant" }).click();
     await expect(page.getByRole("region", { name: "Bien démarrer avec Frisk Plateforme" })).toHaveCount(0);
-    await page.getByRole("link", { name: /Salariés & réglages/ }).click();
+    await page.getByRole("link", { name: /Réglages/ }).click();
     await page.getByRole("button", { name: "Réafficher l'assistant" }).click();
     await page.getByRole("link", { name: /Tableau de bord/ }).click();
     await expect(page.getByRole("region", { name: "Bien démarrer avec Frisk Plateforme" })).toBeVisible();

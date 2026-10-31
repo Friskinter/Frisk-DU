@@ -53,7 +53,7 @@ export function FichesSalaries({ donnees, peutSigner }: { donnees: Donnees; peut
   };
 
   if (!donnees.salaries.length) {
-    return <p className="text-sm text-gris">Ajoutez d&apos;abord vos salariés dans « Salariés & réglages ».</p>;
+    return <p className="text-sm text-gris">Ajoutez d&apos;abord vos salariés dans la page « Salariés ».</p>;
   }
 
   return (

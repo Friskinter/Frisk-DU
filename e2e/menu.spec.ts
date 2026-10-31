@@ -8,7 +8,7 @@ test("le menu est regroupé et toutes ses entrées restent accessibles sur un é
     await expect(menu.getByText(groupe, { exact: true })).toBeVisible();
   }
   // Les dernières entrées étaient coupées en bas de l'écran : le menu défile désormais.
-  for (const entree of ["Salariés & réglages", "Abonnement"]) {
+  for (const entree of ["Réglages", "Abonnement"]) {
     const lien = menu.getByRole("link", { name: entree });
     await lien.scrollIntoViewIfNeeded();
     await expect(lien).toBeInViewport();
