@@ -2,7 +2,7 @@ import { decalerJours } from "../lib/calculs";
 import { donneesDemo } from "../lib/demo";
 import type { Donnees } from "../lib/types";
 
-// Un très gros client, pour vérifier que Frisk Plateforme reste fluide : les éléments de démonstration
+// Un très gros client (avec aussi des risques à réexaminer), pour vérifier que Frisk Plateforme reste fluide : les éléments de démonstration
 // sont recopiés jusqu'au volume voulu (les copies pointent vers les salariés, articles et risques
 // d'origine, qui restent présents).
 const volumes = {
@@ -33,7 +33,11 @@ export function donneesVolumineuses(aujourdhui: string): Donnees {
   return {
     ...d,
     unites: [...d.unites, ...unites],
-    duerp: copier(d.duerp, volumes.duerp, (_, i) => ({ unite: unites[i % unites.length] })),
+    // Un risque sur cinq à réexaminer après un changement signalé dans son unité (lib/reexamen.ts).
+    duerp: copier(d.duerp, volumes.duerp, (_, i) => ({
+      unite: unites[i % unites.length],
+      ...(i % 5 === 0 ? { reexamen: { depuis: decalerJours(aujourdhui, -(i % 30)), motif: "Nouvel équipement ou nouvelle machine" } } : {}),
+    })),
     actions: copier(d.actions, volumes.actions),
     evenements: copier(d.evenements, volumes.evenements, (_, i) => ({ date: decalerJours(aujourdhui, -(i % 700)) })),
     formations: copier(d.formations, volumes.formations),
