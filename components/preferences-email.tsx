@@ -81,7 +81,10 @@ export function PreferencesEmailCompte({ entrepriseId, entreprise, recapitulatif
           />
           <span>
             E-mails immédiats
-            <span className="block text-xs text-gris">Envoyés sur le moment, par exemple lorsqu&apos;un salarié signale un accident ou un danger avec le QR code.</span>
+            <span className="block text-xs text-gris">
+              Un e-mail le matin quand une nouvelle urgence apparaît (accident à déclarer, rupture d&apos;EPI, action en retard…), et sur le
+              moment quand un salarié signale un accident ou un danger avec le QR code.
+            </span>
           </span>
         </label>
       </div>

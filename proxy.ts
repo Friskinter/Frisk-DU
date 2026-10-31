@@ -3,13 +3,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { MODE_TEST } from "@/lib/mode-test";
 import { supabaseClePublique, supabaseUrl } from "@/lib/supabase/config";
 
-// /api/alertes est appelée par le planificateur, sans session : elle vérifie son propre secret.
+// /api/alertes et /api/urgences sont appelées par le planificateur, sans session : elles vérifient leur propre secret.
 // Les pages /legal/ (mentions légales, CGU, confidentialité) sont lisibles sans compte.
 // /signaler/ et /api/signalement : formulaire de signalement des salariés, protégé par le jeton du lien.
 // /inscription : création d'un compte d'essai. /api/stripe/webhook : notifications de Stripe, signées.
 // /api/erreurs : erreurs rencontrées dans le navigateur, y compris avant la connexion.
 // /api/avis : avis clients publiés, lus par le site vitrine Frisk.
-const pagesPubliques = ["/connexion", "/inscription", "/auth/", "/api/alertes", "/legal/", "/signaler/", "/api/signalement", "/api/stripe/webhook", "/api/erreurs", "/api/avis"];
+const pagesPubliques = ["/connexion", "/inscription", "/auth/", "/api/alertes", "/api/urgences", "/legal/", "/signaler/", "/api/signalement", "/api/stripe/webhook", "/api/erreurs", "/api/avis"];
 
 // Rafraîchit la session Supabase et renvoie vers la connexion les visiteurs non connectés.
 export async function proxy(requete: NextRequest) {

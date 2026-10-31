@@ -24,6 +24,8 @@ export type Alerte = {
   // Date concernée (la plus ancienne en retard, ou la plus proche à venir), quand l'alerte en a une :
   // à niveau égal, les alertes sont classées par cette date.
   date?: string;
+  // Éléments concernés (identifiants), pour repérer une urgence nouvelle d'un jour à l'autre (lib/urgences.ts).
+  elements?: string[];
 };
 
 // Lien vers l'élément lui-même quand l'alerte n'en concerne qu'un (la page le met en évidence),
@@ -56,7 +58,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
     const echeance = decalerJours(derniereVersion, 365);
     if (echeance < aujourdhui) {
       alertes.push({
-        id: "version-depassee", gravite: "critique", categorie: "DUERP", lien: "/duerp",
+        id: "version-depassee", gravite: "critique", elements: [derniereVersion], categorie: "DUERP", lien: "/duerp",
         titre: "Mise à jour annuelle du DUERP dépassée",
         detail: `La dernière version date du ${formaterDate(derniereVersion)} ; la mise à jour était due le ${formaterDate(echeance)}.`,
       });
@@ -74,7 +76,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const enRetard = actions.filter((a) => actionEnRetard(a, aujourdhui));
   if (enRetard.length) {
     alertes.push({
-      id: "actions-retard", gravite: "critique", categorie: "DUERP", lien: lienUnique("/actions", "action", enRetard.map((a) => a.id)), date: plusTot(enRetard.map((a) => a.echeance)),
+      id: "actions-retard", gravite: "critique", elements: enRetard.map((a) => a.id), categorie: "DUERP", lien: lienUnique("/actions", "action", enRetard.map((a) => a.id)), date: plusTot(enRetard.map((a) => a.echeance)),
       titre: `${pluriel(enRetard.length, "action")} de prévention en retard`,
       detail: liste(enRetard.map((a) => `${a.intitule || "Action sans intitulé"} (${formaterDate(a.echeance)})`)),
     });
@@ -95,7 +97,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   );
   if (critiquesSansAction.length) {
     alertes.push({
-      id: "critiques-sans-action", gravite: "critique", categorie: "DUERP", lien: "/duerp",
+      id: "critiques-sans-action", gravite: "critique", elements: critiquesSansAction.map((l) => l.id), categorie: "DUERP", lien: "/duerp",
       titre: `${pluriel(critiquesSansAction.length, "risque")} critique${critiquesSansAction.length > 1 ? "s" : ""} sans action prévue`,
       detail: liste(critiquesSansAction.map((l) => `${l.danger || l.activite} (${l.unite})`)),
     });
@@ -131,7 +133,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   if (aDeclarer.length) {
     const retard = aDeclarer.filter((e) => declarationEnRetard(e, aujourdhui));
     alertes.push({
-      id: "accidents-a-declarer", gravite: "critique", categorie: "Accidents", lien: lienEvenement(aDeclarer),
+      id: "accidents-a-declarer", gravite: "critique", elements: aDeclarer.map((e) => e.id), categorie: "Accidents", lien: lienEvenement(aDeclarer),
       titre: `${pluriel(aDeclarer.length, "accident")} à déclarer à la CPAM${retard.length ? ` (dont ${retard.length} hors délai)` : ""}`,
       detail: `Déclaration dans les 48 heures : ${liste(aDeclarer.map((e) => `${nomEvenement(e)}, avant le ${formaterDate(echeanceDeclaration(e))}`))}.`,
     });
@@ -175,7 +177,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const manquantes = formationsManquantes({ ...donnees, formations: donnees.formations ?? [], exigences: donnees.exigences ?? [] }, aujourdhui);
   if (manquantes.length) {
     alertes.push({
-      id: "formations-manquantes", gravite: "critique", categorie: "Formations", lien: "/formations",
+      id: "formations-manquantes", gravite: "critique", elements: manquantes.map((m) => `${m.salarie.id}:${m.type}`), categorie: "Formations", lien: "/formations",
       titre: `${pluriel(manquantes.length, "formation")} exigée${manquantes.length > 1 ? "s" : ""} pour le poste manquante${manquantes.length > 1 ? "s" : ""} ou expirée${manquantes.length > 1 ? "s" : ""}`,
       detail: liste(manquantes.map((m) => `${m.salarie.nom || "Salarié sans nom"} : ${typeFormation(m.type).court}${m.expiree ? " (expirée)" : ""}`)),
     });
@@ -218,7 +220,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const nonConformes = equipements.filter((e) => derniereVerification(verifications, e.id)?.resultat === "non-conforme");
   if (nonConformes.length) {
     alertes.push({
-      id: "verifications-non-conformes", gravite: "critique", categorie: "Vérifications", lien: lienUnique("/verifications", "equipement", nonConformes.map((e) => e.id)),
+      id: "verifications-non-conformes", gravite: "critique", elements: nonConformes.map((e) => `${e.id}:${derniereVerification(verifications, e.id)?.date}`), categorie: "Vérifications", lien: lienUnique("/verifications", "equipement", nonConformes.map((e) => e.id)),
       titre: `${pluriel(nonConformes.length, "équipement")} non conforme${nonConformes.length > 1 ? "s" : ""} lors de la dernière vérification`,
       detail: `Remettre en conformité ou retirer du service : ${liste(nonConformes.map(nomEquipement))}.`,
     });
@@ -226,7 +228,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const enRetardVerif = equipements.filter((e) => etatEquipement(verifications, e, aujourdhui) === "en-retard");
   if (enRetardVerif.length) {
     alertes.push({
-      id: "verifications-retard", gravite: "critique", categorie: "Vérifications", lien: lienUnique("/verifications", "equipement", enRetardVerif.map((e) => e.id)),
+      id: "verifications-retard", gravite: "critique", elements: enRetardVerif.map((e) => `${e.id}:${derniereVerification(verifications, e.id)?.prochaine}`), categorie: "Vérifications", lien: lienUnique("/verifications", "equipement", enRetardVerif.map((e) => e.id)),
       date: plusTot(enRetardVerif.map((e) => derniereVerification(verifications, e.id)?.prochaine)),
       titre: `${pluriel(enRetardVerif.length, "vérification")} périodique${enRetardVerif.length > 1 ? "s" : ""} en retard`,
       detail: liste(enRetardVerif.map((e) => `${nomEquipement(e)} (${formaterDate(derniereVerification(verifications, e.id)!.prochaine)})`)),
@@ -269,7 +271,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const cmrADocumenter = produits.filter((p) => estCmr(p) && (!p.substitution.trim() || !p.salariesExposes.length));
   if (cmrADocumenter.length) {
     alertes.push({
-      id: "chimie-cmr", gravite: "critique", categorie: "Produits chimiques", lien: lienUnique("/produits", "produit", cmrADocumenter.map((p) => p.id)),
+      id: "chimie-cmr", gravite: "critique", elements: cmrADocumenter.map((p) => p.id), categorie: "Produits chimiques", lien: lienUnique("/produits", "produit", cmrADocumenter.map((p) => p.id)),
       titre: `${pluriel(cmrADocumenter.length, "produit")} CMR à documenter`,
       detail: `Recherche de substitution et liste des salariés exposés (suivi médical renforcé) : ${liste(cmrADocumenter.map(nomProduit))}.`,
     });
@@ -309,7 +311,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const enCoursObligatoires = enCours.filter(planEcritObligatoire);
   if (enCoursObligatoires.length) {
     alertes.push({
-      id: "interventions-sans-plan", gravite: "critique", categorie: "Entreprises extérieures", lien: lienIntervention(enCoursObligatoires),
+      id: "interventions-sans-plan", gravite: "critique", elements: enCoursObligatoires.map((i) => i.id), categorie: "Entreprises extérieures", lien: lienIntervention(enCoursObligatoires),
       titre: `${pluriel(enCoursObligatoires.length, "intervention")} en cours sans plan de prévention signé`,
       detail: `Plan écrit obligatoire (400 heures ou travaux dangereux, art. R4512-7) : ${liste(enCoursObligatoires.map(nomEE))}.`,
     });
@@ -351,7 +353,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const protocolesActifs = protocoles.filter((p) => actifOuProche(p, aujourdhui) && nonPret(p));
   if (protocolesActifs.length) {
     alertes.push({
-      id: "protocoles-non-signes", gravite: "critique", categorie: "Entreprises extérieures", lien: lienProtocole(protocolesActifs),
+      id: "protocoles-non-signes", gravite: "critique", elements: protocolesActifs.map((p) => p.id), categorie: "Entreprises extérieures", lien: lienProtocole(protocolesActifs),
       titre: `${pluriel(protocolesActifs.length, "protocole")} de sécurité non signé${protocolesActifs.length > 1 ? "s" : ""} pour des opérations en cours`,
       detail: `Chargements et déchargements sans protocole écrit et signé (art. R4515-4) : ${liste(protocolesActifs.map(nomT))}.`,
     });
@@ -409,7 +411,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   if (nonAccueillis.length) {
     const renforces = nonAccueillis.filter(formationRenforcee);
     alertes.push({
-      id: "accueils-a-faire", gravite: "critique", categorie: "Accueil et causeries", lien: lienAccueil(nonAccueillis),
+      id: "accueils-a-faire", gravite: "critique", elements: nonAccueillis.map((a) => a.id), categorie: "Accueil et causeries", lien: lienAccueil(nonAccueillis),
       titre: `${nonAccueillis.length} ${nonAccueillis.length > 1 ? "nouveaux arrivants" : "nouvel arrivant"} sans accueil sécurité`,
       detail:
         `À faire avant la prise de poste (art. R4141-2) : ${liste(nonAccueillis.map((a) => nomArrivant(a, donnees)))}.` +
@@ -439,7 +441,7 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const ruptures = stocks.filter((s) => s.etat === "rupture");
   if (ruptures.length) {
     alertes.push({
-      id: "stocks-rupture", gravite: "critique", categorie: "EPI", lien: lienUnique("/epi", "article", ruptures.map((s) => s.article.id)),
+      id: "stocks-rupture", gravite: "critique", elements: ruptures.map((s) => `${s.article.id}:${s.taille}`), categorie: "EPI", lien: lienUnique("/epi", "article", ruptures.map((s) => s.article.id)),
       titre: `${pluriel(ruptures.length, "référence")} d'EPI en rupture`,
       detail: liste(ruptures.map((s) => `${s.article.nom} (${s.taille})`)),
     });
