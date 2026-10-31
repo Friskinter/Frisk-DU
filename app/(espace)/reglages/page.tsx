@@ -22,7 +22,7 @@ const categoriesTailles = ["Mains", "Pieds", "Corps", "Haute visibilité"];
 
 const ficheVide: FicheEntreprise = { siret: "", adresse: "", activite: "", effectif: "", responsable: "" };
 
-const champsFiche: { cle: keyof FicheEntreprise; libelle: string; exemple: string }[] = [
+const champsFiche: { cle: Exclude<keyof FicheEntreprise, "profil">; libelle: string; exemple: string }[] = [
   { cle: "siret", libelle: "SIRET", exemple: "123 456 789 00012" },
   { cle: "adresse", libelle: "Adresse", exemple: "12 rue des Lilas, 69000 Lyon" },
   { cle: "activite", libelle: "Activité (et code NAF)", exemple: "Entreposage et stockage (52.10B)" },

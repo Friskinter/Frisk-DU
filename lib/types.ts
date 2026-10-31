@@ -349,6 +349,19 @@ export type FicheEntreprise = {
   effectif: string;
   responsable: string; // employeur ou personne qui établit le document
   heures?: string; // heures travaillées sur 12 mois, pour les taux de fréquence et de gravité
+  profil?: ProfilEntreprise; // réponses du questionnaire « Mon parcours QHSE » (lib/parcours.ts)
+};
+
+// « oui », « non » ou « je ne sais pas » : une réponse « non » n'écarte jamais un sujet, elle le
+// présente comme une piste à vérifier.
+export type ReponseProfil = "oui" | "non" | "nsp";
+
+export type ProfilEntreprise = {
+  secteur?: string; // domaine d'activité du DUERP express (lib/bibliotheque.ts), ou "autre"
+  tranche?: "1-10" | "11-49" | "50-249" | "250+";
+  exterieurs?: ReponseProfil; // intérimaires, stagiaires, sous-traitants ou transporteurs
+  chimiques?: ReponseProfil; // produits chimiques, y compris d'entretien
+  equipements?: ReponseProfil; // équipements ou installations à faire vérifier
 };
 
 export type Donnees = {

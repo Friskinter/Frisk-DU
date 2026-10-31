@@ -1,41 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { classeBouton } from "@/components/ui";
+import { dateDuJour } from "@/lib/calculs";
+import { useContexteParcours } from "@/lib/contexte-parcours";
 import { etapesDemarrage, suggestionsDemarrage } from "@/lib/demarrage";
-import { MODE_TEST } from "@/lib/mode-test";
+import { calculerParcours, questionsSansReponse } from "@/lib/parcours";
 import { modifier, peutModifier, useSession } from "@/lib/stockage";
-import { supabaseNavigateur } from "@/lib/supabase/client";
 import type { Donnees } from "@/lib/types";
-import { useVersions } from "@/lib/versions";
 
 // « Bien démarrer avec Frisk Plateforme » : visible du responsable tant que la mise en place n'est pas finie.
 export function AssistantDemarrage({ donnees }: { donnees: Donnees }) {
   const session = useSession();
-  const { versions, chargement, erreur } = useVersions(session.entrepriseId);
-  const [lienActif, setLienActif] = useState<boolean | undefined>(MODE_TEST ? true : undefined);
+  const contexte = useContexteParcours();
 
-  useEffect(() => {
-    if (MODE_TEST || !session.entrepriseId) return;
-    let actif = true;
-    supabaseNavigateur()
-      .from("entreprises")
-      .select("jeton_signalement")
-      .eq("id", session.entrepriseId)
-      .maybeSingle()
-      .then(({ data, error }: { data: { jeton_signalement: string | null } | null; error: unknown }) => {
-        if (actif && !error) setLienActif(!!data?.jeton_signalement);
-      });
-    return () => {
-      actif = false;
-    };
-  }, [session.entrepriseId]);
-
-  if (!peutModifier(session.role, "tout") || donnees.preferences?.assistantMasque) return null;
-  const etapes = etapesDemarrage(donnees, { versions: chargement || erreur ? undefined : versions.length, lienActif });
+  // Assistant masqué, mise en place terminée ou lecture seule : un simple rappel du parcours.
+  const etapes = etapesDemarrage(donnees, contexte);
   const faites = etapes.filter((e) => e.faite).length;
-  if (faites === etapes.length) return null;
+  if (!peutModifier(session.role, "tout") || donnees.preferences?.assistantMasque || faites === etapes.length) {
+    return <ResumeParcours donnees={donnees} contexte={contexte} />;
+  }
   const prochaine = etapes.find((e) => !e.faite)!;
   const suggestions = suggestionsDemarrage(donnees);
 
@@ -85,6 +69,14 @@ export function AssistantDemarrage({ donnees }: { donnees: Donnees }) {
           </li>
         ))}
       </ol>
+      <p className="border-t border-pierre/60 px-4 py-3 text-sm">
+        {questionsSansReponse(donnees.fiche?.profil) > 0 && (
+          <span className="text-ardoise">Répondez à cinq questions sur votre entreprise pour un parcours adapté. </span>
+        )}
+        <Link href="/parcours" className="font-medium text-bronze-fonce underline">
+          Voir mon parcours QHSE complet →
+        </Link>
+      </p>
       {suggestions.length > 0 && (
         <p className="border-t border-pierre/60 px-4 py-3 text-xs text-ardoise">
           Pour aller plus loin :{" "}
@@ -97,5 +89,24 @@ export function AssistantDemarrage({ donnees }: { donnees: Donnees }) {
         </p>
       )}
     </section>
+  );
+}
+
+// Rappel discret du parcours quand l'assistant n'est plus affiché, tant qu'il reste des étapes.
+function ResumeParcours({ donnees, contexte }: { donnees: Donnees; contexte: ReturnType<typeof useContexteParcours> }) {
+  const parcours = calculerParcours(donnees, { aujourdhui: dateDuJour(), ...contexte });
+  if (!parcours.prochaine) return null;
+  return (
+    <Link
+      href="/parcours"
+      className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-sm border border-pierre/70 bg-white px-4 py-3 text-sm hover:border-bronze"
+    >
+      <span className="font-medium">Mon parcours QHSE : {parcours.pourcentage} %</span>
+      <span className="h-1.5 w-28 overflow-hidden rounded-full bg-marbre" aria-hidden>
+        <span className="block h-full bg-bronze" style={{ width: `${parcours.pourcentage}%` }} />
+      </span>
+      <span className="min-w-0 flex-1 text-ardoise">Prochaine étape : {parcours.prochaine.titre}</span>
+      <span aria-hidden className="text-gris">→</span>
+    </Link>
   );
 }
