@@ -404,7 +404,12 @@ function PointVisite({ visite: v, reponse: r, donnees, verrouille }: { visite: V
       if (r.photo) void supprimerAttestation(r.photo.chemin);
       majReponse(v.id, r.id, { photo });
     } catch (e) {
-      setErreur(e instanceof Error ? e.message : "L'envoi de la photo a échoué.");
+      // Les photos partent directement vers le stockage en ligne : sans réseau, elles attendent qu'on les rajoute.
+      setErreur(
+        !navigator.onLine
+          ? "Pas de réseau : la photo ne peut pas être envoyée pour l'instant. Ajoutez-la au retour du réseau ; le reste de la visite est gardé sur cet appareil."
+          : e instanceof Error ? e.message : "L'envoi de la photo a échoué.",
+      );
     }
   };
 

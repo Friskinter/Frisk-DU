@@ -49,6 +49,11 @@ const nextConfig: NextConfig = {
   },
   cacheComponents: true,
   partialPrefetching: true,
+  experimental: {
+    // Sans réseau (visite sur le terrain), passer d'une page à l'autre attend le retour du réseau au lieu
+    // d'échouer : les pages du menu, préchargées, s'affichent avec les données déjà en mémoire.
+    useOffline: true,
+  },
   turbopack: {
     rules: {
       "*.css": {

@@ -9,7 +9,8 @@ import { useSyncExternalStore } from "react";
 import { normaliser } from "./donnees";
 import { VERSION_CONDITIONS } from "./legal";
 import { accesEntreprise, operationPermiseEssai, type Acces, type Periodicite, type StatutAbonnement } from "./abonnement";
-import { CLE_ABONNEMENT_TEST, CLE_DONNEES_TEST, CLE_ROLE_TEST, MODE_TEST } from "./mode-test";
+import { ajouterAFile, lireFile, memoriserFile } from "./file-attente";
+import { CLE_ABONNEMENT_TEST, CLE_DONNEES_TEST, CLE_HORS_LIGNE_TEST, CLE_ROLE_TEST, MODE_TEST } from "./mode-test";
 import { dateDuJour } from "./calculs";
 import { donneesDemo, donneesVides } from "./demo";
 import { rechargerVers } from "./navigation";
@@ -37,7 +38,9 @@ export type Statut =
   | "base-a-mettre-a-jour" // migration Supabase manquante
   | "erreur";
 
-export type Enregistrement = "enregistre" | "en-cours" | "erreur" | "refuse";
+// « hors-ligne » : envoi impossible, modifications gardées sur l'appareil ; « erreur » : envoi impossible et
+// rien n'a pu être gardé (stockage du navigateur plein ou bloqué) : fermer la page les perdrait.
+export type Enregistrement = "enregistre" | "en-cours" | "hors-ligne" | "erreur" | "refuse";
 
 export type Abonnement = {
   statut: StatutAbonnement;
@@ -83,6 +86,8 @@ let session: Session = {
 // Opérations pas encore envoyées, et celles en cours d'envoi.
 let enAttente: Operation[] = [];
 let enCours: Operation[] = [];
+// La file est-elle gardée sur l'appareil (voir lib/file-attente.ts) ?
+let fileMemorisee = true;
 let minuteur: ReturnType<typeof setTimeout> | null = null;
 let relecture: ReturnType<typeof setTimeout> | null = null;
 const garde = gardeRelecture();
@@ -138,8 +143,9 @@ async function charger() {
     publier({
       statut: "pret", email: "test@frisk.fr", admin: false, role: abonnement.acces === "lecture" ? "lecteur" : roleCompte, roleCompte, abonnement,
       entrepriseId: "00000000-0000-0000-0000-000000000000",
-      donnees: donnees ? normaliser(JSON.parse(donnees)) : donneesDemo(dateDuJour()),
+      donnees: restaurerFile(donnees ? normaliser(JSON.parse(donnees)) : donneesDemo(dateDuJour()), "00000000-0000-0000-0000-000000000000", "test@frisk.fr"),
     });
+    reprendreEnvoi();
     return;
   }
   const supabase = supabaseNavigateur();
@@ -262,8 +268,9 @@ async function charger() {
     entrepriseId,
     groupe,
     espaces,
-    donnees: contenu ? normaliser(contenu) : { ...donneesVides(), entreprise: entreprise.nom },
+    donnees: restaurerFile(contenu ? normaliser(contenu) : { ...donneesVides(), entreprise: entreprise.nom }, entrepriseId, email),
   });
+  reprendreEnvoi();
   ecouterCollegues(entrepriseId);
 }
 
@@ -314,6 +321,35 @@ function ecouterCollegues(entrepriseId: string) {
   });
 }
 
+// Modifications laissées sur l'appareil lors d'une visite précédente (réseau coupé, page fermée) :
+// réappliquées sur la dernière version enregistrée, puis envoyées.
+function restaurerFile(donnees: Donnees, entrepriseId: string, email: string) {
+  enAttente = lireFile(entrepriseId, email);
+  return enAttente.length ? appliquerOperations(donnees, enAttente) : donnees;
+}
+
+function reprendreEnvoi() {
+  if (enAttente.length) {
+    publier({ enregistrement: "en-cours" });
+    planifierEnvoi(0);
+  }
+  // Retour du réseau : on envoie aussitôt, sans attendre le prochain essai.
+  window.addEventListener("online", () => {
+    if (enAttente.length && !enCours.length) planifierEnvoi(0);
+  });
+}
+
+function garderFile() {
+  if (session.entrepriseId) fileMemorisee = memoriserFile(session.entrepriseId, session.email, [...enCours, ...enAttente]);
+}
+
+// Mode de test : rien n'est envoyé ; une coupure du réseau (navigateur hors ligne, ou CLE_HORS_LIGNE_TEST)
+// fait échouer l'envoi comme en vrai.
+function envoiSimule() {
+  const horsLigne = !navigator.onLine || localStorage.getItem(CLE_HORS_LIGNE_TEST) === "1";
+  return { error: horsLigne ? { code: "reseau", message: "Réseau indisponible" } : null };
+}
+
 function planifierEnvoi(delai = DELAI_ENREGISTREMENT) {
   if (minuteur) clearTimeout(minuteur);
   minuteur = setTimeout(envoyer, delai);
@@ -322,19 +358,16 @@ function planifierEnvoi(delai = DELAI_ENREGISTREMENT) {
 async function envoyer() {
   minuteur = null;
   if (enCours.length || !enAttente.length || !session.entrepriseId) return;
-  if (MODE_TEST) {
-    enAttente = [];
-    publier({ enregistrement: "enregistre" });
-    return;
-  }
   enCours = enAttente.slice(0, OPERATIONS_PAR_ENVOI);
   enAttente = enAttente.slice(OPERATIONS_PAR_ENVOI);
 
-  const { error } = await supabaseNavigateur().rpc("appliquer_operations", {
-    p_entreprise: session.entrepriseId,
-    p_operations: enCours,
-    p_client: client,
-  });
+  const { error } = MODE_TEST
+    ? envoiSimule()
+    : await supabaseNavigateur().rpc("appliquer_operations", {
+        p_entreprise: session.entrepriseId,
+        p_operations: enCours,
+        p_client: client,
+      });
 
   if (error?.code === "42501" || error?.code === "22023") {
     // Droits insuffisants ou modification rejetée par la base : la renvoyer échouerait toujours et
@@ -342,22 +375,24 @@ async function envoyer() {
     if (error.code === "22023") console.error("Modification rejetée par la base", error.message, enCours);
     enCours = [];
     enAttente = [];
+    garderFile();
     publier({ enregistrement: "refuse" });
     const contenu = await lireContenu(session.entrepriseId);
     if (contenu) publier({ donnees: normaliser(contenu) });
     return;
   }
   if (error) {
-    // Coupure réseau ou erreur passagère : nouvel essai, sans rien perdre.
+    // Coupure réseau ou erreur passagère : nouvel essai, sans rien perdre (la file reste sur l'appareil).
     enAttente = [...enCours, ...enAttente];
     enCours = [];
-    publier({ enregistrement: "erreur" });
+    publier({ enregistrement: fileMemorisee ? "hors-ligne" : "erreur" });
     planifierEnvoi(DELAI_NOUVEL_ESSAI);
     return;
   }
 
   garde.confirmer();
   enCours = [];
+  garderFile();
   if (enAttente.length) planifierEnvoi(0);
   else if (!minuteur) publier({ enregistrement: "enregistre" });
 }
@@ -372,8 +407,10 @@ export function modifier(transformation: (d: Donnees) => Donnees) {
     publier({ enregistrement: "refuse" });
     return;
   }
-  enAttente.push(...ops);
-  publier({ donnees: suivant, enregistrement: "en-cours" });
+  enAttente = ajouterAFile(enAttente, ops);
+  garderFile();
+  // Déjà hors ligne : on le reste jusqu'au prochain essai, plutôt que d'afficher « Enregistrement… ».
+  publier({ donnees: suivant, enregistrement: session.enregistrement === "hors-ligne" && fileMemorisee ? "hors-ligne" : "en-cours" });
   planifierEnvoi();
 }
 
@@ -386,8 +423,9 @@ export function etablissementsDuGroupe(session: Pick<Session, "groupe" | "espace
   return session.groupe ? session.espaces.filter((e) => e.groupeId === session.groupe!.id) : [];
 }
 
+// Modifications qui seraient perdues en fermant la page (celles gardées sur l'appareil ne le sont pas).
 export function enregistrementEnAttente() {
-  return enAttente.length > 0 || enCours.length > 0;
+  return (enAttente.length > 0 || enCours.length > 0) && !fileMemorisee;
 }
 
 export function ouvrirEntreprise(id: string) {
