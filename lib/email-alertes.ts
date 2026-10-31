@@ -1,5 +1,6 @@
 import { formaterDate } from "./calculs";
 import type { Alerte } from "./alertes";
+import type { Role } from "./operations";
 
 const couleurs: Record<Alerte["gravite"], string> = { critique: "#d03b3b", importante: "#ec835a", info: "#b08d57" };
 const libelles: Record<Alerte["gravite"], string> = { critique: "Urgent", importante: "À traiter", info: "À surveiller" };
@@ -7,8 +8,27 @@ const libelles: Record<Alerte["gravite"], string> = { critique: "Urgent", import
 const echapper = (t: string) =>
   t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+// Le contenu des e-mails dépend du rôle de la personne : le responsable reçoit tout le détail, le
+// contributeur le détail de ce qu'il peut traiter (les EPI), le lecteur seulement les titres. Les
+// titres ne donnent que des nombres ; le détail peut citer des salariés, des produits ou des dates.
+export function alerteTraitable(a: Alerte, role: Role) {
+  if (role === "admin" || role === "responsable") return true;
+  return role === "contributeur" && a.categorie === "EPI";
+}
+
+const detailVisible = (a: Alerte, role: Role) => alerteTraitable(a, role) && a.detail;
+
+// Mention ajoutée en bas de l'e-mail quand une partie du détail a été retirée.
+function mentionResume(alertes: Alerte[], role: Role) {
+  if (alertes.every((a) => alerteTraitable(a, role))) return "";
+  return role === "contributeur"
+    ? "Le détail n'est donné que pour les EPI, que vous gérez. Le reste est suivi par les responsables de votre entreprise."
+    : "Version résumée : le détail est réservé aux responsables de votre entreprise.";
+}
+
 // Contenu de l'e-mail de récapitulatif hebdomadaire.
-export function emailAlertes(entreprise: string, alertes: Alerte[], aujourdhui: string, urlApplication: string) {
+export function emailAlertes(entreprise: string, alertes: Alerte[], aujourdhui: string, urlApplication: string, role: Role = "responsable") {
+  const mention = mentionResume(alertes, role);
   const sujet = `Frisk Plateforme · ${entreprise} : ${alertes.length} point${alertes.length > 1 ? "s" : ""} à traiter`;
   const lignes = alertes
     .map(
@@ -17,7 +37,7 @@ export function emailAlertes(entreprise: string, alertes: Alerte[], aujourdhui: 
         <span style="display:inline-block;padding:2px 8px;border-radius:10px;background:${couleurs[a.gravite]};color:#fff;font-size:12px">${libelles[a.gravite]}</span>
         <span style="color:#6b645b;font-size:12px">&nbsp;${echapper(a.categorie)}</span>
         <div style="margin-top:6px;font-weight:bold">${echapper(a.titre)}</div>
-        <div style="color:#3a3530">${echapper(a.detail)}</div>
+        ${detailVisible(a, role) ? `<div style="color:#3a3530">${echapper(a.detail)}</div>` : ""}
         <a href="${urlApplication}${a.lien}" style="color:#7f6235;font-size:13px">Ouvrir dans Frisk Plateforme →</a>
       </td></tr>`,
     )
@@ -32,6 +52,7 @@ export function emailAlertes(entreprise: string, alertes: Alerte[], aujourdhui: 
       </td></tr>
       <tr><td style="padding:8px 24px 24px">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${lignes}</table>
+        ${mention ? `<p style="margin-top:16px;font-size:13px;color:#3a3530">${echapper(mention)}</p>` : ""}
         <p style="margin-top:24px;font-size:12px;color:#6b645b">
           Vous recevez cet e-mail chaque lundi en tant qu'utilisateur de Frisk Plateforme. Pour ne plus le recevoir,
           décochez « Récapitulatif du lundi » dans « Mon compte ».
@@ -43,7 +64,8 @@ export function emailAlertes(entreprise: string, alertes: Alerte[], aujourdhui: 
   const texte = [
     `Frisk Plateforme · ${entreprise} · récapitulatif du ${formaterDate(aujourdhui)}`,
     "",
-    ...alertes.map((a) => `- [${libelles[a.gravite]}] ${a.titre} : ${a.detail}`),
+    ...alertes.map((a) => `- [${libelles[a.gravite]}] ${a.titre}${detailVisible(a, role) ? ` : ${a.detail}` : ""}`),
+    ...(mention ? ["", mention] : []),
     "",
     `Ouvrir Frisk Plateforme : ${urlApplication}`,
   ].join("\n");
@@ -52,7 +74,8 @@ export function emailAlertes(entreprise: string, alertes: Alerte[], aujourdhui: 
 }
 
 // E-mail du matin : les urgences apparues depuis la veille (lib/urgences.ts).
-export function emailUrgences(entreprise: string, alertes: Alerte[], aujourdhui: string, urlApplication: string) {
+export function emailUrgences(entreprise: string, alertes: Alerte[], aujourdhui: string, urlApplication: string, role: Role = "responsable") {
+  const mention = mentionResume(alertes, role);
   const n = alertes.length;
   const sujet = `Frisk Plateforme · ${entreprise} : ${n > 1 ? `${n} nouvelles urgences` : "nouvelle urgence"}`;
   const lignes = alertes
@@ -61,7 +84,7 @@ export function emailUrgences(entreprise: string, alertes: Alerte[], aujourdhui:
       <tr><td style="padding:12px 0;border-bottom:1px solid #ece6dc">
         <span style="color:#6b645b;font-size:12px">${echapper(a.categorie)}</span>
         <div style="margin-top:4px;font-weight:bold">${echapper(a.titre)}</div>
-        <div style="color:#3a3530">${echapper(a.detail)}</div>
+        ${detailVisible(a, role) ? `<div style="color:#3a3530">${echapper(a.detail)}</div>` : ""}
         <a href="${urlApplication}${a.lien}" style="color:#7f6235;font-size:13px">Ouvrir dans Frisk Plateforme →</a>
       </td></tr>`,
     )
@@ -76,6 +99,7 @@ export function emailUrgences(entreprise: string, alertes: Alerte[], aujourdhui:
       </td></tr>
       <tr><td style="padding:8px 24px 24px">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${lignes}</table>
+        ${mention ? `<p style="margin-top:16px;font-size:13px;color:#3a3530">${echapper(mention)}</p>` : ""}
         <p style="margin-top:24px;font-size:12px;color:#6b645b">
           Vous recevez cet e-mail quand une urgence apparaît, au plus une fois par jour. Pour ne plus le recevoir,
           décochez « E-mails immédiats » dans « Mon compte ».
@@ -86,7 +110,8 @@ export function emailUrgences(entreprise: string, alertes: Alerte[], aujourdhui:
   const texte = [
     `Frisk Plateforme · ${entreprise} · ${n > 1 ? `${n} nouvelles urgences` : "nouvelle urgence"} (${formaterDate(aujourdhui)})`,
     "",
-    ...alertes.map((a) => `- ${a.titre} : ${a.detail}\n  ${urlApplication}${a.lien}`),
+    ...alertes.map((a) => `- ${a.titre}${detailVisible(a, role) ? ` : ${a.detail}` : ""}\n  ${urlApplication}${a.lien}`),
+    ...(mention ? ["", mention] : []),
     "",
     "Pour ne plus recevoir ces e-mails : « Mon compte » dans Frisk Plateforme.",
   ].join("\n");

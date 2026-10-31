@@ -52,8 +52,8 @@ vi.mock("@/lib/supabase/serveur", () => ({
                   id: "e1",
                   nom: "Entreprise 1",
                   membres: [
-                    { user_id: "a", email: "patron@e1.fr" },
-                    { user_id: "b", email: "salarie@e1.fr" },
+                    { user_id: "a", email: "patron@e1.fr", role: "responsable" },
+                    { user_id: "b", email: "salarie@e1.fr", role: "lecteur" },
                   ],
                   espaces: { contenu: etat.contenu },
                   versions: [{ created_at: "2026-09-01T10:00:00Z" }],
@@ -89,6 +89,7 @@ const accident = (id: string) => ({ id, date: "2026-10-30", type: "accident-trav
 
 describe("tâche du matin des urgences", () => {
   let envois: { to: string; subject: string }[];
+  let textes: Record<string, string>;
   const appel = () => GET(new Request("https://du.frisk.fr/api/urgences", { headers: { authorization: "Bearer secret" } }));
 
   beforeEach(() => {
@@ -96,9 +97,11 @@ describe("tâche du matin des urgences", () => {
     vi.stubEnv("RESEND_API_KEY", "re_test");
     vi.stubEnv("ALERTES_EXPEDITEUR", "Frisk Plateforme <alertes@frisk.fr>");
     envois = [];
+    textes = {};
     vi.stubGlobal("fetch", async (_url: string, options: { body: string }) => {
       const corps = JSON.parse(options.body);
       envois.push({ to: corps.to, subject: corps.subject });
+      textes[corps.to] = corps.text;
       return new Response("{}");
     });
     etat.signalees = [];
@@ -131,6 +134,15 @@ describe("tâche du matin des urgences", () => {
     await appel();
     expect(envois).toEqual([]);
     expect(etat.signalees).toEqual([]);
+  });
+
+  it("donne le détail au responsable et un résumé au lecteur", async () => {
+    etat.preferences = [];
+    await appel();
+    expect(envois.map((e) => e.to)).toEqual(["patron@e1.fr", "salarie@e1.fr"]);
+    expect(textes["patron@e1.fr"]).not.toContain("Version résumée");
+    expect(textes["salarie@e1.fr"]).toContain("Version résumée : le détail est réservé aux responsables");
+    expect(textes["salarie@e1.fr"].length).toBeLessThan(textes["patron@e1.fr"].length);
   });
 
   it("en aperçu, n'envoie rien et ne retient rien", async () => {

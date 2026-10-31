@@ -2,7 +2,7 @@ import { calculerAlertes } from "@/lib/alertes";
 import { dateDuJour } from "@/lib/calculs";
 import { normaliser } from "@/lib/donnees";
 import { emailAlertes } from "@/lib/email-alertes";
-import { destinataires as destinatairesSelon } from "@/lib/preferences-email";
+import { destinatairesAvecRole } from "@/lib/preferences-email";
 import { supabaseAdmin } from "@/lib/supabase/serveur";
 import type { Donnees } from "@/lib/types";
 
@@ -30,7 +30,7 @@ export async function GET(requete: Request) {
 
   const { data: entreprises, error } = await admin
     .from("entreprises")
-    .select("id, nom, membres(user_id, email), espaces(contenu), versions(created_at)")
+    .select("id, nom, membres(user_id, email, role), espaces(contenu), versions(created_at)")
     .eq("actif", true);
   if (error) return Response.json({ erreur: "Lecture des entreprises impossible." }, { status: 500 });
   // Préférences de chaque personne (récapitulatif du lundi oui ou non).
@@ -46,7 +46,8 @@ export async function GET(requete: Request) {
 
   for (const e of entreprises ?? []) {
     const donnees = (e.espaces as unknown as { contenu: Donnees } | null)?.contenu;
-    const destinataires = destinatairesSelon((e.membres ?? []) as { user_id: string; email: string }[], e.id, preferences ?? [], "recapitulatif");
+    const pour = destinatairesAvecRole((e.membres ?? []) as { user_id: string; email: string; role: string }[], e.id, preferences ?? [], "recapitulatif");
+    const destinataires = pour.map((d) => d.email);
     if (!donnees || !destinataires.length || donnees.preferences?.alertesEmail === false) continue;
 
     const dates = ((e.versions ?? []) as { created_at: string }[]).map((v) => v.created_at.slice(0, 10)).sort();
@@ -55,10 +56,11 @@ export async function GET(requete: Request) {
 
     let envoye = false;
     if (!apercu) {
-      const { sujet, html, texte } = emailAlertes(e.nom, alertes, aujourdhui, urlApplication);
-      // Un e-mail par destinataire : les adresses des collègues ne sont pas dévoilées.
+      // Un e-mail par destinataire : les adresses des collègues ne sont pas dévoilées, et le
+      // contenu suit le rôle de chacun (détail complet pour les responsables).
       envoye = true;
-      for (const to of destinataires) {
+      for (const { email: to, role } of pour) {
+        const { sujet, html, texte } = emailAlertes(e.nom, alertes, aujourdhui, urlApplication, role);
         const reponse = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: { Authorization: `Bearer ${cleResend}`, "Content-Type": "application/json" },
