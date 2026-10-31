@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { calculerAlertes, type Alerte } from "@/lib/alertes";
+import { alertesAffichees, calculerAlertes, type Alerte } from "@/lib/alertes";
 import { alertesNouvelles, empreinte, vuesDepuis } from "@/lib/alertes-vues";
 import { formaterDate } from "@/lib/calculs";
 import { CLE_ALERTES_VUES_TEST, MODE_TEST } from "@/lib/mode-test";
@@ -26,6 +26,8 @@ export function Alertes({ donnees, aujourdhui }: { donnees: Donnees; aujourdhui:
   const alertes = calculerAlertes(donnees, aujourdhui, derniere);
   // Les alertes de mise à jour annuelle dépendent du chargement des versions : elles ne sont pas suivies.
   const nouvelles = useAlertesNouvelles(session.entrepriseId, session.admin, alertes.filter((a) => !a.id.startsWith("version-")));
+  const [categorie, setCategorie] = useState("");
+  const [tout, setTout] = useState(false);
 
   if (!alertes.length) {
     // Entreprise qui démarre : rien à dire tant qu'aucun risque n'est évalué (l'assistant guide).
@@ -37,18 +39,41 @@ export function Alertes({ donnees, aujourdhui }: { donnees: Donnees; aujourdhui:
     );
   }
 
+  const urgentes = alertes.filter((a) => a.gravite === "critique").length;
+  const categories = [...new Set(alertes.map((a) => a.categorie))].sort((a, b) => a.localeCompare(b, "fr"));
+  const affichees = alertesAffichees(alertes, nouvelles, categorie, tout);
+  const masquees = alertes.length - affichees.length;
+
   return (
     <section className="mb-6 rounded-sm border border-pierre/70 bg-white">
-      <h2 className="border-b border-pierre/60 px-4 py-3 text-sm font-semibold uppercase tracking-wider text-ardoise">
-        À traiter ({alertes.length})
-        {nouvelles.size > 0 && (
-          <span className="ml-2 rounded-full bg-encre px-2 py-0.5 text-xs font-medium normal-case tracking-normal text-marbre">
-            {nouvelles.size} nouvelle{nouvelles.size > 1 ? "s" : ""} depuis votre dernière visite
-          </span>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-pierre/60 px-4 py-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-ardoise">
+          À traiter ({alertes.length})
+          {urgentes > 0 && <span className="ml-1 normal-case tracking-normal text-[#b42318]">dont {urgentes} urgent{urgentes > 1 ? "s" : ""}</span>}
+          {nouvelles.size > 0 && (
+            <span className="ml-2 rounded-full bg-encre px-2 py-0.5 text-xs font-medium normal-case tracking-normal text-marbre">
+              {nouvelles.size} nouvelle{nouvelles.size > 1 ? "s" : ""} depuis votre dernière visite
+            </span>
+          )}
+        </h2>
+        {categories.length > 1 && (
+          <select
+            aria-label="Filtrer les points à traiter par module"
+            value={categorie}
+            onChange={(e) => setCategorie(e.target.value)}
+            className="rounded-sm border border-pierre bg-white px-2 py-1 text-sm"
+          >
+            <option value="">Tous les modules</option>
+            {categories.map((c) => (
+              <option key={c} value={c}>
+                {c} ({alertes.filter((a) => a.categorie === c).length})
+              </option>
+            ))}
+          </select>
         )}
-      </h2>
+      </div>
       <ul className="divide-y divide-pierre/40">
-        {alertes.map((a) => {
+        {affichees.map((a) => {
           const st = styles[a.gravite];
           return (
             <li key={a.id}>
@@ -79,6 +104,15 @@ export function Alertes({ donnees, aujourdhui }: { donnees: Donnees; aujourdhui:
           );
         })}
       </ul>
+      {!categorie && (masquees > 0 || tout) && (
+        <button
+          type="button"
+          onClick={() => setTout(!tout)}
+          className="block w-full border-t border-pierre/60 px-4 py-2.5 text-left text-sm text-bronze-fonce underline hover:bg-ivoire"
+        >
+          {tout ? "Afficher seulement l'essentiel" : `Voir les ${masquees} autre${masquees > 1 ? "s" : ""} point${masquees > 1 ? "s" : ""} à traiter`}
+        </button>
+      )}
       <details className="border-t border-pierre/60 px-4 py-3 text-sm">
         <summary className="cursor-pointer text-ardoise">Comment sont classées les priorités ?</summary>
         <div className="mt-2 space-y-2 text-ardoise">

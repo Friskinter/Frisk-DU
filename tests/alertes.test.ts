@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculerAlertes } from "@/lib/alertes";
+import { alertesAffichees, calculerAlertes, type Alerte } from "@/lib/alertes";
 import { donneesDemo } from "@/lib/demo";
 import { action, article, donnees, equipement, ligne, mouvement, verification } from "./aides";
 
@@ -101,5 +101,28 @@ describe("alertes", () => {
       calculerAlertes(donnees({ duerp: [risque], actions }), aujourdhui, "2026-10-01").find((a) => a.id === "actions-retard")!.lien;
     expect(lien([a1])).toBe(`/actions?action=${a1.id}`);
     expect(lien([a1, a2])).toBe("/actions");
+  });
+});
+
+describe("alertes affichées d'emblée au tableau de bord", () => {
+  const a = (id: string, gravite: Alerte["gravite"], categorie: Alerte["categorie"] = "DUERP"): Alerte => ({ id, gravite, categorie, titre: id, detail: "", lien: "/" });
+  const alertes = [
+    a("u1", "critique"), a("u2", "critique", "EPI"),
+    a("t1", "importante"), a("t2", "importante", "EPI"), a("t3", "importante"), a("t4", "importante"), a("t5", "importante"), a("t6", "importante"),
+    a("s1", "info"), a("s2", "info", "EPI"),
+  ];
+  const ids = (l: Alerte[]) => l.map((x) => x.id);
+
+  it("montre toutes les urgences puis les 5 points suivants", () => {
+    expect(ids(alertesAffichees(alertes, new Set(), "", false))).toEqual(["u1", "u2", "t1", "t2", "t3", "t4", "t5"]);
+  });
+
+  it("montre toujours les nouveautés, même au-delà des 5 points", () => {
+    expect(ids(alertesAffichees(alertes, new Set(["s2"]), "", false))).toContain("s2");
+  });
+
+  it("montre tout sur demande, ou tout le module choisi", () => {
+    expect(alertesAffichees(alertes, new Set(), "", true)).toHaveLength(alertes.length);
+    expect(ids(alertesAffichees(alertes, new Set(), "EPI", false))).toEqual(["u2", "t2", "s2"]);
   });
 });

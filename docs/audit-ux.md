@@ -144,3 +144,9 @@ un message clair « Hors ligne : enregistré sur cet appareil ».
    (6) et détails (9).
 2. Puis la fiche du risque (2), « Mes actions » (3) et la fiche salarié (4).
 3. Enfin la recherche (7) et le hors-ligne (8).
+
+## Suivi
+
+| Proposition | État |
+|---|---|
+| 1. Tableau de bord | **Fait** (#58). Chiffres clés en haut. Les urgences, les nouveautés et les 5 points suivants sont affichés, avec « Voir les N autres ». Filtre par module. « dont N urgents » en face de la pastille du menu. Règle d'affichage : `alertesAffichees` (`lib/alertes.ts`). |
