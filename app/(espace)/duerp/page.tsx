@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { memo, useCallback, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, memo, useCallback, useMemo, useState } from "react";
 import { BibliothequeRisques } from "@/components/bibliotheque-risques";
 import { actionEnRetard, actionsDuRisque, nouvelleAction } from "@/lib/actions";
 import { nouvelleLigne } from "@/lib/donnees";
+import { champsCotation, changementsEnAttente, marquerReexamine, motifsChangement, signalerChangement } from "@/lib/reexamen";
 import { BoutonDocumentUnique } from "@/components/bouton-document-unique";
 import { GuideCotation } from "@/components/guide-cotation";
 import { VersionsDuerp } from "@/components/versions-duerp";
@@ -85,20 +86,32 @@ function supprimer(l: LigneDuerp, nbActions: number, nbEvenements: number) {
 
 const aucuneAction: Action[] = [];
 
+// Revoir la cotation ou les mesures d'un risque à réexaminer vaut réexamen (lib/reexamen.ts).
 function mettreAJour(id: string, champs: Partial<LigneDuerp>) {
+  const reexamine = champsCotation.some((c) => c in champs);
   modifier((d) => ({
     ...d,
-    duerp: d.duerp.map((l) => (l.id === id ? { ...l, ...champs } : l)),
+    duerp: d.duerp.map((l) => (l.id === id ? { ...l, ...champs, ...(reexamine && l.reexamen ? { reexamen: null } : {}) } : l)),
   }));
 }
 
 export default function PageDuerp() {
+  // useSearchParams doit être sous un Suspense avec le pré-rendu de Next.js.
+  return (
+    <Suspense fallback={<Chargement />}>
+      <Duerp />
+    </Suspense>
+  );
+}
+
+function Duerp() {
   const donnees = useDonnees();
+  const parametres = useSearchParams();
   const { role } = useSession();
   const router = useRouter();
   const modifiable = peutModifier(role, "tout");
   const [recherche, setRecherche] = useState("");
-  const [unite, setUnite] = useState("");
+  const [unite, setUnite] = useState(parametres.get("unite") ?? "");
   const [niveau, setNiveau] = useState("");
   const [tri, setTri] = useState(false);
   const [guide, setGuide] = useState(false);
@@ -248,6 +261,17 @@ export default function PageDuerp() {
         </div>
       )}
 
+      <ChangementsUnites
+        changements={changementsEnAttente(donnees)}
+        unite={donnees.duerp.some((l) => l.unite === unite) ? unite : ""}
+        modifiable={modifiable}
+        onVoir={(u) => {
+          setUnite(u);
+          setNiveau("");
+          setRecherche("");
+        }}
+      />
+
       {guide && (
         <div className="mb-8 rounded-sm border border-pierre/70 bg-white p-5 print:hidden">
           <GuideCotation />
@@ -363,7 +387,7 @@ const LigneRisque = memo(function LigneRisque({
 }) {
   const facteur = facteursPenibilite.find((f) => f.code === l.penibilite);
   return (
-    <tr className="hover:bg-ivoire">
+    <tr className={l.reexamen ? "bg-[#fff4e5] hover:bg-[#ffeccc]" : "hover:bg-ivoire"}>
       <td className={cellule}>
         <input list="liste-unites" aria-label="Unité de travail" value={l.unite} onChange={(e) => mettreAJour(l.id, { unite: e.target.value })} className={champCellule} />
       </td>
@@ -510,6 +534,16 @@ const LigneRisque = memo(function LigneRisque({
         </span>
       </td>
       <td className="border-b border-pierre/60 p-1 align-top whitespace-nowrap print:hidden">
+        {l.reexamen && (
+          <button
+            type="button"
+            title={`À réexaminer : ${l.reexamen.motif} (${formaterDate(l.reexamen.depuis)}). Revoyez la cotation, ou confirmez qu'elle reste valable.`}
+            onClick={() => modifier((d) => marquerReexamine(d, l.id))}
+            className="mb-1 block rounded-sm border border-[#ec835a] px-2 py-0.5 text-xs text-[#9a3412] hover:bg-white"
+          >
+            ✓ Réexaminé
+          </button>
+        )}
         <Link href={`/journal?element=${l.id}`} title="Historique des modifications de la ligne" className="rounded-sm px-2 py-1 text-ardoise hover:bg-marbre">
           ◷
         </Link>
@@ -523,3 +557,84 @@ const LigneRisque = memo(function LigneRisque({
     </tr>
   );
 });
+
+// Changements signalés dans les unités de travail, et formulaire pour en signaler un nouveau sur
+// l'unité affichée : ses risques passent « à réexaminer » (art. R4121-2).
+function ChangementsUnites({
+  changements,
+  unite,
+  modifiable,
+  onVoir,
+}: {
+  changements: ReturnType<typeof changementsEnAttente>;
+  unite: string;
+  modifiable: boolean;
+  onVoir: (unite: string) => void;
+}) {
+  const [ouvert, setOuvert] = useState(false);
+  const [motif, setMotif] = useState("");
+  return (
+    <div className="mb-4 space-y-3 print:hidden">
+      {changements.length > 0 && (
+        <div role="status" className="rounded-sm border border-[#ec835a] bg-[#fff4e5] p-4 text-sm">
+          <p className="font-semibold">Risques à réexaminer après un changement</p>
+          <ul className="mt-1 space-y-1">
+            {changements.map((c) => (
+              <li key={c.unite}>
+                <button type="button" className="underline" onClick={() => onVoir(c.unite)}>
+                  {c.unite || "Sans unité"}
+                </button>{" "}
+                : {c.motif.toLowerCase()}, signalé le {formaterDate(c.depuis)} · {c.risques} risque{c.risques > 1 ? "s" : ""}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-ardoise">
+            Revoyez la gravité, la fréquence, la maîtrise et les mesures de chaque ligne surlignée, ou cliquez sur « ✓ Réexaminé » si
+            elles restent valables. Pensez ensuite à figer une nouvelle version du document unique.
+          </p>
+        </div>
+      )}
+      {modifiable && unite && (
+        <div className="text-sm">
+          {!ouvert ? (
+            <button type="button" className="text-bronze-fonce underline" onClick={() => setOuvert(true)}>
+              Signaler un changement dans « {unite} »
+            </button>
+          ) : (
+            <form
+              className="flex flex-wrap items-end gap-2 rounded-sm border border-pierre/70 bg-white p-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                modifier((d) => signalerChangement(d, unite, motif, dateDuJour()));
+                setOuvert(false);
+                setMotif("");
+              }}
+            >
+              <label className="block min-w-64 flex-1">
+                Qu&apos;est-ce qui a changé dans « {unite} » ?
+                <input
+                  list="motifs-changement"
+                  value={motif}
+                  onChange={(e) => setMotif(e.target.value)}
+                  placeholder="Ex. nouvelle machine, réaménagement…"
+                  className={`${classeChamp} mt-1`}
+                />
+              </label>
+              <datalist id="motifs-changement">
+                {motifsChangement.map((m) => (
+                  <option key={m} value={m} />
+                ))}
+              </datalist>
+              <button type="submit" className={classeBouton}>
+                Marquer ses risques à réexaminer
+              </button>
+              <button type="button" className={classeBoutonSecondaire} onClick={() => setOuvert(false)}>
+                Annuler
+              </button>
+            </form>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

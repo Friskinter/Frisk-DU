@@ -64,6 +64,7 @@ const champsDuerp: Record<string, string> = {
   maitrise: "Maîtrise",
   penibilite: "Pénibilité",
   seuilPenibilite: "Seuil de pénibilité",
+  reexamen: "Réexamen après un changement",
   action: "Action",
   responsable: "Responsable",
   echeance: "Échéance",
@@ -164,6 +165,7 @@ export function libelleChamp(champ: string) {
 }
 
 export function valeurLisible(champ: string, valeur: unknown): string {
+  if (champ === "reexamen" && !valeur) return "réexaminé";
   if (valeur === null || valeur === undefined || valeur === "") return "(vide)";
   switch (champ) {
     case "gravite":
@@ -197,6 +199,10 @@ export function valeurLisible(champ: string, valeur: unknown): string {
       return resultats.find((r) => r.valeur === valeur)?.libelle ?? String(valeur);
     case "actif":
       return valeur ? "oui" : "non (produit retiré)";
+    case "reexamen": {
+      const r = valeur as { motif?: string; depuis?: string };
+      return `à réexaminer : ${r.motif ?? "changement"}${r.depuis ? ` (${formaterDate(r.depuis)})` : ""}`;
+    }
     case "salariesExposes":
       return `${(valeur as string[]).length} salarié(s)`;
     case "periodicite":

@@ -19,6 +19,8 @@ export type LigneDuerp = {
   maitrise: NiveauMaitrise;
   penibilite: string; // code du facteur, "" si aucun
   seuilPenibilite: SeuilPenibilite;
+  // Changement signalé dans l'unité : risque à réexaminer (lib/reexamen.ts). null une fois réexaminé.
+  reexamen?: { depuis: string; motif: string } | null;
   // Ancien format (une seule action par risque) : conservé pour relire les versions figées
   // antérieures au plan d'actions. Les actions sont désormais dans Donnees.actions.
   action?: string;

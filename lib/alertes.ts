@@ -12,6 +12,7 @@ import { derniereVisite, sansAction } from "./visites";
 import { accueilsEnRetard, derniereCauserie, etatAccueil, formationRenforcee, nomArrivant } from "./accueils";
 import { typesEvenement } from "./referentiel";
 import { derniereVerification, etatEquipement, observationsOuvertes } from "./verifications";
+import { changementsEnAttente, unitesSansRisque } from "./reexamen";
 import type { Donnees } from "./types";
 
 export type Alerte = {
@@ -69,6 +70,29 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
         detail: `À faire avant le ${formaterDate(echeance)}.`,
       });
     }
+  }
+
+  // Unités de travail modifiées : risques à réexaminer (lib/reexamen.ts)
+  const changements = changementsEnAttente(donnees);
+  if (changements.length) {
+    const total = changements.reduce((t, c) => t + c.risques, 0);
+    alertes.push({
+      id: "risques-a-reexaminer", gravite: "importante", categorie: "DUERP",
+      elements: changements.map((c) => `${c.unite}:${c.depuis}`),
+      lien: changements.length === 1 ? `/duerp?unite=${encodeURIComponent(changements[0].unite)}` : "/duerp",
+      date: changements[0].depuis,
+      titre: `${pluriel(total, "risque")} à réexaminer après un changement dans ${changements.length > 1 ? `${changements.length} unités` : "une unité"} de travail`,
+      detail: `Revoyez la cotation et les mesures (art. R4121-2) : ${liste(changements.map((c) => `${c.unite}, ${c.motif.toLowerCase()} (${formaterDate(c.depuis)})`))}.`,
+    });
+  }
+  const sansRisque = unitesSansRisque(donnees);
+  if (sansRisque.length) {
+    alertes.push({
+      id: "unites-sans-risque", gravite: "importante", categorie: "DUERP", elements: sansRisque,
+      lien: sansRisque.length === 1 ? `/duerp?unite=${encodeURIComponent(sansRisque[0])}` : "/duerp",
+      titre: `${pluriel(sansRisque.length, "unité")} de travail sans risque évalué`,
+      detail: `Évaluez leurs risques ou retirez-les des réglages si elles n'existent plus : ${liste(sansRisque)}.`,
+    });
   }
 
   // Actions de prévention
