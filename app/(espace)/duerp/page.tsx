@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, memo, useCallback, useMemo, useState } from "react";
 import { BibliothequeRisques } from "@/components/bibliotheque-risques";
+import { FicheRisque } from "@/components/fiche-risque";
+import { useEcranLarge } from "@/lib/ecran";
 import { actionEnRetard, actionsDuRisque, nouvelleAction } from "@/lib/actions";
 import { nouvelleLigne } from "@/lib/donnees";
 import { champsCotation, changementsEnAttente, marquerReexamine, motifsChangement, signalerChangement } from "@/lib/reexamen";
@@ -44,10 +46,14 @@ const cellule = "border-b border-r border-pierre/60 p-1 align-top";
 const champCellule =
   "w-full rounded-[2px] border border-transparent bg-transparent px-1.5 py-1 text-sm outline-none hover:border-pierre focus:border-bronze focus:bg-white";
 
+// Colonnes du tableau, dans l'ordre de l'écran : ce qu'on cherche le plus d'abord (l'unité reste
+// fixe à gauche), le détail de la cotation ensuite.
 const colonnes: { titre: string; aide: string; largeur: number }[] = [
   { titre: "Unité de travail", aide: "Lieu, service ou métier regroupant des salariés exposés aux mêmes risques.", largeur: 180 },
-  { titre: "Activité / situation", aide: "Ce que fait le salarié au moment où il est exposé.", largeur: 190 },
   { titre: "Danger", aide: "Ce qui peut causer un dommage (une machine, une charge, un produit…).", largeur: 210 },
+  { titre: "Risque résiduel", aide: "Criticité brute × coefficient de maîtrise : fixe la priorité.", largeur: 140 },
+  { titre: "Actions de prévention", aide: "Mesures prévues ou réalisées pour ce risque : elles se gèrent dans le plan d'actions.", largeur: 280 },
+  { titre: "Activité / situation", aide: "Ce que fait le salarié au moment où il est exposé.", largeur: 190 },
   { titre: "Risque / dommage", aide: "Ce qui pourrait arriver au salarié.", largeur: 190 },
   { titre: "Effectif", aide: "Nombre de salariés exposés.", largeur: 90 },
   { titre: "G", aide: "Gravité de 1 à 4 : voir le guide de cotation.", largeur: 140 },
@@ -55,11 +61,12 @@ const colonnes: { titre: string; aide: string; largeur: number }[] = [
   { titre: "Criticité brute", aide: "G × F, sans tenir compte des protections.", largeur: 130 },
   { titre: "Mesures existantes", aide: "Ce qui est déjà en place pour protéger les salariés.", largeur: 200 },
   { titre: "Maîtrise", aide: "Efficacité des mesures existantes.", largeur: 150 },
-  { titre: "Risque résiduel", aide: "Criticité brute × coefficient de maîtrise : fixe la priorité.", largeur: 140 },
   { titre: "Pénibilité", aide: "Facteur de risques professionnels concerné (10 facteurs du Code du travail).", largeur: 190 },
   { titre: "Seuil", aide: "L'exposition dépasse-t-elle le seuil réglementaire ? Voir la page Pénibilité.", largeur: 140 },
-  { titre: "Actions de prévention", aide: "Mesures prévues ou réalisées pour ce risque : elles se gèrent dans le plan d'actions.", largeur: 280 },
 ];
+
+// L'export Excel garde l'ordre habituel d'un document unique.
+const titresExport = ["Unité de travail", "Activité / situation", "Danger", "Risque / dommage", "Effectif", "G", "F", "Criticité brute", "Mesures existantes", "Maîtrise", "Risque résiduel", "Pénibilité", "Seuil", "Actions de prévention"];
 
 
 function dupliquer(ligne: LigneDuerp) {
@@ -118,6 +125,9 @@ function Duerp() {
   const [bibliotheque, setBibliotheque] = useState(false);
   const [versions, setVersions] = useState(false);
   const [ajoutes, setAjoutes] = useState(0);
+  const [fiche, setFiche] = useState(parametres.get("fiche") ?? "");
+  const large = useEcranLarge();
+  const fermerFiche = useCallback(() => setFiche(""), []);
 
   // Actions et accidents de chaque risque, recalculés seulement quand ces listes changent.
   const actions = donnees?.actions;
@@ -158,12 +168,17 @@ function Duerp() {
   );
   if (tri) lignes = [...lignes].sort((a, b) => risqueResiduel(b) - risqueResiduel(a));
 
-  const ajouter = () =>
-    modifier((d) => ({ ...d, duerp: [...d.duerp, nouvelleLigne(unite || unitesConnues[0] || "")] }));
+  // Sur téléphone, le nouveau risque s'ouvre directement dans sa fiche.
+  const ajouter = () => {
+    const ligne = nouvelleLigne(unite || unitesConnues[0] || "");
+    modifier((d) => ({ ...d, duerp: [...d.duerp, ligne] }));
+    if (!large) setFiche(ligne.id);
+  };
+  const ligneFiche = fiche ? donnees.duerp.find((l) => l.id === fiche) : undefined;
 
   const exporter = () =>
     telechargerCsv(`DUERP-${donnees.entreprise}-${aujourdhui}.csv`, [
-      [...colonnes.map((c) => c.titre)],
+      titresExport,
       ...lignes.map((l) => [
         l.unite, l.activite, l.danger, l.risque, l.effectif, l.gravite, l.frequence,
         criticiteBrute(l), l.mesures, grilleMaitrise.find((m) => m.valeur === l.maitrise)?.libelle ?? "",
@@ -327,18 +342,58 @@ function Duerp() {
         ))}
       </datalist>
 
-      {/* Un fieldset désactivé grise d'un coup tous les champs pour les rôles sans droit de modification. */}
+      {ligneFiche && (
+        <FicheRisque
+          ligne={ligneFiche}
+          actions={actionsParRisque.get(ligneFiche.id) ?? aucuneAction}
+          evenements={evenementsParRisque.get(ligneFiche.id) ?? 0}
+          aujourdhui={aujourdhui}
+          modifiable={modifiable}
+          onModifier={(champs) => mettreAJour(ligneFiche.id, champs)}
+          onAjouterAction={() => ajouterAction(ligneFiche)}
+          onDupliquer={() => dupliquer(ligneFiche)}
+          onSupprimer={() => supprimer(ligneFiche, (actionsParRisque.get(ligneFiche.id) ?? aucuneAction).length, evenementsParRisque.get(ligneFiche.id) ?? 0)}
+          onReexamine={() => modifier((d) => marquerReexamine(d, ligneFiche.id))}
+          onFermer={fermerFiche}
+        />
+      )}
+
+      {!large ? (
+        // Téléphone : une carte par risque, qui ouvre sa fiche.
+        <div className="overflow-hidden rounded-sm border border-pierre/70">
+          <ul>
+            {lignes.map((l) => {
+              const actionsLigne = actionsParRisque.get(l.id) ?? aucuneAction;
+              return (
+                <CarteRisque
+                  key={l.id}
+                  l={l}
+                  nbActions={actionsLigne.length}
+                  enRetard={actionsLigne.filter((a) => actionEnRetard(a, aujourdhui)).length}
+                  onOuvrir={setFiche}
+                />
+              );
+            })}
+          </ul>
+          {modifiable && (
+            <button type="button" onClick={() => ajouter()} className="block w-full bg-white px-4 py-3 text-left text-sm text-bronze-fonce">
+              + Ajouter un risque{unite ? ` dans « ${unite} »` : ""}
+            </button>
+          )}
+        </div>
+      ) : (
+      /* Un fieldset désactivé grise d'un coup tous les champs pour les rôles sans droit de modification. */
       <fieldset disabled={!modifiable} className="min-w-0">
         <div className="max-h-[70vh] overflow-auto rounded-sm border border-pierre/70 bg-white print:max-h-none print:overflow-visible">
           <table className="w-max table-fixed border-separate border-spacing-0 text-sm">
             <thead className="sticky top-0 z-10 bg-marbre">
               <tr>
-                {colonnes.map((c) => (
+                {colonnes.map((c, i) => (
                   <th
                     key={c.titre}
                     title={c.aide}
                     style={{ width: c.largeur }}
-                    className="border-b border-r border-pierre/60 px-2 py-2 text-left text-xs font-semibold uppercase tracking-wide text-ardoise"
+                    className={`border-b border-r border-pierre/60 bg-marbre px-2 py-2 text-left text-xs font-semibold uppercase tracking-wide text-ardoise ${i === 0 ? "sticky left-0 z-[2]" : ""}`}
                   >
                     {c.titre}
                     <span className="ml-1 cursor-help text-gris print:hidden">ⓘ</span>
@@ -356,6 +411,7 @@ function Duerp() {
                   evenements={evenementsParRisque.get(l.id) ?? 0}
                   aujourdhui={aujourdhui}
                   onAjouterAction={ajouterAction}
+                  onOuvrir={setFiche}
                 />
               ))}
             </tbody>
@@ -369,39 +425,101 @@ function Duerp() {
           </button>
         </div>
       </fieldset>
+      )}
       <p className="mt-2 text-xs text-gris print:hidden">
-        Astuce : survolez un en-tête ⓘ pour son explication, et le bouton ⧉ duplique une ligne pour saisir plus vite un risque proche.
+        {large
+          ? "Astuce : « Ouvrir la fiche » affiche tous les champs d'un risque les uns sous les autres ; survolez un en-tête ⓘ pour son explication, et le bouton ⧉ duplique une ligne pour saisir plus vite un risque proche."
+          : "Touchez un risque pour ouvrir sa fiche : tout y est modifiable et enregistré automatiquement."}
       </p>
     </div>
   );
 }
 
 // Une ligne du tableau, redessinée seulement quand elle change : la saisie reste fluide même
-// avec plusieurs centaines de risques.
+// avec plusieurs centaines de risques. Ordre des colonnes : ce qu'on cherche le plus (unité fixe à
+// gauche, danger, risque résiduel, actions), puis le détail de la cotation.
 const LigneRisque = memo(function LigneRisque({
   l,
   actionsLigne,
   evenements,
   aujourdhui,
   onAjouterAction,
+  onOuvrir,
 }: {
   l: LigneDuerp;
   actionsLigne: Action[];
   evenements: number;
   aujourdhui: string;
   onAjouterAction: (l: LigneDuerp) => void;
+  onOuvrir: (id: string) => void;
 }) {
   const facteur = facteursPenibilite.find((f) => f.code === l.penibilite);
+  const fond = l.reexamen ? "bg-[#fff4e5]" : "bg-white";
   return (
     <tr className={l.reexamen ? "bg-[#fff4e5] hover:bg-[#ffeccc]" : "hover:bg-ivoire"}>
-      <td className={cellule}>
+      <td className={`${cellule} sticky left-0 z-[1] ${fond}`}>
         <input list="liste-unites" aria-label="Unité de travail" value={l.unite} onChange={(e) => mettreAJour(l.id, { unite: e.target.value })} className={champCellule} />
-      </td>
-      <td className={cellule}>
-        <textarea rows={2} aria-label="Activité ou situation" value={l.activite} onChange={(e) => mettreAJour(l.id, { activite: e.target.value })} className={`${champCellule} resize-y`} />
+        {/* Un lien et non un bouton : il reste utilisable par un lecteur, pour qui le tableau est désactivé. */}
+        <a
+          href={`?fiche=${l.id}`}
+          onClick={(e) => {
+            e.preventDefault();
+            onOuvrir(l.id);
+          }}
+          aria-label={`Ouvrir la fiche du risque ${l.danger || l.activite || ""}`.trim()}
+          className="mt-0.5 inline-block px-1.5 text-xs text-bronze-fonce underline print:hidden"
+        >
+          Ouvrir la fiche
+        </a>
       </td>
       <td className={cellule}>
         <input list="liste-dangers" aria-label="Danger" value={l.danger} onChange={(e) => mettreAJour(l.id, { danger: e.target.value })} className={champCellule} />
+      </td>
+      <td className={`${cellule} px-2 py-2`}>
+        <PastilleCriticite score={risqueResiduel(l)} />
+      </td>
+      <td className={`${cellule} px-2 py-1.5`}>
+        <ul className="space-y-1">
+          {actionsLigne.map((a) => {
+            const retard = actionEnRetard(a, aujourdhui);
+            return (
+              <li key={a.id} className="flex items-start gap-1.5 text-xs">
+                <span
+                  aria-hidden
+                  className="mt-1 h-2 w-2 shrink-0 rounded-full"
+                  style={{ background: a.statut === "fait" ? "#0ca30c" : retard ? "#d03b3b" : a.statut === "en-cours" ? "#fab219" : "#d9cfc1" }}
+                />
+                <span className="min-w-0">
+                  <span className={a.statut === "fait" ? "text-gris line-through" : ""}>{a.intitule || "Action sans intitulé"}</span>
+                  {a.echeance && a.statut !== "fait" && (
+                    <span className={retard ? "font-semibold text-[#b42318]" : "text-gris"}>
+                      {" "}· {retard ? "en retard, " : ""}
+                      {formaterDate(a.echeance)}
+                    </span>
+                  )}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+        <span className="mt-1 flex gap-3 text-xs print:hidden">
+          <button type="button" onClick={() => onAjouterAction(l)} className="text-bronze-fonce underline disabled:hidden">
+            + Action
+          </button>
+          {actionsLigne.length > 0 && (
+            <Link href={`/actions?risque=${l.id}`} className="text-ardoise underline">
+              Gérer ({actionsLigne.length})
+            </Link>
+          )}
+          {evenements > 0 && (
+            <Link href={`/accidents?risque=${l.id}`} className="text-[#b42318] underline" title="Accidents et presque-accidents rattachés à ce risque">
+              ⚑ {evenements}
+            </Link>
+          )}
+        </span>
+      </td>
+      <td className={cellule}>
+        <textarea rows={2} aria-label="Activité ou situation" value={l.activite} onChange={(e) => mettreAJour(l.id, { activite: e.target.value })} className={`${champCellule} resize-y`} />
       </td>
       <td className={cellule}>
         <textarea rows={2} aria-label="Risque ou dommage" value={l.risque} onChange={(e) => mettreAJour(l.id, { risque: e.target.value })} className={`${champCellule} resize-y`} />
@@ -460,9 +578,6 @@ const LigneRisque = memo(function LigneRisque({
           ))}
         </select>
       </td>
-      <td className={`${cellule} px-2 py-2`}>
-        <PastilleCriticite score={risqueResiduel(l)} />
-      </td>
       <td className={cellule}>
         <select
           value={l.penibilite}
@@ -499,46 +614,6 @@ const LigneRisque = memo(function LigneRisque({
           ))}
         </select>
       </td>
-      <td className={`${cellule} px-2 py-1.5`}>
-        <ul className="space-y-1">
-          {actionsLigne.map((a) => {
-            const retard = actionEnRetard(a, aujourdhui);
-            return (
-              <li key={a.id} className="flex items-start gap-1.5 text-xs">
-                <span
-                  aria-hidden
-                  className="mt-1 h-2 w-2 shrink-0 rounded-full"
-                  style={{ background: a.statut === "fait" ? "#0ca30c" : retard ? "#d03b3b" : a.statut === "en-cours" ? "#fab219" : "#d9cfc1" }}
-                />
-                <span className="min-w-0">
-                  <span className={a.statut === "fait" ? "text-gris line-through" : ""}>{a.intitule || "Action sans intitulé"}</span>
-                  {a.echeance && a.statut !== "fait" && (
-                    <span className={retard ? "font-semibold text-[#b42318]" : "text-gris"}>
-                      {" "}· {retard ? "en retard, " : ""}
-                      {formaterDate(a.echeance)}
-                    </span>
-                  )}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-        <span className="mt-1 flex gap-3 text-xs print:hidden">
-          <button type="button" onClick={() => onAjouterAction(l)} className="text-bronze-fonce underline disabled:hidden">
-            + Action
-          </button>
-          {actionsLigne.length > 0 && (
-            <Link href={`/actions?risque=${l.id}`} className="text-ardoise underline">
-              Gérer ({actionsLigne.length})
-            </Link>
-          )}
-          {evenements > 0 && (
-            <Link href={`/accidents?risque=${l.id}`} className="text-[#b42318] underline" title="Accidents et presque-accidents rattachés à ce risque">
-              ⚑ {evenements}
-            </Link>
-          )}
-        </span>
-      </td>
       <td className="border-b border-pierre/60 p-1 align-top whitespace-nowrap print:hidden">
         {l.reexamen && (
           <button
@@ -561,6 +636,41 @@ const LigneRisque = memo(function LigneRisque({
         </button>
       </td>
     </tr>
+  );
+});
+
+// Sur téléphone, un risque est une carte qui ouvre sa fiche : le tableau y est inutilisable.
+const CarteRisque = memo(function CarteRisque({
+  l,
+  nbActions,
+  enRetard,
+  onOuvrir,
+}: {
+  l: LigneDuerp;
+  nbActions: number;
+  enRetard: number;
+  onOuvrir: (id: string) => void;
+}) {
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={() => onOuvrir(l.id)}
+        className={`flex w-full items-start gap-3 border-b border-pierre/60 px-3 py-3 text-left ${l.reexamen ? "bg-[#fff4e5]" : "bg-white"}`}
+      >
+        <span className="min-w-0 flex-1">
+          <span className="block text-xs text-gris">{l.unite || "Sans unité"}</span>
+          <span className="block font-medium">{l.danger || l.activite || "Nouveau risque"}</span>
+          {l.risque && <span className="block truncate text-xs text-ardoise">{l.risque}</span>}
+          <span className="mt-1 block text-xs text-ardoise">
+            {nbActions ? `${nbActions} action${nbActions > 1 ? "s" : ""}` : "Aucune action"}
+            {enRetard > 0 && <span className="font-semibold text-[#b42318]"> · {enRetard} en retard</span>}
+            {l.reexamen && <span className="text-[#9a3412]"> · à réexaminer</span>}
+          </span>
+        </span>
+        <PastilleCriticite score={risqueResiduel(l)} />
+      </button>
+    </li>
   );
 });
 
