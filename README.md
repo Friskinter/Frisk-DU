@@ -59,7 +59,12 @@ Elles sont lancées automatiquement par GitHub à chaque demande de fusion (`.gi
 ## Liste de lancement
 
 À dérouler dans l'ordre le jour de la mise en ligne publique. Chaque étape renvoie à la section qui la
-détaille.
+détaille. Les cases cochées sont déjà faites (point au 31 octobre 2026). **Reste en priorité** :
+
+1. les informations légales (étape 1) ;
+2. l'envoi des e-mails (étape 3) ;
+3. le paiement réel (étape 4) ;
+4. le domaine définitif (étapes 5 à 7).
 
 ### 1. Avant tout : l'entreprise et les documents légaux
 
@@ -101,10 +106,51 @@ détaille.
 
 ### 3. Envoi des e-mails (Resend)
 
-- [ ] Créer le compte Resend et **vérifier le domaine d'envoi** (enregistrements DNS SPF et DKIM
-      fournis par Resend), sinon les e-mails partent en courrier indésirable.
-- [ ] Noter la clé d'API (`RESEND_API_KEY`) et choisir l'expéditeur (`ALERTES_EXPEDITEUR`, ex.
-      `Frisk Plateforme <alertes@frisk.fr>`).
+**Sans cette étape, aucun e-mail ne part** :
+
+- le récapitulatif du lundi et les urgences du matin ;
+- l'e-mail au responsable lors d'un signalement terrain ;
+- le formulaire de contact du site vitrine ;
+- les e-mails de confirmation d'inscription et de mot de passe oublié, une fois le SMTP branché à
+  l'étape 2.
+
+Tant que la clé d'API ou l'expéditeur manque, la console Frisk l'indique chaque matin dans « Erreurs
+rencontrées ».
+
+- [ ] **Créer le compte** sur [resend.com](https://resend.com), avec une adresse de Frisk.
+- [ ] **Ajouter le domaine d'envoi** : *Domains > Add Domain*, par exemple `frisk.fr`. Un
+      sous-domaine comme `mail.frisk.fr` évite de toucher à la messagerie principale. Région : *EU
+      (Ireland)*, pour que les données restent en Europe.
+- [ ] **Copier les enregistrements DNS** fournis par Resend (SPF, DKIM et, conseillé, DMARC) chez
+      l'hébergeur du nom de domaine (OVH, Gandi, Cloudflare…), puis cliquer sur *Verify DNS Records*.
+      La vérification peut prendre de quelques minutes à quelques heures. **Attendre « Verified »** :
+      sans cela, les e-mails sont refusés ou partent en courrier indésirable.
+- [ ] **Créer la clé d'API** : *API Keys > Create API Key*, droit *Sending access*, limitée au domaine
+      vérifié. Elle ne s'affiche qu'une fois. La coller directement dans Vercel (étape suivante), ne
+      jamais l'envoyer par e-mail ni dans une conversation.
+- [ ] **Vercel, projet `frisk-du-ah45`** (*Settings > Environments > Production*), ajouter :
+  - `RESEND_API_KEY` : la clé d'API ;
+  - `ALERTES_EXPEDITEUR` : l'expéditeur, sur le domaine vérifié, par exemple
+    `Frisk Plateforme <alertes@frisk.fr>`.
+
+  Puis **redéployer** (*Deployments* > « … » sur le dernier déploiement > *Redeploy*).
+- [ ] **Supabase, e-mails d'authentification** (*Authentication > Emails > SMTP Settings*), activer
+      *Custom SMTP* :
+  - hôte `smtp.resend.com`, port `465` ;
+  - utilisateur `resend`, mot de passe : une clé d'API Resend ;
+  - expéditeur : une adresse du domaine vérifié, nom **Frisk Plateforme**.
+
+  Voir aussi l'étape 2.
+- [ ] **Site vitrine** : mêmes réglages dans son projet Vercel (voir l'étape 7).
+- [ ] **Vérifier** :
+  - l'aperçu des alertes, sans envoi (commande à l'étape 8) ;
+  - après le premier lundi ou la première urgence, la carte « E-mails envoyés » de la console Frisk :
+    aucun échec. La raison d'un échec y est donnée, par exemple « domaine non vérifié ».
+- [ ] Bon à savoir :
+  - le premier envoi des urgences du matin reprend une fois les urgences déjà présentes, puis
+    seulement les nouvelles ;
+  - le plan gratuit de Resend (3 000 e-mails par mois, 100 par jour) suffit au démarrage. Passer au
+    plan payant quand le nombre de clients augmente : chaque lundi, un e-mail part par utilisateur.
 
 ### 4. Stripe (paiement réel)
 
@@ -121,11 +167,18 @@ détaille.
 - [ ] Projets déjà créés (Frisk Plateforme : `frisk-du-ah45`, site vitrine : `frisk`). Passer au
       **plan Pro** : le plan gratuit est réservé aux usages non commerciaux.
 - [ ] Brancher le nom de domaine définitif (*Settings > Domains*) ; le HTTPS est automatique.
-- [ ] Ajouter les variables d'environnement (voir [Mise en ligne](#mise-en-ligne-vercel)) :
-      `SUPABASE_SECRET_KEY`, `URL_APPLICATION` (adresse définitive), `CRON_SECRET` (longue
-      chaîne aléatoire), `RESEND_API_KEY`, `ALERTES_EXPEDITEUR`, `STRIPE_SECRET_KEY`,
-      `STRIPE_WEBHOOK_SECRET`. **Jamais** `NEXT_PUBLIC_FRISK_E2E` (la compilation la refuse).
-- [ ] Déployer, puis vérifier que la tâche planifiée `/api/alertes` apparaît dans *Settings > Cron Jobs*.
+- [x] Déjà en place sur `frisk-du-ah45` (en essai) : `SUPABASE_SECRET_KEY`, `CRON_SECRET`,
+      `STRIPE_SECRET_KEY` (mode test), `NEXT_PUBLIC_TURNSTILE_SITE_KEY`.
+- [ ] Ajouter les variables qui manquent (voir [Mise en ligne](#mise-en-ligne-vercel)) :
+  - `RESEND_API_KEY` et `ALERTES_EXPEDITEUR` (étape 3) ;
+  - `URL_APPLICATION` (adresse définitive) ;
+  - `STRIPE_WEBHOOK_SECRET` ;
+  - la clé Stripe réelle à la place de la clé de test (étape 4).
+
+  **Jamais** `NEXT_PUBLIC_FRISK_E2E` (la compilation la refuse).
+- [x] Tâches planifiées visibles dans *Settings > Cron Jobs* : `/api/alertes` (lundi 6 h UTC) et
+      `/api/urgences` (chaque jour 6 h 30 UTC). Ne pas cliquer sur *Run* : de vrais e-mails
+      partiraient.
 
 ### 6. Protection anti-robot (Turnstile)
 
@@ -177,8 +230,8 @@ Dans cet ordre, sinon plus personne ne peut se connecter (voir [Protection anti-
 
 ### 9. Ouverture
 
-- [ ] Frisk Plateforme hors des moteurs de recherche : en-tête `X-Robots-Tag: noindex` présent
-      (PR « Frisk DU hors des moteurs de recherche » à fusionner si ce n'est pas fait).
+- [x] Frisk Plateforme hors des moteurs de recherche : en-tête `X-Robots-Tag: noindex` en place
+      (`next.config.ts`).
 - [ ] Site vitrine Frisk : autoriser les moteurs de recherche (`INDEXATION_AUTORISEE = true` dans
       son `next.config.ts`). Frisk Plateforme, lui, reste toujours hors des moteurs.
 - [ ] Supprimer les comptes et entreprises créés pendant les essais (console Frisk et Stripe).
