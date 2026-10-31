@@ -27,3 +27,4 @@ psql -At -f tests/14_accueil_causeries.test.sql | grep -v '^$' | tail -1
 psql -At -f tests/15_identite_visuelle.test.sql | grep -v '^$' | tail -1
 psql -At -f tests/16_abonnements.test.sql | grep -v '^$' | tail -1
 psql -At -f tests/17_avis.test.sql | grep -v '^$' | tail -1
+psql -At -f tests/18_preferences_email.test.sql | grep -v '^$' | tail -1
