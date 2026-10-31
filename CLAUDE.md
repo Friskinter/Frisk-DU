@@ -19,6 +19,12 @@ s'ajoute ici, par une PR.
   Elle couvre aussi le site vitrine : à la question « qu'est-ce qui reste ? », partir de cette liste,
   vérifier ce qui a été fait depuis et la tenir à jour (cocher, ajouter) par une PR.
 
+## Chantier en cours
+
+- Évolution « Guider – Centraliser – Anticiper » : où on en est, décisions prises et prochaine étape
+  (phase 3, les alertes) dans [docs/suivi-evolution.md](docs/suivi-evolution.md). Le lire avant d'y toucher,
+  et le tenir à jour à chaque PR du chantier.
+
 ## Façon de travailler
 
 - **Une branche et une PR par tâche**, jamais de commit direct sur `main`. Plusieurs sessions

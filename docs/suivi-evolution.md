@@ -1,0 +1,44 @@
+# Suivi de l'évolution « Guider – Centraliser – Anticiper »
+
+*Point de reprise au 31 octobre 2026. À lire avant de continuer ce chantier, quel que soit le compte ou la session.*
+
+Le cahier des charges (version 1.0 du 31/10/2026) demande de faire évoluer Frisk Plateforme d'un logiciel de gestion QHSE vers un outil de pilotage, **sans reconstruire ni supprimer l'existant**, en quatre phases après un audit. Le détail de l'existant, des limites et des propositions est dans [`audit-phase-0.md`](audit-phase-0.md).
+
+## Décisions prises par l'utilisateur
+
+1. **Alertes : on garde le calcul à partir des données** (`lib/alertes.ts`, 43 règles, 3 niveaux). Pas de table de notifications stockées : c'est ce qui garantit l'absence de doublons et la résolution automatique. On ajoute seulement ce qui manque (voir phase 3).
+2. **Profil d'entreprise : 5 questions** (secteur, effectif, intervenants extérieurs, produits chimiques, équipements à vérifier). Fait.
+3. **E-mails immédiats** (sans attendre le lundi) pour : **accident à déclarer**, **rupture de stock d'EPI**, et **toute nouvelle urgence** (un e-mail groupé par jour). L'e-mail existant pour un signalement terrain est conservé.
+4. **Ordre** : tableau de bord, liens directs, parcours, puis alertes. Les trois premiers sont faits.
+
+## Ce qui est fait (fusionné dans `main`)
+
+| PR | Contenu |
+| --- | --- |
+| #44 | **Tableau de bord** : 6 indicateurs, « Prochaines échéances » filtrables (`lib/echeances.ts`), date et tri à niveau égal dans « À traiter », règles de priorité expliquées, « Activité récente » (journal). |
+| #45 | **Liens directs** : `?action=`, `?equipement=`, `?produit=`, `?formation=`, `?article=`, `?onglet=` (EPI) mettent l'élément en évidence (`lib/cible.ts`) ; alertes et échéances y pointent quand elles ne concernent qu'un élément. |
+| #46 | **Mon parcours QHSE** (`/parcours`, `lib/parcours.ts`) : profil en 5 questions rangé dans `fiche.profil` (aucune migration), étapes en 3 groupes, une réponse « non » devient une piste à vérifier (jamais retirée), avancement présenté comme un repère et non une conformité ; l'assistant de démarrage existant est relié au parcours. |
+
+## Prochaine étape : phase 3, les alertes
+
+À faire, dans cet ordre conseillé (chaque point = une PR, avec ses tests) :
+
+1. **Préférences d'e-mail par personne** (aujourd'hui : une seule option par entreprise, `preferences.alertesEmail`). Les préférences d'une personne ne peuvent pas vivre dans le document partagé de l'entreprise : prévoir une **petite table** (ou des colonnes de `membres`), migration `019_…`, règles d'accès et tests SQL (`supabase/tests/18_…`). Choix proposés : récapitulatif du lundi oui/non, e-mails immédiats oui/non.
+2. **E-mails immédiats** selon la décision 3 : une **deuxième tâche planifiée quotidienne** (`vercel.json`, à côté de `/api/alertes` du lundi) qui n'envoie que les **nouvelles** urgences depuis la veille, en un seul e-mail. Il faut donc retenir ce qui a déjà été envoyé (table d'envois), sans quoi la même urgence repartirait chaque jour. Vérifier la limite de tâches planifiées du plan Vercel.
+3. **Statut « vu » par personne** pour distinguer les nouvelles alertes (même table que ci-dessus ou une table dédiée) ; affichage « nouveau » dans « À traiter ».
+4. **Contenu des e-mails selon le rôle** : un lecteur ne reçoit pas les détails qu'il ne peut pas traiter.
+5. **Trace des envois et des échecs** visible dans la console Frisk (aujourd'hui, seulement dans la réponse de la tâche planifiée).
+6. **Récapitulatif du lundi enrichi** (`lib/email-alertes.ts`) : urgences, échéances de la semaine (`calculerEcheances`), prochaine étape du parcours (`calculerParcours`).
+
+## Ensuite : phase 4
+
+- Alerte « unité de travail modifiée → réexaminer ses risques » (seul lien entre modules manquant).
+- Parcours complets de bout en bout et performances.
+
+## Méthode à suivre (rappel de `CLAUDE.md`)
+
+- Partir d'un `main` à jour, **une branche et une PR par tâche**, tout en français.
+- Avant chaque PR : `npm run lint`, `npm test`, `npm run build`, `npm run test:parcours`. Le test « affichage rapide » peut échouer quand toute la suite tourne sur une machine chargée : relancer `npx playwright test e2e/performance.spec.ts` seul.
+- **Attention aux noms de fichiers de test** : `e2e/parcours.spec.ts` existe déjà (parcours utilisateurs) ; le test de la page « Mon parcours » s'appelle `e2e/mon-parcours.spec.ts`.
+- Toute nouvelle donnée de l'entreprise passe par les opérations (`lib/operations.ts`) et une migration ; les tests SQL ne tournent qu'en CI (pas de PostgreSQL en local).
+- À la fin de chaque phase, résumer : modifications, fichiers, tests exécutés, résultats, problèmes restants (exigence du cahier des charges).
