@@ -114,7 +114,7 @@ function Formations() {
         }
       />
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Indicateur libelle="Formations en cours de validité" valeur={compter(["valide", "permanente", "a-renouveler"])} detail={`pour ${donnees.salaries.length} salarié(s)`} />
         <Indicateur libelle="À renouveler" valeur={compter(["a-renouveler"])} detail={`expirent dans les ${DELAI_RENOUVELLEMENT} jours`} alerte={compter(["a-renouveler"]) > 0} />
         <Indicateur libelle="Expirées" valeur={compter(["expiree"])} detail="dernière session dépassée" alerte={compter(["expiree"]) > 0} />

@@ -28,7 +28,7 @@ export default function PagePenibilite() {
         description="Les 10 facteurs de risques professionnels du Code du travail, leurs seuils expliqués simplement, et les situations de votre DUERP qui y exposent vos salariés."
       />
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Indicateur
           libelle="Facteurs identifiés"
           valeur={`${new Set(lignes.map((l) => l.penibilite)).size} / 10`}

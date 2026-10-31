@@ -185,11 +185,21 @@ function Duerp() {
       <EnTetePage
         titre="Document unique (DUERP)"
         description="Chaque ligne est un risque. Cliquez dans une case pour la modifier : tout est enregistré automatiquement."
-        actions={
+        plus={
           <>
+            {modifiable && (
+              <button type="button" className={classeBoutonSecondaire} onClick={() => setBibliotheque(true)}>
+                📚 Bibliothèque de risques
+              </button>
+            )}
             <button type="button" className={classeBoutonSecondaire} onClick={() => setGuide(!guide)}>
               {guide ? "Masquer le guide" : "? Guide de cotation"}
             </button>
+            {modifiable && (
+              <Link href="/duerp-express" className={classeBoutonSecondaire}>
+                ⚡ DUERP express
+              </Link>
+            )}
             <button type="button" className={classeBoutonSecondaire} onClick={exporter}>
               Exporter (Excel)
             </button>
@@ -198,18 +208,14 @@ function Duerp() {
                 Importer (Excel)
               </Link>
             )}
-            <BoutonDocumentUnique donnees={donnees} />
+          </>
+        }
+        actions={
+          <>
             <button type="button" className={classeBoutonSecondaire} onClick={() => setVersions(true)}>
               🗄 Versions
             </button>
-            {modifiable && (
-              <Link href="/duerp-express" className={classeBoutonSecondaire}>
-                ⚡ DUERP express
-              </Link>
-            )}
-            <button type="button" className={`${classeBoutonSecondaire} disabled:opacity-50`} disabled={!modifiable} onClick={() => setBibliotheque(true)}>
-              📚 Bibliothèque de risques
-            </button>
+            <BoutonDocumentUnique donnees={donnees} />
             <button type="button" className={`${classeBouton} disabled:opacity-50`} disabled={!modifiable} onClick={() => ajouter()}>
               + Ajouter un risque
             </button>

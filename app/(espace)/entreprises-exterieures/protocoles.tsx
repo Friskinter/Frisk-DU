@@ -83,7 +83,7 @@ export function Protocoles({ donnees, modifiable, ouvertInitial }: { donnees: Do
         </div>
       </div>
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Indicateur libelle="Valides" valeur={compter(["valide", "a-renouveler"])} detail="protocoles signés en vigueur" />
         <Indicateur
           libelle="À compléter ou signer"
