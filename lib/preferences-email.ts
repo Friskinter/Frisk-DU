@@ -1,3 +1,5 @@
+import type { Role } from "./operations";
+
 // Préférences d'e-mail de chaque personne, pour chacune de ses entreprises (table preferences_email,
 // migration 019). Sans préférence enregistrée, la personne reçoit tout.
 
@@ -24,4 +26,17 @@ export function destinataires(
   type: keyof PreferencesEmail,
 ): string[] {
   return membres.filter((m) => m.email && preferencesDe(m.user_id, entrepriseId, lignes)[type]).map((m) => m.email);
+}
+
+// Même chose avec le rôle de chacun, pour adapter le contenu de l'e-mail (lib/email-alertes.ts).
+// Sans rôle connu, la personne est traitée en lecteur : elle ne reçoit que le résumé.
+export function destinatairesAvecRole(
+  membres: { user_id: string; email: string; role?: string | null }[],
+  entrepriseId: string,
+  lignes: Ligne[],
+  type: keyof PreferencesEmail,
+): { email: string; role: Role }[] {
+  return membres
+    .filter((m) => m.email && preferencesDe(m.user_id, entrepriseId, lignes)[type])
+    .map((m) => ({ email: m.email, role: m.role === "responsable" || m.role === "contributeur" ? m.role : "lecteur" }));
 }

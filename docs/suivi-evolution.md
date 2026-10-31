@@ -1,6 +1,6 @@
 # Suivi de l'évolution « Guider – Centraliser – Anticiper »
 
-*Point de reprise au 31 octobre 2026 (mis à jour avec la phase 3, point 1). À lire avant de continuer ce chantier, quel que soit le compte ou la session.*
+*Point de reprise au 31 octobre 2026 (mis à jour avec la phase 3, point 4). À lire avant de continuer ce chantier, quel que soit le compte ou la session.*
 
 Le cahier des charges (version 1.0 du 31/10/2026) demande de faire évoluer Frisk Plateforme d'un logiciel de gestion QHSE vers un outil de pilotage, **sans reconstruire ni supprimer l'existant**, en quatre phases après un audit. Le détail de l'existant, des limites et des propositions est dans [`audit-phase-0.md`](audit-phase-0.md).
 
@@ -21,6 +21,7 @@ Le cahier des charges (version 1.0 du 31/10/2026) demande de faire évoluer Fris
 | #48 | **Préférences d'e-mail par personne** : table `preferences_email` (migration `019_preferences_email.sql`, test SQL `18_preferences_email.test.sql`), une ligne par personne et par entreprise, écrite seulement par `changer_preferences_email` ; sans ligne, tout est envoyé. Carte « E-mails que je reçois » dans *Mon compte* (récapitulatif du lundi, e-mails immédiats). Appliquées au récapitulatif du lundi (`/api/alertes`) et à l'e-mail de signalement terrain ; le réglage de l'entreprise (`preferences.alertesEmail`) reste prioritaire. `lib/preferences-email.ts`. |
 | #49 | **E-mails immédiats des urgences** : tâche planifiée quotidienne `/api/urgences` (6 h 30 UTC, `vercel.json`, à côté de `/api/alertes` du lundi), un e-mail par entreprise avec les seules urgences (gravité « critique », dont accident à déclarer et rupture d'EPI) apparues depuis le dernier envoi, aux personnes dont la préférence `immediats` est active. Chaque urgence critique porte désormais `elements` (identifiants concernés) ; `lib/urgences.ts` en tire des clés (`alerte:élément`) retenues dans la table `alertes_envoyees` (migration `020_urgences_signalees.sql`, test SQL `19_…`) : jamais deux fois la même, une urgence réglée est oubliée et signalée de nouveau si elle revient, un envoi échoué repart le lendemain. Mode `?apercu=1`. Premier passage : les urgences déjà présentes partent une fois. |
 | #50 | **Alertes nouvelles depuis la dernière visite** : repère « Nouveau » sur chaque alerte de « À traiter », et nombre de nouvelles dans le titre. Chaque alerte est résumée par une empreinte courte (`lib/alertes-vues.ts` : identifiant + éléments, ou titre et détail), une alerte dont le contenu change redevient nouvelle. Table `alertes_vues` par personne et par entreprise (migration `021_alertes_vues.sql`, test SQL `20_…`), remplacée à chaque visite par `marquer_alertes_vues` (la table reste petite, une alerte réglée puis revenue redevient nouvelle). Première visite : rien n'est marqué. Les alertes de mise à jour annuelle du DUERP ne sont pas suivies (elles dépendent du chargement des versions). Les administrateurs Frisk ne sont pas suivis. |
+| #NN | **Contenu des e-mails selon le rôle** (récapitulatif du lundi et urgences du matin) : le responsable reçoit tout le détail, le contributeur le détail des alertes EPI qu'il gère et les seuls titres pour le reste, le lecteur un résumé (les titres, qui ne donnent que des nombres, sans le détail qui peut citer des salariés ou des produits) avec une mention en bas de l'e-mail. Règle dans `alerteTraitable` (`lib/email-alertes.ts`), rôle lu dans `membres` (`destinatairesAvecRole`, `lib/preferences-email.ts`), un e-mail construit par personne. Rôle inconnu : traité en lecteur. Pas de migration. Le signalement terrain n'est pas concerné : il ne part qu'aux responsables et ne contient déjà aucun détail. |
 
 ## Prochaine étape : phase 3, les alertes
 
@@ -29,7 +30,7 @@ Le cahier des charges (version 1.0 du 31/10/2026) demande de faire évoluer Fris
 1. ~~**Préférences d'e-mail par personne**~~ : **fait** (#48).
 2. ~~**E-mails immédiats**~~ : **fait** (#49).
 3. ~~**Statut « vu » par personne**~~ : **fait** (#50).
-4. **Contenu des e-mails selon le rôle** : un lecteur ne reçoit pas les détails qu'il ne peut pas traiter.
+4. ~~**Contenu des e-mails selon le rôle**~~ : **fait** (#NN).
 5. **Trace des envois et des échecs** visible dans la console Frisk (aujourd'hui, seulement dans la réponse de la tâche planifiée).
 6. **Récapitulatif du lundi enrichi** (`lib/email-alertes.ts`) : urgences, échéances de la semaine (`calculerEcheances`), prochaine étape du parcours (`calculerParcours`).
 

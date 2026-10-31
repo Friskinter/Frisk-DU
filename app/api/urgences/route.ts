@@ -2,7 +2,7 @@ import { calculerAlertes } from "@/lib/alertes";
 import { dateDuJour } from "@/lib/calculs";
 import { normaliser } from "@/lib/donnees";
 import { emailUrgences } from "@/lib/email-alertes";
-import { destinataires } from "@/lib/preferences-email";
+import { destinatairesAvecRole } from "@/lib/preferences-email";
 import { supabaseAdmin } from "@/lib/supabase/serveur";
 import type { Donnees } from "@/lib/types";
 import { nouvellesUrgences } from "@/lib/urgences";
@@ -31,7 +31,7 @@ export async function GET(requete: Request) {
 
   const [{ data: entreprises, error }, { data: preferences, error: erreurPreferences }, { data: signalees, error: erreurSignalees }] =
     await Promise.all([
-      admin.from("entreprises").select("id, nom, membres(user_id, email), espaces(contenu), versions(created_at)").eq("actif", true),
+      admin.from("entreprises").select("id, nom, membres(user_id, email, role), espaces(contenu), versions(created_at)").eq("actif", true),
       admin.from("preferences_email").select("user_id, entreprise_id, recapitulatif, immediats"),
       admin.from("alertes_envoyees").select("entreprise_id, cle"),
     ]);
@@ -48,17 +48,18 @@ export async function GET(requete: Request) {
     const alertes = calculerAlertes(normaliser(donnees), aujourdhui, dates.at(-1) ?? null);
     const deja = new Set(((signalees ?? []) as { entreprise_id: string; cle: string }[]).filter((s) => s.entreprise_id === e.id).map((s) => s.cle));
     const { aSignaler, nouvelles, reglees } = nouvellesUrgences(alertes, deja);
-    const pour = destinataires((e.membres ?? []) as { user_id: string; email: string }[], e.id, preferences ?? [], "immediats");
+    const pour = destinatairesAvecRole((e.membres ?? []) as { user_id: string; email: string; role: string }[], e.id, preferences ?? [], "immediats");
 
     let envoye = false;
     if (aSignaler.length && pour.length) {
       if (apercu) {
         envoye = false;
       } else {
-        const { sujet, html, texte } = emailUrgences(e.nom, aSignaler, aujourdhui, urlApplication);
-        // Un e-mail par destinataire : les adresses des collègues ne sont pas dévoilées.
+        // Un e-mail par destinataire : les adresses des collègues ne sont pas dévoilées, et le
+        // contenu suit le rôle de chacun (détail complet pour les responsables).
         envoye = true;
-        for (const to of pour) {
+        for (const { email: to, role } of pour) {
+          const { sujet, html, texte } = emailUrgences(e.nom, aSignaler, aujourdhui, urlApplication, role);
           const reponse = await fetch("https://api.resend.com/emails", {
             method: "POST",
             headers: { Authorization: `Bearer ${cleResend}`, "Content-Type": "application/json" },
@@ -68,7 +69,7 @@ export async function GET(requete: Request) {
         }
       }
     }
-    if (aSignaler.length) rapport.push({ entreprise: e.nom, destinataires: pour, urgences: aSignaler.length, envoye });
+    if (aSignaler.length) rapport.push({ entreprise: e.nom, destinataires: pour.map((d) => d.email), urgences: aSignaler.length, envoye });
 
     // Retenir les urgences signalées (ou sans destinataire), oublier celles qui sont réglées.
     // Si l'envoi a échoué, rien n'est retenu : elles repartiront demain.
