@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Alerte } from "@/lib/alertes";
-import { alerteTraitable, emailAlertes, emailUrgences } from "@/lib/email-alertes";
+import { alerteTraitable, emailRecapitulatif, emailUrgences } from "@/lib/email-alertes";
 import { destinatairesAvecRole } from "@/lib/preferences-email";
 
 const alerte = (id: string, categorie: Alerte["categorie"], detail: string): Alerte => ({
@@ -17,7 +17,7 @@ describe("contenu des e-mails selon le rôle", () => {
   });
 
   it("le responsable reçoit tout le détail", () => {
-    for (const email of [emailAlertes("E1", alertes, "2026-11-02", "https://app", "responsable"), emailUrgences("E1", alertes, "2026-11-02", "https://app")]) {
+    for (const email of [emailRecapitulatif("E1", { urgences: alertes, echeances: [], autres: [] }, "2026-11-02", "https://app", "responsable"), emailUrgences("E1", alertes, "2026-11-02", "https://app")]) {
       for (const contenu of [email.html, email.texte]) {
         expect(contenu).toContain("Paul Martin");
         expect(contenu).toContain("Gants nitrile");
@@ -27,7 +27,7 @@ describe("contenu des e-mails selon le rôle", () => {
   });
 
   it("le contributeur ne reçoit le détail que pour les EPI", () => {
-    for (const email of [emailAlertes("E1", alertes, "2026-11-02", "https://app", "contributeur"), emailUrgences("E1", alertes, "2026-11-02", "https://app", "contributeur")]) {
+    for (const email of [emailRecapitulatif("E1", { urgences: alertes, echeances: [], autres: [] }, "2026-11-02", "https://app", "contributeur"), emailUrgences("E1", alertes, "2026-11-02", "https://app", "contributeur")]) {
       for (const contenu of [email.html, email.texte]) {
         expect(contenu).not.toContain("Paul Martin");
         expect(contenu).toContain("Gants nitrile");
@@ -38,7 +38,7 @@ describe("contenu des e-mails selon le rôle", () => {
   });
 
   it("le lecteur reçoit un résumé : les titres, sans les noms ni le détail", () => {
-    for (const email of [emailAlertes("E1", alertes, "2026-11-02", "https://app", "lecteur"), emailUrgences("E1", alertes, "2026-11-02", "https://app", "lecteur")]) {
+    for (const email of [emailRecapitulatif("E1", { urgences: alertes, echeances: [], autres: [] }, "2026-11-02", "https://app", "lecteur"), emailUrgences("E1", alertes, "2026-11-02", "https://app", "lecteur")]) {
       expect(email.sujet).toContain("E1");
       for (const contenu of [email.html, email.texte]) {
         expect(contenu).not.toContain("Paul Martin");

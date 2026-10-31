@@ -1,13 +1,14 @@
-import { calculerAlertes } from "@/lib/alertes";
 import { dateDuJour } from "@/lib/calculs";
 import { normaliser } from "@/lib/donnees";
-import { emailAlertes } from "@/lib/email-alertes";
+import { emailRecapitulatif } from "@/lib/email-alertes";
 import { envoyerEmail, journaliserEnvois, signalerConfigurationManquante, type LigneEnvoi } from "@/lib/envoi-email";
 import { destinatairesAvecRole } from "@/lib/preferences-email";
+import { preparerRecapitulatif, recapitulatifVide } from "@/lib/recapitulatif";
 import { supabaseAdmin } from "@/lib/supabase/serveur";
 import type { Donnees } from "@/lib/types";
 
-// Récapitulatif hebdomadaire des alertes, envoyé par e-mail aux utilisateurs de chaque entreprise.
+// Récapitulatif du lundi (urgences, échéances de la semaine, points à traiter, prochaine étape du
+// parcours, lib/recapitulatif.ts), envoyé par e-mail aux utilisateurs de chaque entreprise.
 // Appelé chaque lundi par le planificateur de l'hébergeur (voir vercel.json), avec l'en-tête
 // « Authorization: Bearer <CRON_SECRET> ». Avec ?apercu=1, rien n'est envoyé : la réponse liste
 // les e-mails qui seraient partis.
@@ -32,7 +33,7 @@ export async function GET(requete: Request) {
 
   const { data: entreprises, error } = await admin
     .from("entreprises")
-    .select("id, nom, membres(user_id, email, role), espaces(contenu), versions(created_at)")
+    .select("id, nom, jeton_signalement, membres(user_id, email, role), espaces(contenu), versions(created_at)")
     .eq("actif", true);
   if (error) return Response.json({ erreur: "Lecture des entreprises impossible." }, { status: 500 });
   // Préférences de chaque personne (récapitulatif du lundi oui ou non).
@@ -41,7 +42,7 @@ export async function GET(requete: Request) {
     .select("user_id, entreprise_id, recapitulatif, immediats");
   if (erreurPreferences) return Response.json({ erreur: "Lecture des préférences d'e-mail impossible." }, { status: 500 });
 
-  const rapport: { entreprise: string; destinataires: string[]; alertes: number; envoye: boolean }[] = [];
+  const rapport: { entreprise: string; destinataires: string[]; urgences: number; echeances: number; alertes: number; envoye: boolean }[] = [];
 
   // Suivi des erreurs : conservation limitée à 90 jours.
   if (!apercu) await admin.from("erreurs").delete().lt("created_at", new Date(Date.now() - 90 * 86_400_000).toISOString());
@@ -53,8 +54,12 @@ export async function GET(requete: Request) {
     if (!donnees || !destinataires.length || donnees.preferences?.alertesEmail === false) continue;
 
     const dates = ((e.versions ?? []) as { created_at: string }[]).map((v) => v.created_at.slice(0, 10)).sort();
-    const alertes = calculerAlertes(normaliser(donnees), aujourdhui, dates.at(-1) ?? null);
-    if (!alertes.length) continue;
+    const recap = preparerRecapitulatif(normaliser(donnees), aujourdhui, {
+      versions: dates.length,
+      derniereVersion: dates.at(-1) ?? null,
+      lienActif: !!e.jeton_signalement,
+    });
+    if (recapitulatifVide(recap)) continue;
 
     let envoye = false;
     if (!apercu && cleResend && expediteur) {
@@ -62,14 +67,21 @@ export async function GET(requete: Request) {
       // contenu suit le rôle de chacun (détail complet pour les responsables).
       const journal: LigneEnvoi[] = [];
       for (const { email: to, role } of pour) {
-        const { sujet, html, texte } = emailAlertes(e.nom, alertes, aujourdhui, urlApplication, role);
+        const { sujet, html, texte } = emailRecapitulatif(e.nom, recap, aujourdhui, urlApplication, role);
         const resultat = await envoyerEmail(cleResend, { from: expediteur, to, subject: sujet, html, text: texte });
         journal.push({ type: "recapitulatif", entreprise_id: e.id, destinataire: to, ...resultat });
       }
       await journaliserEnvois(admin, journal);
       envoye = journal.every((l) => l.reussi);
     }
-    rapport.push({ entreprise: e.nom, destinataires, alertes: alertes.length, envoye });
+    rapport.push({
+      entreprise: e.nom,
+      destinataires,
+      urgences: recap.urgences.length,
+      echeances: recap.echeances.length,
+      alertes: recap.autres.length,
+      envoye,
+    });
   }
 
   return Response.json({ date: aujourdhui, apercu, rapport });
