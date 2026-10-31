@@ -37,6 +37,8 @@ const etat = vi.hoisted(() => ({
   contenu: null as unknown,
   signalees: [] as { entreprise_id: string; cle: string }[],
   preferences: [] as { user_id: string; entreprise_id: string; recapitulatif: boolean; immediats: boolean }[],
+  journal: [] as { destinataire: string; reussi: boolean; erreur: string }[],
+  erreurs: [] as { message: string }[],
 }));
 
 vi.mock("@/lib/supabase/serveur", () => ({
@@ -63,6 +65,23 @@ vi.mock("@/lib/supabase/serveur", () => ({
         };
       }
       if (table === "preferences_email") return { select: () => lecture(etat.preferences) };
+      if (table === "envois_email") {
+        return {
+          insert: (lignes: typeof etat.journal) => {
+            etat.journal.push(...lignes);
+            return lecture(null);
+          },
+          delete: () => ({ lt: () => lecture(null) }),
+        };
+      }
+      if (table === "erreurs") {
+        return {
+          insert: (ligne: { message: string }) => {
+            etat.erreurs.push(ligne);
+            return lecture(null);
+          },
+        };
+      }
       return {
         select: () => lecture(etat.signalees),
         upsert: (lignes: { entreprise_id: string; cle: string }[]) => {
@@ -105,6 +124,8 @@ describe("tâche du matin des urgences", () => {
       return new Response("{}");
     });
     etat.signalees = [];
+    etat.journal = [];
+    etat.erreurs = [];
     etat.preferences = [{ user_id: "b", entreprise_id: "e1", recapitulatif: true, immediats: false }];
     etat.contenu = { ...donneesVides(), evenements: [accident("ev1")] };
   });
@@ -145,11 +166,35 @@ describe("tâche du matin des urgences", () => {
     expect(textes["salarie@e1.fr"].length).toBeLessThan(textes["patron@e1.fr"].length);
   });
 
+  it("note chaque envoi dans le journal, avec la raison d'un échec, et réessaie le lendemain", async () => {
+    etat.preferences = [];
+    vi.stubGlobal("fetch", async (_url: string, options: { body: string }) => {
+      const { to } = JSON.parse(options.body);
+      return to === "salarie@e1.fr"
+        ? Response.json({ statusCode: 422, message: "Invalid `to` field", name: "validation_error" }, { status: 422 })
+        : new Response("{}");
+    });
+    await appel();
+    expect(etat.journal).toEqual([
+      { type: "urgences", entreprise_id: "e1", destinataire: "patron@e1.fr", reussi: true, erreur: "" },
+      { type: "urgences", entreprise_id: "e1", destinataire: "salarie@e1.fr", reussi: false, erreur: "Resend 422 : Invalid `to` field" },
+    ]);
+    // Échec : l'urgence n'est pas retenue, elle repartira demain.
+    expect(etat.signalees).toEqual([]);
+  });
+
+  it("signale dans la console une configuration d'envoi manquante", async () => {
+    vi.stubEnv("RESEND_API_KEY", "");
+    expect((await appel()).status).toBe(500);
+    expect(etat.erreurs.map((e) => e.message)).toEqual(["E-mails non envoyés : RESEND_API_KEY ou ALERTES_EXPEDITEUR manquante dans Vercel."]);
+  });
+
   it("en aperçu, n'envoie rien et ne retient rien", async () => {
     const reponse = await GET(new Request("https://du.frisk.fr/api/urgences?apercu=1", { headers: { authorization: "Bearer secret" } }));
     expect((await reponse.json()).rapport).toEqual([{ entreprise: "Entreprise 1", destinataires: ["patron@e1.fr"], urgences: 1, envoye: false }]);
     expect(envois).toEqual([]);
     expect(etat.signalees).toEqual([]);
+    expect(etat.journal).toEqual([]);
   });
 
   it("si l'envoi échoue, l'urgence repartira le lendemain", async () => {

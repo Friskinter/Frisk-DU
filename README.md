@@ -83,7 +83,7 @@ détaille.
 - [ ] **Passer au plan payant** : en gratuit, un projet sans activité pendant une semaine est mis en
       pause et les sauvegardes quotidiennes ne sont pas incluses.
 - [ ] Vérifier que `supabase/schema.sql` et **toutes** les migrations de `supabase/migrations` ont
-      été exécutées (la dernière : `021_alertes_vues.sql`).
+      été exécutées (la dernière : `022_envois_email.sql`).
 - [ ] Compte administrateur Frisk créé (voir [Mise en place de Supabase](#mise-en-place-de-supabase-une-seule-fois))
       et **double authentification activée** dessus.
 - [ ] *Authentication > Sign In / Providers* : **Allow new users to sign up** et **Confirm email**
@@ -166,7 +166,8 @@ Dans cet ordre, sinon plus personne ne peut se connecter (voir [Protection anti-
 - [ ] **Alertes** : aperçu sans envoi, qui liste les e-mails qui partiraient :
       `curl -H "Authorization: Bearer <CRON_SECRET>" "https://<adresse>/api/alertes?apercu=1"`, et de même
       pour les urgences du matin : `…/api/urgences?apercu=1`. Vérifier dans Vercel (*Settings* > *Cron
-      Jobs*) que les deux tâches planifiées apparaissent.
+      Jobs*) que les deux tâches planifiées apparaissent. Après le premier envoi, vérifier dans la
+      console Frisk, carte « E-mails envoyés », qu'il n'y a pas d'échec.
 - [ ] **PDF** : document unique, rapport annuel, registre des accidents.
 - [ ] **Site vitrine** : les quatre objets du formulaire de contact (devis, rendez-vous, question sur
       la plateforme, autre) arrivent par e-mail, « Répondre » écrit bien au demandeur.

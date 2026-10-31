@@ -11,6 +11,7 @@ const etat = vi.hoisted(() => ({
   identite: undefined as Record<string, string> | undefined,
   responsables: [] as { user_id: string; email: string }[],
   preferences: [] as { user_id: string; entreprise_id: string; recapitulatif: boolean; immediats: boolean }[],
+  journal: [] as unknown[],
 }));
 
 vi.mock("@/lib/supabase/serveur", () => ({
@@ -22,6 +23,10 @@ vi.mock("@/lib/supabase/serveur", () => ({
         then: (resoudre: (r: { data: unknown[] }) => unknown) => Promise.resolve({ data: liste }).then(resoudre),
         select: () => requete,
         eq: () => requete,
+        insert: (lignes: unknown[]) => {
+          etat.journal.push(...lignes);
+          return Promise.resolve({ error: null });
+        },
         gt: () => Promise.resolve({ count: etat.signalementsDerniereHeure }),
         maybeSingle: () =>
           Promise.resolve({
@@ -141,6 +146,8 @@ describe("route de signalement", () => {
     const reponse = await envoi();
     expect(reponse.status).toBe(200);
     expect(envois).toEqual(["patron@e1.fr"]);
+    // Chaque envoi est noté dans le journal consulté par Frisk.
+    expect(etat.journal).toEqual([{ type: "signalement", entreprise_id: "e1", destinataire: "patron@e1.fr", reussi: true, erreur: "" }]);
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
   });
