@@ -103,9 +103,7 @@ export default function TableauDeBord() {
       />
 
       <AssistantDemarrage donnees={donnees} />
-      <Alertes donnees={donnees} aujourdhui={aujourdhui} />
-
-      {/* Indicateurs calculés sur les données de l'entreprise : un état des lieux, pas une mesure de conformité. */}
+      {/* Les chiffres clés d'abord : un état des lieux calculé sur les données, pas une mesure de conformité. */}
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Indicateur
           libelle="Risques évalués"
@@ -132,6 +130,8 @@ export default function TableauDeBord() {
           alerte={etatsEquipements.includes("en-retard")}
         />
       </div>
+
+      <Alertes donnees={donnees} aujourdhui={aujourdhui} />
 
       <EcheancesAVenir donnees={donnees} aujourdhui={aujourdhui} />
       <ActiviteRecente donnees={donnees} />

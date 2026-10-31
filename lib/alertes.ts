@@ -505,3 +505,15 @@ export function calculerAlertes(donnees: Donnees, aujourdhui: string, derniereVe
   const ordre = { critique: 0, importante: 1, info: 2 };
   return alertes.sort((a, b) => ordre[a.gravite] - ordre[b.gravite] || (a.date ?? "9999").localeCompare(b.date ?? "9999"));
 }
+
+// Points affichés d'emblée, en plus des urgences et des nouveautés : le reste se déplie.
+export const ALERTES_VISIBLES = 5;
+
+// Alertes affichées : toutes celles du module choisi ; sinon les urgences, les nouvelles depuis la
+// dernière visite et les premiers autres points (déjà classés du plus urgent au moins urgent).
+export function alertesAffichees(alertes: Alerte[], nouvelles: Set<string>, categorie: string, tout: boolean) {
+  if (categorie) return alertes.filter((a) => a.categorie === categorie);
+  if (tout) return alertes;
+  let autres = 0;
+  return alertes.filter((a) => a.gravite === "critique" || nouvelles.has(a.id) || autres++ < ALERTES_VISIBLES);
+}

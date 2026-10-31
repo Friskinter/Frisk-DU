@@ -89,6 +89,8 @@ test("établir le protocole de sécurité d'un transporteur", async ({ page }) =
 
 test("une alerte ouvre directement le protocole concerné", async ({ page }) => {
   await ouvrir(page, "/");
+  // Point « à traiter » au-delà des premiers affichés : on le retrouve par son module.
+  await page.getByLabel("Filtrer les points à traiter par module").selectOption("Entreprises extérieures");
   await page.getByRole("link", { name: /protocole de sécurité à renouveler/ }).click();
   await expect(page.getByRole("tab", { name: /Protocoles de sécurité/ })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("button", { name: "Renouveler pour 12 mois" })).toBeVisible();
