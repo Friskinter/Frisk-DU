@@ -1,6 +1,8 @@
 import { formaterDate } from "./calculs";
 import type { Alerte } from "./alertes";
+import { libellesTypesEcheance, type Echeance } from "./echeances";
 import type { Role } from "./operations";
+import type { Recapitulatif } from "./recapitulatif";
 
 const couleurs: Record<Alerte["gravite"], string> = { critique: "#d03b3b", importante: "#ec835a", info: "#b08d57" };
 const libelles: Record<Alerte["gravite"], string> = { critique: "Urgent", importante: "À traiter", info: "À surveiller" };
@@ -19,29 +21,70 @@ export function alerteTraitable(a: Alerte, role: Role) {
 const detailVisible = (a: Alerte, role: Role) => alerteTraitable(a, role) && a.detail;
 
 // Mention ajoutée en bas de l'e-mail quand une partie du détail a été retirée.
-function mentionResume(alertes: Alerte[], role: Role) {
-  if (alertes.every((a) => alerteTraitable(a, role))) return "";
+function mentionResume(alertes: Alerte[], role: Role, autreDetailRetire = false) {
+  if (!autreDetailRetire && alertes.every((a) => alerteTraitable(a, role))) return "";
   return role === "contributeur"
     ? "Le détail n'est donné que pour les EPI, que vous gérez. Le reste est suivi par les responsables de votre entreprise."
     : "Version résumée : le détail est réservé aux responsables de votre entreprise.";
 }
 
-// Contenu de l'e-mail de récapitulatif hebdomadaire.
-export function emailAlertes(entreprise: string, alertes: Alerte[], aujourdhui: string, urlApplication: string, role: Role = "responsable") {
-  const mention = mentionResume(alertes, role);
-  const sujet = `Frisk Plateforme · ${entreprise} : ${alertes.length} point${alertes.length > 1 ? "s" : ""} à traiter`;
-  const lignes = alertes
-    .map(
-      (a) => `
+// Contenu du récapitulatif du lundi (lib/recapitulatif.ts) : urgences, échéances de la semaine,
+// autres points à traiter, puis prochaine étape du parcours. Les échéances citent des salariés, des
+// équipements ou des entreprises : seuls les responsables en reçoivent le détail, les autres un
+// décompte par type. La prochaine étape du parcours ne s'adresse qu'aux responsables.
+export function emailRecapitulatif(entreprise: string, recap: Recapitulatif, aujourdhui: string, urlApplication: string, role: Role = "responsable") {
+  const { urgences, echeances, autres } = recap;
+  const responsable = role === "admin" || role === "responsable";
+  const prochaine = responsable ? recap.prochaine : undefined;
+  const alertes = [...urgences, ...autres];
+  const mention = mentionResume(alertes, role, echeances.length > 0 && !responsable);
+
+  const nombre = (n: number, un: string, plusieurs: string) => `${n} ${n > 1 ? plusieurs : un}`;
+  const resume = [
+    urgences.length ? nombre(urgences.length, "urgence", "urgences") : "",
+    autres.length ? nombre(autres.length, "point à traiter", "points à traiter") : "",
+    echeances.length ? `${nombre(echeances.length, "échéance", "échéances")} cette semaine` : "",
+  ].filter(Boolean);
+  const sujet = `Frisk Plateforme · ${entreprise} : ${resume.join(", ") || "votre semaine"}`;
+
+  const ligneAlerte = (a: Alerte) => `
       <tr><td style="padding:12px 0;border-bottom:1px solid #ece6dc">
         <span style="display:inline-block;padding:2px 8px;border-radius:10px;background:${couleurs[a.gravite]};color:#fff;font-size:12px">${libelles[a.gravite]}</span>
         <span style="color:#6b645b;font-size:12px">&nbsp;${echapper(a.categorie)}</span>
         <div style="margin-top:6px;font-weight:bold">${echapper(a.titre)}</div>
         ${detailVisible(a, role) ? `<div style="color:#3a3530">${echapper(a.detail)}</div>` : ""}
         <a href="${urlApplication}${a.lien}" style="color:#7f6235;font-size:13px">Ouvrir dans Frisk Plateforme →</a>
-      </td></tr>`,
-    )
-    .join("");
+      </td></tr>`;
+  const ligneEcheance = (e: Echeance) => `
+      <tr><td style="padding:10px 0;border-bottom:1px solid #ece6dc">
+        <span style="color:#6b645b;font-size:12px">${formaterDate(e.date)} · ${echapper(libellesTypesEcheance[e.type])}</span>
+        <div style="margin-top:4px;font-weight:bold">${echapper(e.titre)}</div>
+        ${[e.detail, e.responsable && `Responsable : ${e.responsable}`].filter(Boolean).map((t) => `<div style="color:#3a3530">${echapper(t)}</div>`).join("")}
+        <a href="${urlApplication}${e.lien}" style="color:#7f6235;font-size:13px">Ouvrir →</a>
+      </td></tr>`;
+  const parType = Object.entries(
+    echeances.reduce<Record<string, number>>((t, e) => ({ ...t, [libellesTypesEcheance[e.type]]: (t[libellesTypesEcheance[e.type]] ?? 0) + 1 }), {}),
+  ).map(([type, n]) => `${type} : ${n}`);
+  const titreSection = (t: string) => `<h2 style="margin:24px 0 4px;font-size:15px;color:#0c0b0a">${t}</h2>`;
+
+  const sections = [
+    urgences.length ? titreSection("Urgent") + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${urgences.map(ligneAlerte).join("")}</table>` : "",
+    echeances.length
+      ? titreSection("Échéances de la semaine") +
+        (responsable
+          ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${echeances.map(ligneEcheance).join("")}</table>`
+          : `<ul style="margin:8px 0;padding-left:20px;color:#3a3530">${parType.map((t) => `<li>${echapper(t)}</li>`).join("")}</ul>`)
+      : "",
+    autres.length ? titreSection("À traiter et à surveiller") + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${autres.map(ligneAlerte).join("")}</table>` : "",
+    prochaine
+      ? titreSection("Prochaine étape de votre parcours") +
+        `<div style="padding:12px;background:#f7f4ef;border-left:3px solid #b08d57">
+          <div style="font-weight:bold">${echapper(prochaine.titre)}</div>
+          <div style="margin-top:4px;color:#3a3530">${echapper(prochaine.aide)}</div>
+          <a href="${urlApplication}${prochaine.lien}" style="color:#7f6235;font-size:13px">${echapper(prochaine.bouton)} →</a>
+        </div>`
+      : "",
+  ].join("");
 
   const html = `<!doctype html><html lang="fr"><body style="margin:0;background:#f7f4ef;font-family:Arial,sans-serif;color:#0c0b0a">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
@@ -51,7 +94,7 @@ export function emailAlertes(entreprise: string, alertes: Alerte[], aujourdhui: 
         <div style="margin-top:8px;font-size:14px;color:#d9cfc1">Récapitulatif du ${formaterDate(aujourdhui)} · ${echapper(entreprise)}</div>
       </td></tr>
       <tr><td style="padding:8px 24px 24px">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${lignes}</table>
+        ${sections}
         ${mention ? `<p style="margin-top:16px;font-size:13px;color:#3a3530">${echapper(mention)}</p>` : ""}
         <p style="margin-top:24px;font-size:12px;color:#6b645b">
           Vous recevez cet e-mail chaque lundi en tant qu'utilisateur de Frisk Plateforme. Pour ne plus le recevoir,
@@ -61,10 +104,21 @@ export function emailAlertes(entreprise: string, alertes: Alerte[], aujourdhui: 
     </table>
   </td></tr></table></body></html>`;
 
+  const texteAlerte = (a: Alerte) => `- [${libelles[a.gravite]}] ${a.titre}${detailVisible(a, role) ? ` : ${a.detail}` : ""}`;
   const texte = [
     `Frisk Plateforme · ${entreprise} · récapitulatif du ${formaterDate(aujourdhui)}`,
-    "",
-    ...alertes.map((a) => `- [${libelles[a.gravite]}] ${a.titre}${detailVisible(a, role) ? ` : ${a.detail}` : ""}`),
+    ...(urgences.length ? ["", "URGENT", ...urgences.map(texteAlerte)] : []),
+    ...(echeances.length
+      ? [
+          "",
+          "ÉCHÉANCES DE LA SEMAINE",
+          ...(responsable
+            ? echeances.map((e) => `- ${formaterDate(e.date)} · ${e.titre}${e.detail ? ` (${e.detail})` : ""}${e.responsable ? ` · responsable : ${e.responsable}` : ""}`)
+            : parType.map((t) => `- ${t}`)),
+        ]
+      : []),
+    ...(autres.length ? ["", "À TRAITER ET À SURVEILLER", ...autres.map(texteAlerte)] : []),
+    ...(prochaine ? ["", "PROCHAINE ÉTAPE DE VOTRE PARCOURS", `${prochaine.titre} : ${prochaine.aide}`, `${urlApplication}${prochaine.lien}`] : []),
     ...(mention ? ["", mention] : []),
     "",
     `Ouvrir Frisk Plateforme : ${urlApplication}`,
