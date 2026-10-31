@@ -34,7 +34,7 @@ export function emailAlertes(entreprise: string, alertes: Alerte[], aujourdhui: 
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${lignes}</table>
         <p style="margin-top:24px;font-size:12px;color:#6b645b">
           Vous recevez cet e-mail chaque lundi en tant qu'utilisateur de Frisk Plateforme. Pour ne plus le recevoir,
-          décochez l'option dans « Salariés &amp; réglages ».
+          décochez « Récapitulatif du lundi » dans « Mon compte ».
         </p>
       </td></tr>
     </table>
@@ -48,6 +48,48 @@ export function emailAlertes(entreprise: string, alertes: Alerte[], aujourdhui: 
     `Ouvrir Frisk Plateforme : ${urlApplication}`,
   ].join("\n");
 
+  return { sujet, html, texte };
+}
+
+// E-mail du matin : les urgences apparues depuis la veille (lib/urgences.ts).
+export function emailUrgences(entreprise: string, alertes: Alerte[], aujourdhui: string, urlApplication: string) {
+  const n = alertes.length;
+  const sujet = `Frisk Plateforme · ${entreprise} : ${n > 1 ? `${n} nouvelles urgences` : "nouvelle urgence"}`;
+  const lignes = alertes
+    .map(
+      (a) => `
+      <tr><td style="padding:12px 0;border-bottom:1px solid #ece6dc">
+        <span style="color:#6b645b;font-size:12px">${echapper(a.categorie)}</span>
+        <div style="margin-top:4px;font-weight:bold">${echapper(a.titre)}</div>
+        <div style="color:#3a3530">${echapper(a.detail)}</div>
+        <a href="${urlApplication}${a.lien}" style="color:#7f6235;font-size:13px">Ouvrir dans Frisk Plateforme →</a>
+      </td></tr>`,
+    )
+    .join("");
+  const html = `<!doctype html><html lang="fr"><body style="margin:0;background:#f7f4ef;font-family:Arial,sans-serif;color:#0c0b0a">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
+    <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff">
+      <tr><td style="background:#d03b3b;padding:20px 24px;color:#ffffff">
+        <div style="letter-spacing:4px;font-size:16px">FRISK PLATEFORME</div>
+        <div style="margin-top:6px;font-size:15px;font-weight:bold">${n > 1 ? `${n} nouvelles urgences` : "Nouvelle urgence"} · ${echapper(entreprise)}</div>
+        <div style="margin-top:2px;font-size:13px">Apparue${n > 1 ? "s" : ""} depuis le dernier e-mail · ${formaterDate(aujourdhui)}</div>
+      </td></tr>
+      <tr><td style="padding:8px 24px 24px">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${lignes}</table>
+        <p style="margin-top:24px;font-size:12px;color:#6b645b">
+          Vous recevez cet e-mail quand une urgence apparaît, au plus une fois par jour. Pour ne plus le recevoir,
+          décochez « E-mails immédiats » dans « Mon compte ».
+        </p>
+      </td></tr>
+    </table>
+  </td></tr></table></body></html>`;
+  const texte = [
+    `Frisk Plateforme · ${entreprise} · ${n > 1 ? `${n} nouvelles urgences` : "nouvelle urgence"} (${formaterDate(aujourdhui)})`,
+    "",
+    ...alertes.map((a) => `- ${a.titre} : ${a.detail}\n  ${urlApplication}${a.lien}`),
+    "",
+    "Pour ne plus recevoir ces e-mails : « Mon compte » dans Frisk Plateforme.",
+  ].join("\n");
   return { sujet, html, texte };
 }
 

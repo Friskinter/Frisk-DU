@@ -83,7 +83,7 @@ détaille.
 - [ ] **Passer au plan payant** : en gratuit, un projet sans activité pendant une semaine est mis en
       pause et les sauvegardes quotidiennes ne sont pas incluses.
 - [ ] Vérifier que `supabase/schema.sql` et **toutes** les migrations de `supabase/migrations` ont
-      été exécutées (la dernière : `019_preferences_email.sql`).
+      été exécutées (la dernière : `020_urgences_signalees.sql`).
 - [ ] Compte administrateur Frisk créé (voir [Mise en place de Supabase](#mise-en-place-de-supabase-une-seule-fois))
       et **double authentification activée** dessus.
 - [ ] *Authentication > Sign In / Providers* : **Allow new users to sign up** et **Confirm email**
@@ -164,7 +164,9 @@ Dans cet ordre, sinon plus personne ne peut se connecter (voir [Protection anti-
 - [ ] **Signalement terrain** : scanner le QR code depuis un téléphone, envoyer un signalement avec
       photo, vérifier l'e-mail reçu par le responsable.
 - [ ] **Alertes** : aperçu sans envoi, qui liste les e-mails qui partiraient :
-      `curl -H "Authorization: Bearer <CRON_SECRET>" "https://<adresse>/api/alertes?apercu=1"`
+      `curl -H "Authorization: Bearer <CRON_SECRET>" "https://<adresse>/api/alertes?apercu=1"`, et de même
+      pour les urgences du matin : `…/api/urgences?apercu=1`. Vérifier dans Vercel (*Settings* > *Cron
+      Jobs*) que les deux tâches planifiées apparaissent.
 - [ ] **PDF** : document unique, rapport annuel, registre des accidents.
 - [ ] **Site vitrine** : les quatre objets du formulaire de contact (devis, rendez-vous, question sur
       la plateforme, autre) arrivent par e-mail, « Répondre » écrit bien au demandeur.
@@ -190,7 +192,7 @@ Importer le dépôt sur Vercel et ajouter les variables d'environnement (détail
 | --- | --- |
 | `SUPABASE_SECRET_KEY` | Console Frisk, signalements, alertes et webhook Stripe (obligatoire) |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Protection anti-robot de l'inscription et de la connexion |
-| `CRON_SECRET`, `RESEND_API_KEY`, `ALERTES_EXPEDITEUR`, `URL_APPLICATION` | Récapitulatif hebdomadaire des alertes par e-mail |
+| `CRON_SECRET`, `RESEND_API_KEY`, `ALERTES_EXPEDITEUR`, `URL_APPLICATION` | E-mails d'alertes : récapitulatif du lundi et urgences du matin |
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Paiement en ligne |
 
 Reporter ensuite l'adresse obtenue dans Supabase (*Site URL*) et dans le lien « Espace client » du site Frisk.
