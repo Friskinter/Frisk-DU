@@ -105,8 +105,17 @@ function ResumeParcours({ donnees, contexte }: { donnees: Donnees; contexte: Ret
       <span className="h-1.5 w-28 overflow-hidden rounded-full bg-marbre" aria-hidden>
         <span className="block h-full bg-bronze" style={{ width: `${parcours.pourcentage}%` }} />
       </span>
-      <span className="min-w-0 flex-1 text-ardoise">Prochaine étape : {parcours.prochaine.titre}</span>
+      <span className="min-w-0 flex-1 text-ardoise">{etapeRestante(parcours)}</span>
       <span aria-hidden className="text-gris">→</span>
     </Link>
   );
+}
+
+// « Il vous reste 1 étape : … » quand la fin approche : plus parlant que « Prochaine étape » avec
+// une étape du début du parcours restée en suspens.
+function etapeRestante(parcours: { total: number; faites: number; prochaine?: { titre: string } }) {
+  const reste = parcours.total - parcours.faites;
+  const titre = parcours.prochaine?.titre ?? "";
+  if (reste === 1) return `Il vous reste 1 étape : ${titre.charAt(0).toLowerCase()}${titre.slice(1)}`;
+  return `Prochaine étape : ${titre}`;
 }
