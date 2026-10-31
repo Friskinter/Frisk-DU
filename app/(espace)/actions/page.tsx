@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { classeCible, idCible, useCible } from "@/lib/cible";
+import { useUtilisateursEspace, type UtilisateurEspace } from "@/lib/utilisateurs-espace";
 import { Suspense, useState } from "react";
 import {
   Chargement,
@@ -40,6 +41,7 @@ function PlanActions() {
   const { role } = useSession();
   const risqueFiltre = useSearchParams().get("risque") ?? "";
   const cible = useCible("action", !!donnees);
+  const utilisateurs = useUtilisateursEspace();
   const [statut, setStatut] = useState("");
   const [principe, setPrincipe] = useState("");
   const [responsable, setResponsable] = useState("");
@@ -239,6 +241,7 @@ function PlanActions() {
                     onSupprimer={supprimer}
                     onStatut={changerStatut}
                     cible={cible}
+                    utilisateurs={utilisateurs}
                   />
                 ))}
                 {orphelines.length > 0 && (
@@ -253,6 +256,7 @@ function PlanActions() {
                     onSupprimer={supprimer}
                     onStatut={changerStatut}
                     cible={cible}
+                    utilisateurs={utilisateurs}
                   />
                 )}
               </tbody>
@@ -276,6 +280,7 @@ function GroupeRisque({
   onSupprimer,
   onStatut,
   cible,
+  utilisateurs,
 }: {
   risque: LigneDuerp | null; // null : actions non rattachées à un risque du DUERP
   risquesDuerp?: LigneDuerp[];
@@ -288,6 +293,7 @@ function GroupeRisque({
   onSupprimer: (a: Action) => void;
   onStatut: (a: Action, statut: Action["statut"]) => void;
   cible: string; // action visée par l'adresse de la page
+  utilisateurs: UtilisateurEspace[]; // utilisateurs de l'espace à qui confier une action
 }) {
   const seulementEpi = !!l && actions.length > 0 && actions.every((a) => a.principe === "epi") && risqueResiduel(l) >= 8;
   return (
@@ -394,6 +400,25 @@ function GroupeRisque({
             </td>
             <td className={cellule}>
               <input aria-label="Responsable" list="liste-responsables" value={a.responsable} onChange={(e) => mettreAJour(a.id, { responsable: e.target.value })} className={champ} />
+              {utilisateurs.length > 0 && (
+                // Confier l'action à un utilisateur de l'espace : elle apparaît dans sa page « Mes actions »
+                // et son récapitulatif du lundi. Sans responsable saisi, son adresse le devient.
+                <select
+                  aria-label="Confier l'action à un utilisateur"
+                  value={a.responsableEmail ?? ""}
+                  onChange={(e) =>
+                    mettreAJour(a.id, { responsableEmail: e.target.value, ...(e.target.value && !a.responsable.trim() ? { responsable: e.target.value } : {}) })
+                  }
+                  className={`${champ} mt-1 text-xs ${a.responsableEmail ? "text-encre" : "text-gris"}`}
+                >
+                  <option value="">Confier à…</option>
+                  {utilisateurs.map((u) => (
+                    <option key={u.email} value={u.email}>
+                      {u.email}
+                    </option>
+                  ))}
+                </select>
+              )}
             </td>
             <td className={cellule}>
               <input aria-label="Échéance"

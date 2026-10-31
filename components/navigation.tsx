@@ -20,6 +20,7 @@ const groupes: { titre: string; liens: { href: string; label: string; icone: str
     liens: [
       { href: "/", label: "Tableau de bord", icone: "▦" },
       { href: "/parcours", label: "Mon parcours", icone: "➚" },
+      { href: "/mes-actions", label: "Mes actions", icone: "☑" },
       { href: "/bilans", label: "Bilans", icone: "▤" },
       { href: "/rapport", label: "Rapport annuel", icone: "▥" },
     ],

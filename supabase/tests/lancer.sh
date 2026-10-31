@@ -31,3 +31,4 @@ psql -At -f tests/18_preferences_email.test.sql | grep -v '^$' | tail -1
 psql -At -f tests/19_urgences_signalees.test.sql | grep -v '^$' | tail -1
 psql -At -f tests/20_alertes_vues.test.sql | grep -v '^$' | tail -1
 psql -At -f tests/21_envois_email.test.sql | grep -v '^$' | tail -1
+psql -At -f tests/22_utilisateurs_espace.test.sql | grep -v '^$' | tail -1

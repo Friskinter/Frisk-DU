@@ -3,6 +3,7 @@ import type { Alerte } from "./alertes";
 import { libellesTypesEcheance, type Echeance } from "./echeances";
 import type { Role } from "./operations";
 import type { Recapitulatif } from "./recapitulatif";
+import type { Action } from "./types";
 
 const couleurs: Record<Alerte["gravite"], string> = { critique: "#d03b3b", importante: "#ec835a", info: "#b08d57" };
 const libelles: Record<Alerte["gravite"], string> = { critique: "Urgent", importante: "À traiter", info: "À surveiller" };
@@ -31,8 +32,16 @@ function mentionResume(alertes: Alerte[], role: Role, autreDetailRetire = false)
 // Contenu du récapitulatif du lundi (lib/recapitulatif.ts) : urgences, échéances de la semaine,
 // autres points à traiter, puis prochaine étape du parcours. Les échéances citent des salariés, des
 // équipements ou des entreprises : seuls les responsables en reçoivent le détail, les autres un
-// décompte par type. La prochaine étape du parcours ne s'adresse qu'aux responsables.
-export function emailRecapitulatif(entreprise: string, recap: Recapitulatif, aujourdhui: string, urlApplication: string, role: Role = "responsable") {
+// décompte par type. La prochaine étape du parcours ne s'adresse qu'aux responsables. En tête, les
+// actions confiées à la personne (lib/mes-actions.ts : en retard ou à échéance dans la semaine).
+export function emailRecapitulatif(
+  entreprise: string,
+  recap: Recapitulatif,
+  aujourdhui: string,
+  urlApplication: string,
+  role: Role = "responsable",
+  actionsConfiees: Action[] = [],
+) {
   const { urgences, echeances, autres } = recap;
   const responsable = role === "admin" || role === "responsable";
   const prochaine = responsable ? recap.prochaine : undefined;
@@ -41,6 +50,7 @@ export function emailRecapitulatif(entreprise: string, recap: Recapitulatif, auj
 
   const nombre = (n: number, un: string, plusieurs: string) => `${n} ${n > 1 ? plusieurs : un}`;
   const resume = [
+    actionsConfiees.length ? nombre(actionsConfiees.length, "action vous est confiée", "actions vous sont confiées") : "",
     urgences.length ? nombre(urgences.length, "urgence", "urgences") : "",
     autres.length ? nombre(autres.length, "point à traiter", "points à traiter") : "",
     echeances.length ? `${nombre(echeances.length, "échéance", "échéances")} cette semaine` : "",
@@ -67,7 +77,19 @@ export function emailRecapitulatif(entreprise: string, recap: Recapitulatif, auj
   ).map(([type, n]) => `${type} : ${n}`);
   const titreSection = (t: string) => `<h2 style="margin:24px 0 4px;font-size:15px;color:#0c0b0a">${t}</h2>`;
 
+  const ligneAction = (a: Action) => {
+    const retard = a.echeance < aujourdhui;
+    return `
+      <tr><td style="padding:10px 0;border-bottom:1px solid #ece6dc">
+        <span style="color:${retard ? "#b42318" : "#6b645b"};font-size:12px">${retard ? "En retard depuis le" : "Échéance le"} ${formaterDate(a.echeance)}</span>
+        <div style="margin-top:4px;font-weight:bold">${echapper(a.intitule || "Action sans intitulé")}</div>
+        <a href="${urlApplication}/actions?action=${a.id}" style="color:#7f6235;font-size:13px">Ouvrir →</a>
+      </td></tr>`;
+  };
   const sections = [
+    actionsConfiees.length
+      ? titreSection("Vos actions") + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${actionsConfiees.map(ligneAction).join("")}</table>`
+      : "",
     urgences.length ? titreSection("Urgent") + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${urgences.map(ligneAlerte).join("")}</table>` : "",
     echeances.length
       ? titreSection("Échéances de la semaine") +
@@ -107,6 +129,9 @@ export function emailRecapitulatif(entreprise: string, recap: Recapitulatif, auj
   const texteAlerte = (a: Alerte) => `- [${libelles[a.gravite]}] ${a.titre}${detailVisible(a, role) ? ` : ${a.detail}` : ""}`;
   const texte = [
     `Frisk Plateforme · ${entreprise} · récapitulatif du ${formaterDate(aujourdhui)}`,
+    ...(actionsConfiees.length
+      ? ["", "VOS ACTIONS", ...actionsConfiees.map((a) => `- ${a.echeance < aujourdhui ? "en retard depuis le" : "échéance le"} ${formaterDate(a.echeance)} · ${a.intitule || "Action sans intitulé"}`)]
+      : []),
     ...(urgences.length ? ["", "URGENT", ...urgences.map(texteAlerte)] : []),
     ...(echeances.length
       ? [
