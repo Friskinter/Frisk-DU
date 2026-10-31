@@ -7,6 +7,7 @@ export const JETON_TEST = "a".repeat(64);
 // Pages de l'espace client, parcourues par les contrôles d'accessibilité et d'affichage mobile.
 export const pages = [
   { chemin: "/", titre: "Tableau de bord" },
+  { chemin: "/parcours", titre: "Mon parcours QHSE" },
   { chemin: "/duerp", titre: "Document unique (DUERP)" },
   { chemin: "/duerp-express", titre: "DUERP express" },
   { chemin: "/actions", titre: "Plan d'actions" },

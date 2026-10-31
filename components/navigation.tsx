@@ -15,6 +15,7 @@ import { deconnecter, etablissementsDuGroupe, ouvrirEntreprise, useSession, type
 
 const liens = [
   { href: "/", label: "Tableau de bord", icone: "▦" },
+  { href: "/parcours", label: "Mon parcours", icone: "➚" },
   { href: "/duerp", label: "DUERP", icone: "☰" },
   { href: "/actions", label: "Plan d'actions", icone: "✓" },
   { href: "/accidents", label: "Accidents", icone: "⚑" },
