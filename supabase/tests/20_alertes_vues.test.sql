@@ -20,7 +20,7 @@ end $$;
 -- Visite suivante : une alerte réglée disparaît, une nouvelle s'ajoute, la visite reste.
 select public.marquer_alertes_vues('10000000-0000-0000-0000-000000000001', array['actions-retard:a1', 'formations-30j:c3']);
 do $$ begin
-  assert (select array_agg(empreinte order by empreinte) from public.alertes_vues) = array['__visite__', 'actions-retard:a1', 'formations-30j:c3'], 'remplacement';
+  assert (select array_agg(empreinte order by empreinte collate "C") from public.alertes_vues) = array['__visite__', 'actions-retard:a1', 'formations-30j:c3'], 'remplacement';
 end $$;
 
 -- Visite sans alerte : seule la visite reste.
