@@ -12,3 +12,6 @@ export const CLE_DONNEES_TEST = "__friskDonneesTest";
 
 // Abonnement simulé (JSON { statut, essaiFin }), pour tester l'essai gratuit et la lecture seule.
 export const CLE_ABONNEMENT_TEST = "frisk-e2e-abonnement";
+
+// Empreintes des alertes vues (JSON), pour tester le repère « Nouveau » du tableau de bord.
+export const CLE_ALERTES_VUES_TEST = "frisk-e2e-alertes-vues";

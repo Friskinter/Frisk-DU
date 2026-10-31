@@ -1,9 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { calculerAlertes, type Alerte } from "@/lib/alertes";
+import { alertesNouvelles, empreinte, vuesDepuis } from "@/lib/alertes-vues";
 import { formaterDate } from "@/lib/calculs";
+import { CLE_ALERTES_VUES_TEST, MODE_TEST } from "@/lib/mode-test";
 import { useSession } from "@/lib/stockage";
+import { supabaseNavigateur } from "@/lib/supabase/client";
 import type { Donnees } from "@/lib/types";
 import { useVersions } from "@/lib/versions";
 
@@ -20,6 +24,8 @@ export function Alertes({ donnees, aujourdhui }: { donnees: Donnees; aujourdhui:
   // Tant que les versions ne sont pas connues, on n'affiche pas d'alerte de mise à jour annuelle.
   const derniere = chargement || erreur ? undefined : versions[0] ? versions[0].created_at.slice(0, 10) : null;
   const alertes = calculerAlertes(donnees, aujourdhui, derniere);
+  // Les alertes de mise à jour annuelle dépendent du chargement des versions : elles ne sont pas suivies.
+  const nouvelles = useAlertesNouvelles(session.entrepriseId, session.admin, alertes.filter((a) => !a.id.startsWith("version-")));
 
   if (!alertes.length) {
     // Entreprise qui démarre : rien à dire tant qu'aucun risque n'est évalué (l'assistant guide).
@@ -35,6 +41,11 @@ export function Alertes({ donnees, aujourdhui }: { donnees: Donnees; aujourdhui:
     <section className="mb-6 rounded-sm border border-pierre/70 bg-white">
       <h2 className="border-b border-pierre/60 px-4 py-3 text-sm font-semibold uppercase tracking-wider text-ardoise">
         À traiter ({alertes.length})
+        {nouvelles.size > 0 && (
+          <span className="ml-2 rounded-full bg-encre px-2 py-0.5 text-xs font-medium normal-case tracking-normal text-marbre">
+            {nouvelles.size} nouvelle{nouvelles.size > 1 ? "s" : ""} depuis votre dernière visite
+          </span>
+        )}
       </h2>
       <ul className="divide-y divide-pierre/40">
         {alertes.map((a) => {
@@ -50,6 +61,9 @@ export function Alertes({ donnees, aujourdhui }: { donnees: Donnees; aujourdhui:
                   {st.libelle}
                 </span>
                 <span className="min-w-0 flex-1">
+                  {nouvelles.has(a.id) && (
+                    <span className="mr-1.5 rounded-sm bg-encre px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-marbre">Nouveau</span>
+                  )}
                   <span className="font-medium">{a.titre}</span>
                   <span className="text-gris"> · {a.categorie}</span>
                   <span className="mt-0.5 block text-ardoise">{a.detail}</span>
@@ -89,4 +103,52 @@ export function Alertes({ donnees, aujourdhui }: { donnees: Donnees; aujourdhui:
       </details>
     </section>
   );
+}
+
+// Alertes nouvelles depuis la dernière visite de la personne connectée, puis enregistrement de
+// celles qu'elle vient de voir. Le repère reste affiché pendant toute la visite.
+function useAlertesNouvelles(entrepriseId: string, admin: boolean, alertes: Alerte[]) {
+  const [nouvelles, setNouvelles] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    // Les administrateurs Frisk ne sont pas membres de l'entreprise : pas de suivi pour eux.
+    if (admin) return;
+    let actif = true;
+    const vuesMaintenant = alertes.map(empreinte);
+    const traiter = (lignes: { empreinte: string }[]) => {
+      if (!actif) return;
+      setNouvelles(alertesNouvelles(alertes, vuesDepuis(lignes)));
+      if (MODE_TEST) {
+        try {
+          localStorage.setItem(CLE_ALERTES_VUES_TEST, JSON.stringify(["__visite__", ...vuesMaintenant]));
+        } catch {
+          // Sans stockage local, le test ne suit pas les visites.
+        }
+        return;
+      }
+      void supabaseNavigateur().rpc("marquer_alertes_vues", { p_entreprise: entrepriseId, p_empreintes: vuesMaintenant });
+    };
+    if (MODE_TEST) {
+      let lues: string[] = [];
+      try {
+        lues = JSON.parse(localStorage.getItem(CLE_ALERTES_VUES_TEST) ?? "[]");
+      } catch {
+        lues = [];
+      }
+      traiter(lues.map((e) => ({ empreinte: e })));
+    } else {
+      supabaseNavigateur()
+        .from("alertes_vues")
+        .select("empreinte")
+        .eq("entreprise_id", entrepriseId)
+        .then(({ data }: { data: { empreinte: string }[] | null }) => traiter(data ?? []));
+    }
+    return () => {
+      actif = false;
+    };
+    // Une seule lecture par visite : les alertes qui changent pendant la visite ne relancent rien.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entrepriseId, admin]);
+
+  return nouvelles;
 }
