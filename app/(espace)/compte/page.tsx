@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AvisClient } from "@/components/avis-client";
 import { DoubleAuthentification } from "@/components/double-authentification";
+import { PreferencesEmailCompte } from "@/components/preferences-email";
 import { Carte, Chargement, EnTetePage } from "@/components/ui";
 import { libellesRoles } from "@/lib/operations";
 import { useSession } from "@/lib/stockage";
@@ -29,6 +30,14 @@ export default function PageCompte() {
       </Carte>
 
       <DoubleAuthentification recommandee={session.admin || session.role === "responsable"} />
+
+      {!session.admin && (
+        <PreferencesEmailCompte
+          entrepriseId={session.entrepriseId}
+          entreprise={session.espaces.find((e) => e.id === session.entrepriseId)?.nom ?? session.donnees?.entreprise ?? ""}
+          recapitulatifEntreprise={session.donnees?.preferences?.alertesEmail !== false}
+        />
+      )}
 
       {!session.admin && (
         <AvisClient

@@ -137,7 +137,8 @@ export default function PageReglages() {
               Envoyer chaque lundi un récapitulatif des points à traiter à tous les utilisateurs de l&apos;entreprise
               <span className="block text-xs text-gris">
                 Actions en retard ou proches de l&apos;échéance, stocks en rupture ou sous le stock tampon, mise à jour annuelle
-                du DUERP, remises d&apos;EPI non signées. Aucun e-mail n&apos;est envoyé s&apos;il n&apos;y a rien à signaler.
+                du DUERP, remises d&apos;EPI non signées. Aucun e-mail n&apos;est envoyé s&apos;il n&apos;y a rien à signaler. Chaque
+                personne peut aussi choisir ses e-mails dans <Link href="/compte" className="underline">Mon compte</Link>.
               </span>
             </span>
           </label>

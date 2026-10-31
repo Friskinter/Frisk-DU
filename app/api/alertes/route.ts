@@ -2,6 +2,7 @@ import { calculerAlertes } from "@/lib/alertes";
 import { dateDuJour } from "@/lib/calculs";
 import { normaliser } from "@/lib/donnees";
 import { emailAlertes } from "@/lib/email-alertes";
+import { destinataires as destinatairesSelon } from "@/lib/preferences-email";
 import { supabaseAdmin } from "@/lib/supabase/serveur";
 import type { Donnees } from "@/lib/types";
 
@@ -29,9 +30,14 @@ export async function GET(requete: Request) {
 
   const { data: entreprises, error } = await admin
     .from("entreprises")
-    .select("id, nom, membres(email), espaces(contenu), versions(created_at)")
+    .select("id, nom, membres(user_id, email), espaces(contenu), versions(created_at)")
     .eq("actif", true);
   if (error) return Response.json({ erreur: "Lecture des entreprises impossible." }, { status: 500 });
+  // Préférences de chaque personne (récapitulatif du lundi oui ou non).
+  const { data: preferences, error: erreurPreferences } = await admin
+    .from("preferences_email")
+    .select("user_id, entreprise_id, recapitulatif, immediats");
+  if (erreurPreferences) return Response.json({ erreur: "Lecture des préférences d'e-mail impossible." }, { status: 500 });
 
   const rapport: { entreprise: string; destinataires: string[]; alertes: number; envoye: boolean }[] = [];
 
@@ -40,7 +46,7 @@ export async function GET(requete: Request) {
 
   for (const e of entreprises ?? []) {
     const donnees = (e.espaces as unknown as { contenu: Donnees } | null)?.contenu;
-    const destinataires = ((e.membres ?? []) as { email: string }[]).map((m) => m.email);
+    const destinataires = destinatairesSelon((e.membres ?? []) as { user_id: string; email: string }[], e.id, preferences ?? [], "recapitulatif");
     if (!donnees || !destinataires.length || donnees.preferences?.alertesEmail === false) continue;
 
     const dates = ((e.versions ?? []) as { created_at: string }[]).map((v) => v.created_at.slice(0, 10)).sort();

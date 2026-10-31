@@ -9,12 +9,17 @@ const etat = vi.hoisted(() => ({
   retraits: [] as string[],
   rpc: [] as unknown[],
   identite: undefined as Record<string, string> | undefined,
+  responsables: [] as { user_id: string; email: string }[],
+  preferences: [] as { user_id: string; entreprise_id: string; recapitulatif: boolean; immediats: boolean }[],
 }));
 
 vi.mock("@/lib/supabase/serveur", () => ({
   supabaseAdmin: () => ({
     from: (table: string) => {
+      // Listes lues sans maybeSingle (responsables, préférences d'e-mail) : la requête se résout directement.
+      const liste = table === "membres" ? etat.responsables : table === "preferences_email" ? etat.preferences : [];
       const requete = {
+        then: (resoudre: (r: { data: unknown[] }) => unknown) => Promise.resolve({ data: liste }).then(resoudre),
         select: () => requete,
         eq: () => requete,
         gt: () => Promise.resolve({ count: etat.signalementsDerniereHeure }),
@@ -65,6 +70,8 @@ beforeEach(() => {
   etat.depots = [];
   etat.retraits = [];
   etat.rpc = [];
+  etat.responsables = [];
+  etat.preferences = [];
 });
 
 describe("route de signalement", () => {
@@ -116,5 +123,25 @@ describe("route de signalement", () => {
     expect((await envoi({}, [1, 2, 3, 4].map(() => new Blob([JPEG], { type: "image/jpeg" })))).status).toBe(400);
     expect(etat.depots).toEqual([]);
     expect(etat.rpc).toEqual([]);
+  });
+
+  it("prévient par e-mail les responsables qui n'ont pas coupé les e-mails immédiats", async () => {
+    vi.stubEnv("RESEND_API_KEY", "re_test");
+    vi.stubEnv("ALERTES_EXPEDITEUR", "Frisk Plateforme <alertes@frisk.fr>");
+    const envois: string[] = [];
+    vi.stubGlobal("fetch", async (_url: string, options: { body: string }) => {
+      envois.push(JSON.parse(options.body).to);
+      return new Response("{}");
+    });
+    etat.responsables = [
+      { user_id: "a", email: "patron@e1.fr" },
+      { user_id: "b", email: "adjoint@e1.fr" },
+    ];
+    etat.preferences = [{ user_id: "b", entreprise_id: "e1", recapitulatif: true, immediats: false }];
+    const reponse = await envoi();
+    expect(reponse.status).toBe(200);
+    expect(envois).toEqual(["patron@e1.fr"]);
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
   });
 });

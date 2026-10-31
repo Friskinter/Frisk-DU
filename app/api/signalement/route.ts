@@ -1,5 +1,6 @@
 import { dateDuJour } from "@/lib/calculs";
 import { emailSignalement } from "@/lib/email-alertes";
+import { destinataires } from "@/lib/preferences-email";
 import { couleurValide, logoValide } from "@/lib/identite";
 import { typesEvenement } from "@/lib/referentiel";
 import { evenementSignale, extensions, jetonValide, lireFormulaire, PHOTOS_MAX, TAILLE_ENVOI_MAX, TAILLE_PHOTO_MAX, typeImage } from "@/lib/signalement";
@@ -114,13 +115,17 @@ async function prevenirResponsables(
   const expediteur = process.env.ALERTES_EXPEDITEUR;
   if (!cle || !expediteur) return;
   try {
-    const { data } = await entreprise.admin.from("membres").select("email").eq("entreprise_id", entreprise.id).eq("role", "responsable");
+    const [{ data }, { data: preferences }] = await Promise.all([
+      entreprise.admin.from("membres").select("user_id, email").eq("entreprise_id", entreprise.id).eq("role", "responsable"),
+      entreprise.admin.from("preferences_email").select("user_id, entreprise_id, recapitulatif, immediats").eq("entreprise_id", entreprise.id),
+    ]);
     const url = process.env.URL_APPLICATION ?? new URL(requete.url).origin;
     const type = typesEvenement.find((t) => t.valeur === evenement.type)?.libelle ?? "Événement";
     const { sujet, html, texte } = emailSignalement(
       entreprise.nom, type, evenement.type === "accident-travail", `${url}/accidents?evenement=${evenement.id}`,
     );
-    for (const { email } of (data ?? []) as { email: string }[]) {
+    // Seulement les responsables qui n'ont pas coupé les e-mails immédiats.
+    for (const email of destinataires((data ?? []) as { user_id: string; email: string }[], entreprise.id, preferences ?? [], "immediats")) {
       await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { Authorization: `Bearer ${cle}`, "Content-Type": "application/json" },

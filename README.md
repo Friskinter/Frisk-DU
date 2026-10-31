@@ -83,7 +83,7 @@ détaille.
 - [ ] **Passer au plan payant** : en gratuit, un projet sans activité pendant une semaine est mis en
       pause et les sauvegardes quotidiennes ne sont pas incluses.
 - [ ] Vérifier que `supabase/schema.sql` et **toutes** les migrations de `supabase/migrations` ont
-      été exécutées (la dernière : `018_avis.sql`).
+      été exécutées (la dernière : `019_preferences_email.sql`).
 - [ ] Compte administrateur Frisk créé (voir [Mise en place de Supabase](#mise-en-place-de-supabase-une-seule-fois))
       et **double authentification activée** dessus.
 - [ ] *Authentication > Sign In / Providers* : **Allow new users to sign up** et **Confirm email**
