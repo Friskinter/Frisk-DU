@@ -15,3 +15,6 @@ export const CLE_ABONNEMENT_TEST = "frisk-e2e-abonnement";
 
 // Empreintes des alertes vues (JSON), pour tester le repère « Nouveau » du tableau de bord.
 export const CLE_ALERTES_VUES_TEST = "frisk-e2e-alertes-vues";
+
+// Coupure du réseau simulée ("1") : les modifications restent en attente sur l'appareil.
+export const CLE_HORS_LIGNE_TEST = "frisk-e2e-hors-ligne";

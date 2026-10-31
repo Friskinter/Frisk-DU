@@ -76,7 +76,8 @@ function useCouleurEntreprise(couleur: string | undefined) {
 const etatsEnregistrement: Record<Enregistrement, { texte: string; classe: string }> = {
   enregistre: { texte: "✓ Enregistré", classe: "text-pierre/70" },
   "en-cours": { texte: "Enregistrement…", classe: "text-bronze-clair" },
-  erreur: { texte: "⚠ Hors connexion, nouvel essai…", classe: "text-[#ec835a]" },
+  "hors-ligne": { texte: "⚠ Hors ligne : enregistré sur cet appareil", classe: "text-[#fab219]" },
+  erreur: { texte: "⚠ Hors connexion : ne fermez pas la page", classe: "text-[#ec835a]" },
   refuse: { texte: "⚠ Modification refusée", classe: "text-[#ec835a]" },
 };
 
