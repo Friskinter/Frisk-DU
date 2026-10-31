@@ -1,6 +1,6 @@
 # Suivi de l'évolution « Guider – Centraliser – Anticiper »
 
-*Point de reprise au 31 octobre 2026 (mis à jour avec la phase 3, point 6 : phase 3 terminée). À lire avant de continuer ce chantier, quel que soit le compte ou la session.*
+*Point de reprise au 31 octobre 2026 (phase 3 terminée ; mis à jour avec la phase 4, point 1). À lire avant de continuer ce chantier, quel que soit le compte ou la session.*
 
 Le cahier des charges (version 1.0 du 31/10/2026) demande de faire évoluer Frisk Plateforme d'un logiciel de gestion QHSE vers un outil de pilotage, **sans reconstruire ni supprimer l'existant**, en quatre phases après un audit. Le détail de l'existant, des limites et des propositions est dans [`audit-phase-0.md`](audit-phase-0.md).
 
@@ -24,6 +24,7 @@ Le cahier des charges (version 1.0 du 31/10/2026) demande de faire évoluer Fris
 | #51 | **Contenu des e-mails selon le rôle** (récapitulatif du lundi et urgences du matin) : le responsable reçoit tout le détail, le contributeur le détail des alertes EPI qu'il gère et les seuls titres pour le reste, le lecteur un résumé (les titres, qui ne donnent que des nombres, sans le détail qui peut citer des salariés ou des produits) avec une mention en bas de l'e-mail. Règle dans `alerteTraitable` (`lib/email-alertes.ts`), rôle lu dans `membres` (`destinatairesAvecRole`, `lib/preferences-email.ts`), un e-mail construit par personne. Rôle inconnu : traité en lecteur. Pas de migration. Le signalement terrain n'est pas concerné : il ne part qu'aux responsables et ne contient déjà aucun détail. |
 | #52 | **Journal des e-mails dans la console Frisk** : chaque e-mail envoyé (récapitulatif du lundi, urgences du matin, signalement terrain) est noté, réussi ou en échec avec la raison donnée par Resend (`lib/envoi-email.ts` : `envoyerEmail`, qui ne lève jamais d'erreur, et `journaliserEnvois`). Table `envois_email` (migration `022_envois_email.sql`, test SQL `21_…`), lisible par Frisk seulement, sans le contenu de l'e-mail, conservée 90 jours (purge chaque matin) et supprimée avec l'entreprise. Carte « E-mails envoyés » dans la console : bilan de la semaine, échecs en rouge, liste complète sur demande. Une tâche planifiée qui ne peut pas envoyer faute de `RESEND_API_KEY` ou `ALERTES_EXPEDITEUR` le note dans « Erreurs rencontrées ». |
 | #53 | **Récapitulatif du lundi enrichi** : dans l'ordre, les urgences (alertes critiques), les échéances de la semaine (du lundi au dimanche, `calculerEcheances` sur 6 jours, sans celles en retard qui sont déjà des alertes), les autres points à traiter et à surveiller, puis la prochaine étape de « Mon parcours QHSE » (`calculerParcours`, contexte lu par la tâche : versions figées, lien de signalement). Préparé par `preparerRecapitulatif` (`lib/recapitulatif.ts`), mis en forme par `emailRecapitulatif` (`lib/email-alertes.ts`, remplace `emailAlertes`). Sujet : « 1 urgence, 3 points à traiter, 2 échéances cette semaine ». Selon le rôle : le responsable a le détail des échéances et la prochaine étape ; le contributeur et le lecteur un décompte des échéances par type, sans noms ni parcours. Aucun e-mail si rien n'est à signaler (la prochaine étape seule ne suffit pas). Aperçu : `urgences`, `echeances`, `alertes` par entreprise. Pas de migration. |
+| #NN | **Unité de travail modifiée → réexaminer ses risques** (phase 4) : dans le DUERP filtré sur une unité, « Signaler un changement » (motif proposé : nouvel équipement, réaménagement, nouveau procédé, organisation, accident) marque tous ses risques à réexaminer (champ `reexamen` de la ligne, `lib/reexamen.ts`). Lignes surlignées, bandeau récapitulatif, bouton « ✓ Réexaminé » ; revoir gravité, fréquence, maîtrise, mesures ou effectif vaut aussi réexamen. Alertes « N risques à réexaminer après un changement » et « N unités de travail sans risque évalué » (unité nouvelle ou renommée), qui ouvrent `/duerp?unite=…`. Visible dans le journal. Pas de migration (champ d'une ligne existante). |
 
 ## Phase 3, les alertes : terminée
 
@@ -38,8 +39,8 @@ Les six points, chacun dans sa PR avec ses tests :
 
 ## Prochaine étape : phase 4
 
-- Alerte « unité de travail modifiée → réexaminer ses risques » (seul lien entre modules manquant).
-- Parcours complets de bout en bout et performances.
+1. ~~**Alerte « unité de travail modifiée → réexaminer ses risques »**~~ : **fait** (#NN).
+2. **Parcours complets de bout en bout et performances.**
 
 ## Méthode à suivre (rappel de `CLAUDE.md`)
 
