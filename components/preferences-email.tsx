@@ -68,7 +68,7 @@ export function PreferencesEmailCompte({ entrepriseId, entreprise, recapitulatif
             Récapitulatif du lundi
             <span className="block text-xs text-gris">
               Les points à traiter de la semaine : actions en retard, formations et vérifications à prévoir, stocks d&apos;EPI…
-              {!recapitulatifEntreprise && " Il est actuellement désactivé pour toute l'entreprise par un responsable (Salariés & réglages)."}
+              {!recapitulatifEntreprise && " Il est actuellement désactivé pour toute l'entreprise par un responsable (Réglages)."}
             </span>
           </span>
         </label>

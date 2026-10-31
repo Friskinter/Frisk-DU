@@ -46,15 +46,16 @@ const groupes: { titre: string; liens: { href: string; label: string; icone: str
   {
     titre: "Salariés",
     liens: [
+      { href: "/salaries", label: "Salariés", icone: "☺" },
       { href: "/formations", label: "Formations", icone: "◆" },
       { href: "/accueil", label: "Accueil et causeries", icone: "✎" },
       { href: "/epi", label: "EPI & stocks", icone: "⛑" },
-      { href: "/reglages", label: "Salariés & réglages", icone: "⚙" },
     ],
   },
   {
     titre: "",
     liens: [
+      { href: "/reglages", label: "Réglages", icone: "⚙" },
       { href: "/journal", label: "Journal", icone: "◷" },
       { href: "/abonnement", label: "Abonnement", icone: "€" },
     ],

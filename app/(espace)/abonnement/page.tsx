@@ -208,7 +208,7 @@ function Abonnement() {
 
       <p className="text-sm text-ardoise">
         Vos données vous appartiennent : téléchargez-en une copie à tout moment depuis{" "}
-        <Link href="/reglages" className="underline">Salariés &amp; réglages</Link>, rubrique Données.
+        <Link href="/reglages" className="underline">Réglages</Link>, rubrique Données.
       </p>
     </div>
   );
