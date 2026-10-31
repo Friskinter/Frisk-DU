@@ -21,7 +21,7 @@ s'ajoute ici, par une PR.
 
 ## Chantier « Guider – Centraliser – Anticiper » (terminé)
 
-- Les phases 0 à 4 sont faites (PR #44 à #55 et la PR de fin) : décisions, contenu de chaque PR et
+- Les phases 0 à 4 sont faites (PR #44 à #56) : décisions, contenu de chaque PR et
   méthode dans [docs/suivi-evolution.md](docs/suivi-evolution.md). Le lire avant de reprendre une de
   ces fonctions (alertes, e-mails, parcours, tableau de bord). La suite, c'est la liste de lancement.
 
