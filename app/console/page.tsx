@@ -14,6 +14,7 @@ import {
 import { accesEntreprise, joursRestants, offres, type StatutAbonnement } from "@/lib/abonnement";
 import { libellesStatutAvis, type StatutAvis } from "@/lib/avis";
 import { formaterDate } from "@/lib/calculs";
+import { bilanEnvois, libellesEnvoi, type EnvoiJournal } from "@/lib/envoi-email";
 import { champsManquants } from "@/lib/legal";
 import { deconnecter, ouvrirEntreprise } from "@/lib/stockage";
 import { libellesRoles } from "@/lib/operations";
@@ -307,6 +308,7 @@ export default function Console() {
 
         <AvisClients />
         <ErreursRecentes />
+        <EnvoisEmail />
 
         <div className="flex items-center gap-3">
           <input
@@ -692,6 +694,65 @@ function ErreursRecentes() {
             </ul>
           )}
         </>
+      )}
+    </section>
+  );
+}
+
+// Derniers e-mails envoyés par Frisk Plateforme (alertes, urgences, signalements), sur 90 jours :
+// un échec (adresse refusée, clé Resend invalide, domaine non vérifié) se voit tout de suite.
+function EnvoisEmail() {
+  const [liste, setListe] = useState<{ envois: EnvoiJournal[]; bilan: ReturnType<typeof bilanEnvois> } | null>(null);
+  const [ouvert, setOuvert] = useState(false);
+  useEffect(() => {
+    const lire = async () => {
+      const { data } = await supabaseNavigateur()
+        .from("envois_email")
+        .select("id, created_at, type, destinataire, reussi, erreur, entreprises(nom)")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      const envois = (data ?? []) as unknown as EnvoiJournal[];
+      setListe({ envois, bilan: bilanEnvois(envois, Date.now()) });
+    };
+    void lire();
+  }, []);
+  if (!liste) return null;
+  const { envois, bilan } = liste;
+  const affiches = ouvert ? envois : envois.filter((e) => !e.reussi).slice(0, 10);
+  return (
+    <section className="rounded-sm border border-pierre/70 bg-white p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-ardoise">E-mails envoyés</h2>
+        <p className="text-sm">
+          {envois.length
+            ? `Cette semaine : ${bilan.reussis} envoyé${bilan.reussis > 1 ? "s" : ""} · ${bilan.echecs} échec${bilan.echecs > 1 ? "s" : ""}`
+            : "Aucun e-mail envoyé pour l'instant."}
+        </p>
+      </div>
+      {bilan.echecs > 0 && (
+        <p role="alert" className="mt-2 text-sm text-[#b42318]">
+          Des e-mails n&apos;ont pas pu partir cette semaine : la raison est indiquée ci-dessous.
+        </p>
+      )}
+      {affiches.length > 0 && (
+        <ul className="mt-3 divide-y divide-pierre/60 text-sm">
+          {affiches.map((e) => (
+            <li key={e.id} className="py-2">
+              <span className="text-xs text-gris">
+                {new Date(e.created_at).toLocaleString("fr-FR")} · {libellesEnvoi[e.type]} · {e.entreprises?.nom ?? "—"}
+              </span>
+              <br />
+              <span className="break-all">{e.destinataire}</span>{" "}
+              {e.reussi ? <span className="text-[#006300]">envoyé</span> : <strong className="text-[#b42318]">échec</strong>}
+              {e.erreur && <span className="block break-all text-xs text-ardoise">{e.erreur}</span>}
+            </li>
+          ))}
+        </ul>
+      )}
+      {envois.length > 0 && (
+        <button type="button" className="mt-2 text-sm text-bronze-fonce underline" onClick={() => setOuvert(!ouvert)}>
+          {ouvert ? "N'afficher que les échecs" : `Afficher tous les envois (${envois.length} derniers)`}
+        </button>
       )}
     </section>
   );

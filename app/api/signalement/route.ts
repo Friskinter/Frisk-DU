@@ -1,5 +1,6 @@
 import { dateDuJour } from "@/lib/calculs";
 import { emailSignalement } from "@/lib/email-alertes";
+import { envoyerEmail, journaliserEnvois, type LigneEnvoi } from "@/lib/envoi-email";
 import { destinataires } from "@/lib/preferences-email";
 import { couleurValide, logoValide } from "@/lib/identite";
 import { typesEvenement } from "@/lib/referentiel";
@@ -125,13 +126,12 @@ async function prevenirResponsables(
       entreprise.nom, type, evenement.type === "accident-travail", `${url}/accidents?evenement=${evenement.id}`,
     );
     // Seulement les responsables qui n'ont pas coupé les e-mails immédiats.
+    const journal: LigneEnvoi[] = [];
     for (const email of destinataires((data ?? []) as { user_id: string; email: string }[], entreprise.id, preferences ?? [], "immediats")) {
-      await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${cle}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ from: expediteur, to: email, subject: sujet, html, text: texte }),
-      });
+      const resultat = await envoyerEmail(cle, { from: expediteur, to: email, subject: sujet, html, text: texte });
+      journal.push({ type: "signalement", entreprise_id: entreprise.id, destinataire: email, ...resultat });
     }
+    await journaliserEnvois(entreprise.admin, journal);
   } catch {
     // Le signalement est enregistré ; l'e-mail n'est qu'une commodité.
   }

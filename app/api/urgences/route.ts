@@ -2,6 +2,7 @@ import { calculerAlertes } from "@/lib/alertes";
 import { dateDuJour } from "@/lib/calculs";
 import { normaliser } from "@/lib/donnees";
 import { emailUrgences } from "@/lib/email-alertes";
+import { envoyerEmail, journaliserEnvois, purgerJournal, signalerConfigurationManquante, type LigneEnvoi } from "@/lib/envoi-email";
 import { destinatairesAvecRole } from "@/lib/preferences-email";
 import { supabaseAdmin } from "@/lib/supabase/serveur";
 import type { Donnees } from "@/lib/types";
@@ -24,6 +25,7 @@ export async function GET(requete: Request) {
   const cleResend = process.env.RESEND_API_KEY;
   const expediteur = process.env.ALERTES_EXPEDITEUR;
   if (!apercu && (!cleResend || !expediteur)) {
+    await signalerConfigurationManquante(admin, "/api/urgences");
     return Response.json({ erreur: "RESEND_API_KEY ou ALERTES_EXPEDITEUR manquante." }, { status: 500 });
   }
   const aujourdhui = dateDuJour();
@@ -41,6 +43,9 @@ export async function GET(requete: Request) {
 
   const rapport: { entreprise: string; destinataires: string[]; urgences: number; envoye: boolean }[] = [];
 
+  // Journal des e-mails : conservation limitée à 90 jours.
+  if (!apercu) await purgerJournal(admin);
+
   for (const e of entreprises ?? []) {
     const donnees = (e.espaces as unknown as { contenu: Donnees } | null)?.contenu;
     if (!donnees) continue;
@@ -51,23 +56,17 @@ export async function GET(requete: Request) {
     const pour = destinatairesAvecRole((e.membres ?? []) as { user_id: string; email: string; role: string }[], e.id, preferences ?? [], "immediats");
 
     let envoye = false;
-    if (aSignaler.length && pour.length) {
-      if (apercu) {
-        envoye = false;
-      } else {
-        // Un e-mail par destinataire : les adresses des collègues ne sont pas dévoilées, et le
-        // contenu suit le rôle de chacun (détail complet pour les responsables).
-        envoye = true;
-        for (const { email: to, role } of pour) {
-          const { sujet, html, texte } = emailUrgences(e.nom, aSignaler, aujourdhui, urlApplication, role);
-          const reponse = await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${cleResend}`, "Content-Type": "application/json" },
-            body: JSON.stringify({ from: expediteur, to, subject: sujet, html, text: texte }),
-          });
-          if (!reponse.ok) envoye = false;
-        }
+    if (aSignaler.length && pour.length && !apercu && cleResend && expediteur) {
+      // Un e-mail par destinataire : les adresses des collègues ne sont pas dévoilées, et le
+      // contenu suit le rôle de chacun (détail complet pour les responsables).
+      const journal: LigneEnvoi[] = [];
+      for (const { email: to, role } of pour) {
+        const { sujet, html, texte } = emailUrgences(e.nom, aSignaler, aujourdhui, urlApplication, role);
+        const resultat = await envoyerEmail(cleResend, { from: expediteur, to, subject: sujet, html, text: texte });
+        journal.push({ type: "urgences", entreprise_id: e.id, destinataire: to, ...resultat });
       }
+      await journaliserEnvois(admin, journal);
+      envoye = journal.every((l) => l.reussi);
     }
     if (aSignaler.length) rapport.push({ entreprise: e.nom, destinataires: pour.map((d) => d.email), urgences: aSignaler.length, envoye });
 

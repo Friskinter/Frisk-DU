@@ -24,7 +24,7 @@ const DELAI_NOUVEL_ESSAI = 5000;
 const DELAI_RELECTURE = 500;
 const OPERATIONS_PAR_ENVOI = 200;
 // Version de la base attendue par cette version de Frisk Plateforme (fonction frisk_version, migrations).
-export const VERSION_BASE = 21;
+export const VERSION_BASE = 22;
 
 export type Statut =
   | "chargement"
