@@ -42,7 +42,7 @@ function majGrille(id: string, champs: Partial<GrilleAudit>) {
 }
 
 function couleurTaux(taux: number | null) {
-  if (taux === null) return { couleur: "#ece6dc", texte: "#3a3530" };
+  if (taux === null) return { couleur: "#e3e9ec", texte: "#2e4450" };
   if (taux >= 90) return { couleur: "#0ca30c", texte: "#0b0b0b" };
   if (taux >= 70) return { couleur: "#fab219", texte: "#0b0b0b" };
   return { couleur: "#d03b3b", texte: "#ffffff" };
@@ -424,7 +424,7 @@ function PointVisite({ visite: v, reponse: r, donnees, verrouille }: { visite: V
             aria-pressed={r.resultat === x.valeur}
             onClick={() => choisir(x.valeur)}
             className="min-w-28 rounded-sm border px-3 py-2 text-sm font-medium transition-colors disabled:opacity-60"
-            style={r.resultat === x.valeur ? { background: x.couleur, color: x.texte, borderColor: x.couleur } : { borderColor: "#d9cfc1", background: "#ffffff" }}
+            style={r.resultat === x.valeur ? { background: x.couleur, color: x.texte, borderColor: x.couleur } : { borderColor: "#cdd7dc", background: "#ffffff" }}
           >
             {x.court} {x.libelle}
           </button>

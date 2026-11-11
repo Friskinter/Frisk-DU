@@ -5,11 +5,11 @@
 
 import type { Identite } from "./types";
 
-export const COULEUR_FRISK = "#b08d57";
-const ENCRE = "#0c0b0a";
-const MARBRE = "#ece6dc";
-const PIERRE = "#d9cfc1";
-const GRIS = "#6b645b";
+export const COULEUR_FRISK = "#d4874f";
+const ENCRE = "#182630";
+const MARBRE = "#e3e9ec";
+const PIERRE = "#cdd7dc";
+const GRIS = "#4f5e67";
 const ALERTE_MENU = "#ec835a"; // « Hors connexion » dans le menu
 export const LOGO_TAILLE_MAX = 200_000; // caractères de l'image enregistrée (data URL)
 

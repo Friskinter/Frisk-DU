@@ -188,7 +188,7 @@ export const principesPrevention: EchelonPrincipe[] = [
 ];
 
 export const efficacites: { valeur: Efficacite; libelle: string; couleur: string; texte: string }[] = [
-  { valeur: "non-evaluee", libelle: "Non vérifiée", couleur: "#d9cfc1", texte: "#0c0b0a" },
+  { valeur: "non-evaluee", libelle: "Non vérifiée", couleur: "#cdd7dc", texte: "#182630" },
   { valeur: "efficace", libelle: "Efficace", couleur: "#0ca30c", texte: "#0b0b0b" },
   { valeur: "partielle", libelle: "Partiellement efficace", couleur: "#fab219", texte: "#0b0b0b" },
   { valeur: "inefficace", libelle: "Inefficace", couleur: "#d03b3b", texte: "#ffffff" },
@@ -210,7 +210,7 @@ export const typesEvenement: { valeur: TypeEvenement; libelle: string; definitio
     definition: "Aurait pu blesser quelqu'un, mais sans conséquence cette fois (ex. un colis tombe à côté d'un salarié).",
   },
   {
-    valeur: "situation-dangereuse", libelle: "Situation dangereuse", couleur: "#d9cfc1", texte: "#0c0b0a",
+    valeur: "situation-dangereuse", libelle: "Situation dangereuse", couleur: "#cdd7dc", texte: "#182630",
     definition: "Repérée avant tout incident et pouvant conduire à un accident (ex. garde-corps manquant, flaque d'huile).",
   },
 ];

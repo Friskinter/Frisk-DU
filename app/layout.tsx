@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Cinzel, Inter } from "next/font/google";
+import { Archivo, Inter } from "next/font/google";
 import { SuiviErreurs } from "@/components/suivi-erreurs";
 import "./globals.css";
 
-const cinzel = Cinzel({
-  variable: "--font-cinzel",
+const archivo = Archivo({
+  variable: "--font-archivo",
   subsets: ["latin"],
 });
 
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="fr" className={`${cinzel.variable} ${inter.variable} h-full antialiased`}>
+    <html lang="fr" className={`${archivo.variable} ${inter.variable} h-full antialiased`}>
       <body className="min-h-full font-sans">
         <SuiviErreurs />
         {children}

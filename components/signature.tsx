@@ -45,7 +45,7 @@ export function PaveSignature({ onChange }: { onChange: (image: string | null) =
     if (!dernier.current) return;
     const ctx = toile.current!.getContext("2d")!;
     const p = point(e);
-    ctx.strokeStyle = "#0c0b0a";
+    ctx.strokeStyle = "#182630";
     ctx.lineWidth = 2.5;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";

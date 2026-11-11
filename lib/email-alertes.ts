@@ -5,7 +5,7 @@ import type { Role } from "./operations";
 import type { Recapitulatif } from "./recapitulatif";
 import type { Action } from "./types";
 
-const couleurs: Record<Alerte["gravite"], string> = { critique: "#d03b3b", importante: "#ec835a", info: "#b08d57" };
+const couleurs: Record<Alerte["gravite"], string> = { critique: "#d03b3b", importante: "#ec835a", info: "#d4874f" };
 const libelles: Record<Alerte["gravite"], string> = { critique: "Urgent", importante: "À traiter", info: "À surveiller" };
 
 const echapper = (t: string) =>
@@ -58,32 +58,32 @@ export function emailRecapitulatif(
   const sujet = `Frisk Plateforme · ${entreprise} : ${resume.join(", ") || "votre semaine"}`;
 
   const ligneAlerte = (a: Alerte) => `
-      <tr><td style="padding:12px 0;border-bottom:1px solid #ece6dc">
+      <tr><td style="padding:12px 0;border-bottom:1px solid #e3e9ec">
         <span style="display:inline-block;padding:2px 8px;border-radius:10px;background:${couleurs[a.gravite]};color:#fff;font-size:12px">${libelles[a.gravite]}</span>
-        <span style="color:#6b645b;font-size:12px">&nbsp;${echapper(a.categorie)}</span>
+        <span style="color:#4f5e67;font-size:12px">&nbsp;${echapper(a.categorie)}</span>
         <div style="margin-top:6px;font-weight:bold">${echapper(a.titre)}</div>
-        ${detailVisible(a, role) ? `<div style="color:#3a3530">${echapper(a.detail)}</div>` : ""}
-        <a href="${urlApplication}${a.lien}" style="color:#7f6235;font-size:13px">Ouvrir dans Frisk Plateforme →</a>
+        ${detailVisible(a, role) ? `<div style="color:#2e4450">${echapper(a.detail)}</div>` : ""}
+        <a href="${urlApplication}${a.lien}" style="color:#8a4a1c;font-size:13px">Ouvrir dans Frisk Plateforme →</a>
       </td></tr>`;
   const ligneEcheance = (e: Echeance) => `
-      <tr><td style="padding:10px 0;border-bottom:1px solid #ece6dc">
-        <span style="color:#6b645b;font-size:12px">${formaterDate(e.date)} · ${echapper(libellesTypesEcheance[e.type])}</span>
+      <tr><td style="padding:10px 0;border-bottom:1px solid #e3e9ec">
+        <span style="color:#4f5e67;font-size:12px">${formaterDate(e.date)} · ${echapper(libellesTypesEcheance[e.type])}</span>
         <div style="margin-top:4px;font-weight:bold">${echapper(e.titre)}</div>
-        ${[e.detail, e.responsable && `Responsable : ${e.responsable}`].filter(Boolean).map((t) => `<div style="color:#3a3530">${echapper(t)}</div>`).join("")}
-        <a href="${urlApplication}${e.lien}" style="color:#7f6235;font-size:13px">Ouvrir →</a>
+        ${[e.detail, e.responsable && `Responsable : ${e.responsable}`].filter(Boolean).map((t) => `<div style="color:#2e4450">${echapper(t)}</div>`).join("")}
+        <a href="${urlApplication}${e.lien}" style="color:#8a4a1c;font-size:13px">Ouvrir →</a>
       </td></tr>`;
   const parType = Object.entries(
     echeances.reduce<Record<string, number>>((t, e) => ({ ...t, [libellesTypesEcheance[e.type]]: (t[libellesTypesEcheance[e.type]] ?? 0) + 1 }), {}),
   ).map(([type, n]) => `${type} : ${n}`);
-  const titreSection = (t: string) => `<h2 style="margin:24px 0 4px;font-size:15px;color:#0c0b0a">${t}</h2>`;
+  const titreSection = (t: string) => `<h2 style="margin:24px 0 4px;font-size:15px;color:#182630">${t}</h2>`;
 
   const ligneAction = (a: Action) => {
     const retard = a.echeance < aujourdhui;
     return `
-      <tr><td style="padding:10px 0;border-bottom:1px solid #ece6dc">
-        <span style="color:${retard ? "#b42318" : "#6b645b"};font-size:12px">${retard ? "En retard depuis le" : "Échéance le"} ${formaterDate(a.echeance)}</span>
+      <tr><td style="padding:10px 0;border-bottom:1px solid #e3e9ec">
+        <span style="color:${retard ? "#b42318" : "#4f5e67"};font-size:12px">${retard ? "En retard depuis le" : "Échéance le"} ${formaterDate(a.echeance)}</span>
         <div style="margin-top:4px;font-weight:bold">${echapper(a.intitule || "Action sans intitulé")}</div>
-        <a href="${urlApplication}/actions?action=${a.id}" style="color:#7f6235;font-size:13px">Ouvrir →</a>
+        <a href="${urlApplication}/actions?action=${a.id}" style="color:#8a4a1c;font-size:13px">Ouvrir →</a>
       </td></tr>`;
   };
   const sections = [
@@ -95,30 +95,30 @@ export function emailRecapitulatif(
       ? titreSection("Échéances de la semaine") +
         (responsable
           ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${echeances.map(ligneEcheance).join("")}</table>`
-          : `<ul style="margin:8px 0;padding-left:20px;color:#3a3530">${parType.map((t) => `<li>${echapper(t)}</li>`).join("")}</ul>`)
+          : `<ul style="margin:8px 0;padding-left:20px;color:#2e4450">${parType.map((t) => `<li>${echapper(t)}</li>`).join("")}</ul>`)
       : "",
     autres.length ? titreSection("À traiter et à surveiller") + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${autres.map(ligneAlerte).join("")}</table>` : "",
     prochaine
       ? titreSection("Prochaine étape de votre parcours") +
-        `<div style="padding:12px;background:#f7f4ef;border-left:3px solid #b08d57">
+        `<div style="padding:12px;background:#f4f7f8;border-left:3px solid #d4874f">
           <div style="font-weight:bold">${echapper(prochaine.titre)}</div>
-          <div style="margin-top:4px;color:#3a3530">${echapper(prochaine.aide)}</div>
-          <a href="${urlApplication}${prochaine.lien}" style="color:#7f6235;font-size:13px">${echapper(prochaine.bouton)} →</a>
+          <div style="margin-top:4px;color:#2e4450">${echapper(prochaine.aide)}</div>
+          <a href="${urlApplication}${prochaine.lien}" style="color:#8a4a1c;font-size:13px">${echapper(prochaine.bouton)} →</a>
         </div>`
       : "",
   ].join("");
 
-  const html = `<!doctype html><html lang="fr"><body style="margin:0;background:#f7f4ef;font-family:Arial,sans-serif;color:#0c0b0a">
+  const html = `<!doctype html><html lang="fr"><body style="margin:0;background:#f4f7f8;font-family:Arial,sans-serif;color:#182630">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
     <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff">
-      <tr><td style="background:#0c0b0a;padding:24px;color:#ece6dc">
-        <div style="letter-spacing:4px;font-size:18px">FRISK <span style="color:#c9a978">PLATEFORME</span></div>
-        <div style="margin-top:8px;font-size:14px;color:#d9cfc1">Récapitulatif du ${formaterDate(aujourdhui)} · ${echapper(entreprise)}</div>
+      <tr><td style="background:#182630;padding:24px;color:#e3e9ec">
+        <div style="letter-spacing:4px;font-size:18px">FRISK <span style="color:#e8a878">PLATEFORME</span></div>
+        <div style="margin-top:8px;font-size:14px;color:#cdd7dc">Récapitulatif du ${formaterDate(aujourdhui)} · ${echapper(entreprise)}</div>
       </td></tr>
       <tr><td style="padding:8px 24px 24px">
         ${sections}
-        ${mention ? `<p style="margin-top:16px;font-size:13px;color:#3a3530">${echapper(mention)}</p>` : ""}
-        <p style="margin-top:24px;font-size:12px;color:#6b645b">
+        ${mention ? `<p style="margin-top:16px;font-size:13px;color:#2e4450">${echapper(mention)}</p>` : ""}
+        <p style="margin-top:24px;font-size:12px;color:#4f5e67">
           Vous recevez cet e-mail chaque lundi en tant qu'utilisateur de Frisk Plateforme. Pour ne plus le recevoir,
           décochez « Récapitulatif du lundi » dans « Mon compte ».
         </p>
@@ -160,15 +160,15 @@ export function emailUrgences(entreprise: string, alertes: Alerte[], aujourdhui:
   const lignes = alertes
     .map(
       (a) => `
-      <tr><td style="padding:12px 0;border-bottom:1px solid #ece6dc">
-        <span style="color:#6b645b;font-size:12px">${echapper(a.categorie)}</span>
+      <tr><td style="padding:12px 0;border-bottom:1px solid #e3e9ec">
+        <span style="color:#4f5e67;font-size:12px">${echapper(a.categorie)}</span>
         <div style="margin-top:4px;font-weight:bold">${echapper(a.titre)}</div>
-        ${detailVisible(a, role) ? `<div style="color:#3a3530">${echapper(a.detail)}</div>` : ""}
-        <a href="${urlApplication}${a.lien}" style="color:#7f6235;font-size:13px">Ouvrir dans Frisk Plateforme →</a>
+        ${detailVisible(a, role) ? `<div style="color:#2e4450">${echapper(a.detail)}</div>` : ""}
+        <a href="${urlApplication}${a.lien}" style="color:#8a4a1c;font-size:13px">Ouvrir dans Frisk Plateforme →</a>
       </td></tr>`,
     )
     .join("");
-  const html = `<!doctype html><html lang="fr"><body style="margin:0;background:#f7f4ef;font-family:Arial,sans-serif;color:#0c0b0a">
+  const html = `<!doctype html><html lang="fr"><body style="margin:0;background:#f4f7f8;font-family:Arial,sans-serif;color:#182630">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
     <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff">
       <tr><td style="background:#d03b3b;padding:20px 24px;color:#ffffff">
@@ -178,8 +178,8 @@ export function emailUrgences(entreprise: string, alertes: Alerte[], aujourdhui:
       </td></tr>
       <tr><td style="padding:8px 24px 24px">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${lignes}</table>
-        ${mention ? `<p style="margin-top:16px;font-size:13px;color:#3a3530">${echapper(mention)}</p>` : ""}
-        <p style="margin-top:24px;font-size:12px;color:#6b645b">
+        ${mention ? `<p style="margin-top:16px;font-size:13px;color:#2e4450">${echapper(mention)}</p>` : ""}
+        <p style="margin-top:24px;font-size:12px;color:#4f5e67">
           Vous recevez cet e-mail quand une urgence apparaît, au plus une fois par jour. Pour ne plus le recevoir,
           décochez « E-mails immédiats » dans « Mon compte ».
         </p>
@@ -204,10 +204,10 @@ export function emailSignalement(entreprise: string, type: string, accident: boo
   const consigne = accident
     ? "S'il y a eu un arrêt ou des soins médicaux, l'accident doit être déclaré à la CPAM dans les 48 heures."
     : "Analysez-le rapidement : un presque-accident traité, c'est un accident évité.";
-  const html = `<div style="font-family:Arial,sans-serif;color:#0c0b0a;max-width:560px">
+  const html = `<div style="font-family:Arial,sans-serif;color:#182630;max-width:560px">
     <p style="font-size:16px"><strong>${echapper(type)}</strong> signalé depuis le terrain chez ${echapper(entreprise)}.</p>
     <p>${echapper(consigne)}</p>
-    <p><a href="${echapper(lien)}" style="color:#7f6235">Ouvrir le signalement dans Frisk Plateforme →</a></p>
+    <p><a href="${echapper(lien)}" style="color:#8a4a1c">Ouvrir le signalement dans Frisk Plateforme →</a></p>
   </div>`;
   const texte = `${type} signalé depuis le terrain chez ${entreprise}.\n\n${consigne}\n\n${lien}`;
   return { sujet, html, texte };

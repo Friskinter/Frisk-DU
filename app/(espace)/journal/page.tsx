@@ -13,7 +13,7 @@ const PAR_PAGE = 100;
 
 const actions: Record<EntreeJournal["action"], { libelle: string; couleur: string }> = {
   ajout: { libelle: "Ajout", couleur: "#0a7a0a" },
-  modification: { libelle: "Modification", couleur: "#7f6235" },
+  modification: { libelle: "Modification", couleur: "#8a4a1c" },
   suppression: { libelle: "Suppression", couleur: "#b42318" },
 };
 

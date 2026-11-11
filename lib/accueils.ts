@@ -71,7 +71,7 @@ export function formationRenforcee(a: Pick<Accueil, "contrat" | "posteARisque">)
 export type EtatAccueil = "a-venir" | "a-faire" | "a-signer" | "fait";
 
 export const etatsAccueil: Record<EtatAccueil, { libelle: string; couleur: string; texte: string }> = {
-  "a-venir": { libelle: "Arrivée à venir", couleur: "#d9cfc1", texte: "#0b0b0b" },
+  "a-venir": { libelle: "Arrivée à venir", couleur: "#cdd7dc", texte: "#0b0b0b" },
   "a-faire": { libelle: "Accueil à faire", couleur: "#d03b3b", texte: "#ffffff" },
   "a-signer": { libelle: "À faire signer", couleur: "#fab219", texte: "#0b0b0b" },
   fait: { libelle: "Fait", couleur: "#0ca30c", texte: "#0b0b0b" },

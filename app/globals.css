@@ -1,24 +1,25 @@
 @import "tailwindcss";
 
-/* Palette tirée du logo : noir profond, pierre/marbre, accent bronze */
+/* Identité « Minéral » (novembre 2026) : bleu-gris ardoise et cuivre. Les noms sont ceux de
+   l'identité précédente (« bronze » désigne le cuivre), gardée dans la branche identite-novembre-2026. */
 @theme {
-  --color-encre: #0c0b0a;
-  --color-nuit: #161412;
-  --color-ardoise: #24211e;
-  --color-pierre: #d9cfc1;
-  --color-marbre: #ece6dc;
-  --color-ivoire: #f7f4ef;
-  --color-bronze: #b08d57;
-  --color-bronze-clair: #c9a978;
-  --color-bronze-fonce: #7f6235; /* bronze lisible en texte sur fond clair (contraste AA) */
-  --color-gris: #6b645b;
+  --color-encre: #182630;
+  --color-nuit: #1d2e38;
+  --color-ardoise: #22343e;
+  --color-pierre: #cdd7dc;
+  --color-marbre: #e3e9ec;
+  --color-ivoire: #f4f7f8;
+  --color-bronze: #d4874f;
+  --color-bronze-clair: #e8a878;
+  --color-bronze-fonce: #8a4a1c; /* bronze lisible en texte sur fond clair (contraste AA) */
+  --color-gris: #4f5e67;
   /* Remplacées par la couleur de l'entreprise (lib/identite.ts) */
-  --color-menu: #0c0b0a;
-  --color-titre: #0c0b0a;
-  --color-intertitre: #24211e;
+  --color-menu: #182630;
+  --color-titre: #182630;
+  --color-intertitre: #22343e;
 
   --font-sans: var(--font-inter);
-  --font-serif: var(--font-cinzel);
+  --font-serif: var(--font-archivo);
 }
 
 body {

@@ -18,8 +18,8 @@ import { donneesDemo } from "@/lib/demo";
 vi.mock("server-only", () => ({}));
 const { adresseInterdite, formatImage, identiteDuSite } = await import("@/lib/identite-serveur");
 
-const ENCRE = "#0c0b0a";
-const MARBRE = "#ece6dc";
+const ENCRE = "#182630";
+const MARBRE = "#e3e9ec";
 
 describe("couleurs de l'entreprise", () => {
   it("restent lisibles quelle que soit la couleur choisie", () => {
@@ -33,14 +33,14 @@ describe("couleurs de l'entreprise", () => {
       expect(contraste(p.clair, p.menu), `${couleur} : texte clair du menu`).toBeGreaterThanOrEqual(4.5);
       expect(contraste("#ec835a", p.menu), `${couleur} : alerte du menu`).toBeGreaterThanOrEqual(4.5);
       expect(contraste("#ffffff", p.menu), `${couleur} : blanc sur le menu`).toBeGreaterThanOrEqual(7);
-      expect(contraste("#6b645b", p.marbre), `${couleur} : gris sur encadré`).toBeGreaterThanOrEqual(4.5);
-      expect(contraste("#6b645b", p.ivoire), `${couleur} : gris sur la page`).toBeGreaterThanOrEqual(4.5);
+      expect(contraste("#4f5e67", p.marbre), `${couleur} : gris sur encadré`).toBeGreaterThanOrEqual(4.5);
+      expect(contraste("#4f5e67", p.ivoire), `${couleur} : gris sur la page`).toBeGreaterThanOrEqual(4.5);
     }
   });
 
   it("teintent le menu et les fonds avec la couleur de l'entreprise", () => {
     const p = palette("#002b5c");
-    expect(p.menu).not.toBe("#0c0b0a");
+    expect(p.menu).not.toBe("#182630");
     expect(p.ivoire).not.toBe("#ffffff");
     const [r, , b] = [1, 3, 5].map((i) => parseInt(p.menu.slice(i, i + 2), 16));
     expect(b).toBeGreaterThan(r); // le menu reste bleu
@@ -142,8 +142,8 @@ describe("logo enregistré", () => {
     expect(marqueDocuments(undefined, "/frisk.png")).toMatchObject({ logo: "/frisk.png", logoClient: false, frisk: "/frisk.png" });
     const client = marqueDocuments({ logo: "data:image/png;base64,iVBORw0KGgo=", couleur: "#002b5c" }, "/frisk.png");
     expect(client).toMatchObject({ logo: "data:image/png;base64,iVBORw0KGgo=", logoClient: true, accent: "#002b5c", titre: "#002b5c", bandeau: "#002b5c", frisk: "/frisk.png" });
-    // Documents Frisk : titres noirs, sans bandeau, comme avant.
-    expect(marqueDocuments(undefined, "/frisk.png")).toMatchObject({ titre: "#0c0b0a", bandeau: null, fond: "#0c0b0a" });
+    // Documents Frisk : titres ardoise, sans bandeau.
+    expect(marqueDocuments(undefined, "/frisk.png")).toMatchObject({ titre: "#182630", bandeau: null, fond: "#182630" });
   });
 
   it("est enregistré comme une information générale de l'espace", () => {

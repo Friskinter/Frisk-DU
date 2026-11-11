@@ -7,7 +7,7 @@ import type { Donnees, Produit } from "@/lib/types";
 import type { Marque } from "@/lib/identite";
 import { BandeauCouleur, CouleurTitres, LogoDocument, MentionFrisk } from "./marque";
 
-const c = { encre: "#0c0b0a", ardoise: "#3a3530", gris: "#8a837a", bronze: "#b08d57", marbre: "#ece6dc", pierre: "#d9cfc1", ivoire: "#f7f4ef", rouge: "#b42318" };
+const c = { encre: "#182630", ardoise: "#2e4450", gris: "#7d8f99", bronze: "#d4874f", marbre: "#e3e9ec", pierre: "#cdd7dc", ivoire: "#f4f7f8", rouge: "#b42318" };
 
 const s = StyleSheet.create({
   // Pas d'interligne sur la page : il empêche la bibliothèque PDF d'afficher les pieds de page fixes.

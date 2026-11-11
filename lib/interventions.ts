@@ -188,9 +188,9 @@ export type EtatIntervention = "a-preparer" | "a-signer" | "a-venir" | "en-cours
 export const etatsIntervention: Record<EtatIntervention, { libelle: string; couleur: string; texte: string }> = {
   "a-preparer": { libelle: "À préparer", couleur: "#ec835a", texte: "#0b0b0b" },
   "a-signer": { libelle: "À signer", couleur: "#fab219", texte: "#0b0b0b" },
-  "a-venir": { libelle: "Signé, à venir", couleur: "#d9cfc1", texte: "#0b0b0b" },
+  "a-venir": { libelle: "Signé, à venir", couleur: "#cdd7dc", texte: "#0b0b0b" },
   "en-cours": { libelle: "En cours", couleur: "#0ca30c", texte: "#0b0b0b" },
-  terminee: { libelle: "Terminée", couleur: "#ece6dc", texte: "#3a3530" },
+  terminee: { libelle: "Terminée", couleur: "#e3e9ec", texte: "#2e4450" },
 };
 
 export function etatIntervention(i: Intervention, signatures: Donnees["signatures"], aujourdhui: string): EtatIntervention {

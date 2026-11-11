@@ -125,7 +125,7 @@ export const grillesModeles: GrilleAudit[] = [
 export const resultatsPoint: { valeur: Exclude<ResultatPoint, "">; libelle: string; court: string; couleur: string; texte: string }[] = [
   { valeur: "conforme", libelle: "Conforme", court: "✓", couleur: "#0ca30c", texte: "#0b0b0b" },
   { valeur: "non-conforme", libelle: "Non conforme", court: "✗", couleur: "#d03b3b", texte: "#ffffff" },
-  { valeur: "sans-objet", libelle: "Sans objet", court: "—", couleur: "#d9cfc1", texte: "#0b0b0b" },
+  { valeur: "sans-objet", libelle: "Sans objet", court: "—", couleur: "#cdd7dc", texte: "#0b0b0b" },
 ];
 
 export function nouvelleGrille(champs: Partial<GrilleAudit> = {}): GrilleAudit {
