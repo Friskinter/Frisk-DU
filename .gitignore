@@ -49,3 +49,6 @@ next-env.d.ts
 # tests de parcours
 /test-results/
 /playwright-report/
+
+# vidéo de présentation filmée en local (trop lourde pour le dépôt)
+/video-presentation-*.webm

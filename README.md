@@ -234,6 +234,12 @@ Dans cet ordre, sinon plus personne ne peut se connecter (voir [Protection anti-
       (`next.config.ts`).
 - [ ] Site vitrine Frisk : autoriser les moteurs de recherche (`INDEXATION_AUTORISEE = true` dans
       son `next.config.ts`). Frisk Plateforme, lui, reste toujours hors des moteurs.
+- [ ] **Vidéo de présentation** pour les nouveaux venus (2 min 45, sous-titrée en français, sans son) :
+      une première version existe (`video-presentation-frisk-plateforme.webm`, gardée en local, hors du
+      dépôt). Avant l'ouverture : la refilmer sur la version finale
+      (`VIDEO_PRESENTATION=1 npx playwright test e2e/video-presentation.spec.ts --project=ordinateur`),
+      choisir où la montrer (accueil d'une nouvelle entreprise dans l'application, page Plateforme du
+      site vitrine) et, si on le souhaite, ajouter une voix off.
 - [ ] Supprimer les comptes et entreprises créés pendant les essais (console Frisk et Stripe).
 - [ ] Les jours suivants : surveiller la console (erreurs), Stripe (paiements, webhooks en échec) et
       Resend (e-mails refusés).
