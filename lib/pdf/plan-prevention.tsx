@@ -8,7 +8,7 @@ import type { Donnees, Intervention, Signature } from "@/lib/types";
 import type { Marque } from "@/lib/identite";
 import { BandeauCouleur, CouleurTitres, LogoDocument, MentionFrisk } from "./marque";
 
-export const c = { encre: "#0c0b0a", ardoise: "#3a3530", gris: "#6b645b", bronze: "#7f6235", marbre: "#ece6dc", pierre: "#d9cfc1", ivoire: "#f7f4ef", rouge: "#b42318" };
+export const c = { encre: "#182630", ardoise: "#2e4450", gris: "#4f5e67", bronze: "#8a4a1c", marbre: "#e3e9ec", pierre: "#cdd7dc", ivoire: "#f4f7f8", rouge: "#b42318" };
 
 export const s = StyleSheet.create({
   page: { paddingTop: 32, paddingBottom: 50, paddingHorizontal: 36, fontFamily: "Helvetica", fontSize: 9, color: c.encre },

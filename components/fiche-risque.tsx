@@ -196,7 +196,7 @@ export function FicheRisque({
                         <span
                           aria-hidden
                           className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
-                          style={{ background: a.statut === "fait" ? "#0ca30c" : retard ? "#d03b3b" : a.statut === "en-cours" ? "#fab219" : "#d9cfc1" }}
+                          style={{ background: a.statut === "fait" ? "#0ca30c" : retard ? "#d03b3b" : a.statut === "en-cours" ? "#fab219" : "#cdd7dc" }}
                         />
                         <span className={a.statut === "fait" ? "text-gris line-through" : ""}>
                           {a.intitule || "Action sans intitulé"}

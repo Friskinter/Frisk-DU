@@ -189,7 +189,7 @@ export function BarresHorizontales({
                   className="block h-full rounded-r-[4px] transition-opacity"
                   style={{
                     width: `${Math.max((d.valeur / max) * 100, 1)}%`,
-                    background: "#b08d57",
+                    background: "#d4874f",
                     opacity: estinactif ? 0.3 : 1,
                   }}
                 />
@@ -227,7 +227,7 @@ export function Colonnes({
           <div key={d.cle} className="group relative flex h-full flex-1 items-end justify-center hover:bg-marbre/50">
             <div
               className="w-full max-w-10 rounded-t-[4px]"
-              style={{ height: `${(d.valeur / max) * 100}%`, background: "#b08d57" }}
+              style={{ height: `${(d.valeur / max) * 100}%`, background: "#d4874f" }}
             />
             <div className="pointer-events-none absolute bottom-full z-10 mb-1 hidden whitespace-nowrap rounded-sm bg-encre px-2 py-1 text-xs text-marbre group-hover:block">
               {d.libelle} : <strong>{format(d.valeur)}</strong>

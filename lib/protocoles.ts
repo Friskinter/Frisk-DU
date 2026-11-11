@@ -79,10 +79,10 @@ export type EtatProtocole = "a-completer" | "a-signer" | "a-venir" | "valide" | 
 export const etatsProtocole: Record<EtatProtocole, { libelle: string; couleur: string; texte: string }> = {
   "a-completer": { libelle: "À compléter", couleur: "#ec835a", texte: "#0b0b0b" },
   "a-signer": { libelle: "À signer", couleur: "#fab219", texte: "#0b0b0b" },
-  "a-venir": { libelle: "Signé, à venir", couleur: "#d9cfc1", texte: "#0b0b0b" },
+  "a-venir": { libelle: "Signé, à venir", couleur: "#cdd7dc", texte: "#0b0b0b" },
   valide: { libelle: "Valide", couleur: "#0ca30c", texte: "#0b0b0b" },
   "a-renouveler": { libelle: "À renouveler", couleur: "#fab219", texte: "#0b0b0b" },
-  expire: { libelle: "Expiré", couleur: "#ece6dc", texte: "#3a3530" },
+  expire: { libelle: "Expiré", couleur: "#e3e9ec", texte: "#2e4450" },
 };
 
 export const DELAI_RENOUVELLEMENT = 30; // jours
