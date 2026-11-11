@@ -147,6 +147,8 @@ un message clair « Hors ligne : enregistré sur cet appareil ».
 
 ## Suivi
 
+Les neuf propositions sont faites (#58 à #71). La suite : la [liste de lancement](../README.md#liste-de-lancement).
+
 | Proposition | État |
 |---|---|
 | 1. Tableau de bord | **Fait** (#58). Chiffres clés en haut. Les urgences, les nouveautés et les 5 points suivants sont affichés, avec « Voir les N autres ». Filtre par module. « dont N urgents » en face de la pastille du menu. Règle d'affichage : `alertesAffichees` (`lib/alertes.ts`). |
@@ -156,4 +158,5 @@ un message clair « Hors ligne : enregistré sur cet appareil ».
 | 5. Moins de boutons en tête de page | **Fait** (#60). Menu « Plus » dans l'en-tête de page (`EnTetePage`, propriété `plus`) : il s'ouvre entièrement à l'écran et se referme après un choix. DUERP : 3 boutons et « Plus » au lieu de 8 (restent Versions, Document unique (PDF), + Ajouter un risque). Accidents : 3 boutons et « Plus » au lieu de 6. Chiffres clés sur deux colonnes sur téléphone dans tous les modules. |
 | 6. Menu regroupé | **Fait** (#59). Quatre groupes titrés sur ordinateur (Piloter, Évaluer, Suivre, Salariés), puis Journal et Abonnement. Sur téléphone, le menu reste une ligne qui défile, sans titres. Le menu défile désormais en hauteur : sur un écran de 900 pixels, « Salariés & réglages » et « Abonnement » étaient coupés et inaccessibles. |
 | 7. Recherche dans toute l'application | **Fait** (#69). Champ « Rechercher… » en haut du menu, aussi ouvert par Ctrl+K (⌘K sur Mac) : salariés, risques, actions, accidents, formations, équipements, produits, entreprises extérieures, visites, accueils, causeries, EPI et pages du menu (`lib/recherche.ts`). Sans accents ni majuscules, tous les mots doivent correspondre ; Entrée ou un clic ouvre l'élément par son lien direct. La fenêtre est rendue hors du menu (`createPortal`), sinon les en-têtes fixes des tableaux passent par-dessus. |
+| 8. Visites sans réseau | **Fait** (#71). Les modifications pas encore envoyées sont gardées sur l'appareil (`lib/file-attente.ts`, une file par entreprise et par utilisateur) : elles survivent à la fermeture ou au rechargement de la page et partent au retour du réseau (événement `online`). Message « Hors ligne : enregistré sur cet appareil » dans le menu et bandeau en haut de page. Changement de page sans réseau : `experimental.useOffline`. Limites : l'application doit être ouverte avant de perdre le réseau (pas de service worker) ; les photos ne sont pas mises en attente. |
 | 9. Petits détails | **Fait** (#61). Dépôt du logo : bouton maison « Choisir un fichier… » (le dernier bouton de fichier qui s'affichait dans la langue du navigateur). Parcours : « Il vous reste 1 étape : … » sur le tableau de bord et « Dernière étape » sur « Mon parcours », au lieu de « Prochaine étape » quand il ne reste qu'une étape. |
