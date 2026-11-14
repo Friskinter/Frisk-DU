@@ -35,7 +35,7 @@ async function enregistrerPdf(document: ReactElement, nom: string) {
 // Logo et couleur de l'entreprise (sinon ceux de Frisk), et logo de Frisk pour la mention en bas de page.
 // Pendant l'essai gratuit, les documents portent la mention « Version d'essai ».
 const marque = (identite: Identite | undefined) =>
-  marqueDocuments(identite, `${window.location.origin}/logo-frisk.png`, accesActuel() === "essai");
+  marqueDocuments(identite, `${window.location.origin}/logo-frisk-bouclier.png`, accesActuel() === "essai");
 
 // Sans version : document de travail à la date du jour. Avec version : la version figée, telle qu'enregistrée.
 export async function telechargerDocumentUnique(

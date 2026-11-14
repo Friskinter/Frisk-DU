@@ -8,7 +8,7 @@ export function EcranAuth({ titre, sousTitre, children }: { titre: string; sousT
     <main className="flex min-h-screen items-center justify-center bg-encre bg-[radial-gradient(ellipse_at_top_right,rgba(176,141,87,0.18),transparent_60%)] px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
-          <Image src="/logo-frisk.png" alt="" width={56} height={56} className="h-14 w-14 rounded-sm" priority />
+          <Image src="/logo-frisk-bouclier.png" alt="" width={56} height={56} className="h-14 w-14 rounded-sm" priority />
           <p className="mt-4 font-serif text-2xl tracking-[0.25em] text-marbre">
             FRISK <span className="text-bronze-clair">PLATEFORME</span>
           </p>

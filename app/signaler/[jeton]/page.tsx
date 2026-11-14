@@ -153,7 +153,7 @@ function Signalement() {
           {identite?.logo ? (
             <Logo identite={identite} />
           ) : (
-            <Image src="/logo-frisk.png" alt="" width={32} height={32} className="h-8 w-8 rounded-sm" />
+            <Image src="/logo-frisk-bouclier.png" alt="" width={32} height={32} className="h-8 w-8 rounded-sm" />
           )}
           <div className="min-w-0">
             {identite?.logo ? (
@@ -336,7 +336,7 @@ function Signalement() {
         )}
         {identite?.logo && (
           <p className="mt-8 flex items-center justify-center gap-1.5 text-[11px] text-gris">
-            <Image src="/logo-frisk.png" alt="" width={14} height={14} className="h-3.5 w-3.5 rounded-[2px]" />
+            <Image src="/logo-frisk-bouclier.png" alt="" width={14} height={14} className="h-3.5 w-3.5 rounded-[2px]" />
             Réalisé avec Frisk Plateforme
           </p>
         )}

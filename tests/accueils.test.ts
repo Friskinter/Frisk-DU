@@ -104,7 +104,7 @@ describe("causeries sécurité", () => {
 
   it("PDF : fiche d'accueil et feuille d'émargement", async () => {
     const d = donneesDemo(aujourdhui);
-    const marque = marqueDocuments(undefined, `${process.cwd()}/public/logo-frisk.png`);
+    const marque = marqueDocuments(undefined, `${process.cwd()}/public/logo-frisk-bouclier.png`);
     for (const accueil of d.accueils) {
       const pdf = await renderToBuffer(createElement(FicheAccueil, { donnees: d, accueil, aujourdhui, marque }) as Parameters<typeof renderToBuffer>[0]);
       expect(pdf.subarray(0, 4).toString()).toBe("%PDF");

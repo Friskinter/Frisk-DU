@@ -10,7 +10,7 @@ export default function LayoutLegal({ children }: { children: ReactNode }) {
       <header className="bg-encre text-pierre">
         <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <Link href="/" className="flex items-center gap-3">
-            <Image src="/logo-frisk.png" alt="" width={32} height={32} className="h-8 w-8 rounded-sm" />
+            <Image src="/logo-frisk-bouclier.png" alt="" width={32} height={32} className="h-8 w-8 rounded-sm" />
             <span className="font-serif text-lg tracking-[0.2em] text-marbre">
               FRISK <span className="text-bronze-clair">PLATEFORME</span>
             </span>

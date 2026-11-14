@@ -13,7 +13,7 @@ import { RapportVisite } from "@/lib/pdf/rapport-visite";
 import { RegistreSecurite } from "@/lib/pdf/registre-securite";
 import { marqueDocuments } from "@/lib/identite";
 
-const marque = marqueDocuments(undefined, `${process.cwd()}/public/logo-frisk.png`);
+const marque = marqueDocuments(undefined, `${process.cwd()}/public/logo-frisk-bouclier.png`);
 const d = donneesDemo("2026-10-28");
 
 // Les PDF commencent par « %PDF » ; on vérifie qu'ils se génèrent sans erreur.
@@ -107,7 +107,7 @@ describe("PDF des versions figées", () => {
 
   it("documents aux couleurs de l'entreprise (logo large et couleur)", async () => {
     const logoClient = `data:image/png;base64,${readFileSync(`${process.cwd()}/tests/fixtures/logo-client.png`).toString("base64")}`;
-    const client = marqueDocuments({ logo: logoClient, couleur: "#1f5fa8" }, `${process.cwd()}/public/logo-frisk.png`);
+    const client = marqueDocuments({ logo: logoClient, couleur: "#1f5fa8" }, `${process.cwd()}/public/logo-frisk-bouclier.png`);
     expect(client.logo).toBe(logoClient);
     const pdfs = [
       await renderToBuffer(<DocumentUnique donnees={d} aujourdhui="2026-10-28" marque={client} />),
@@ -117,7 +117,7 @@ describe("PDF des versions figées", () => {
   }, 30_000);
 
   it("document unique de l'essai gratuit, marqué « Version d'essai »", async () => {
-    const essai = marqueDocuments(undefined, `${process.cwd()}/public/logo-frisk.png`, true);
+    const essai = marqueDocuments(undefined, `${process.cwd()}/public/logo-frisk-bouclier.png`, true);
     expect(essai.essai).toBe(true);
     const pdf = await renderToBuffer(<DocumentUnique donnees={d} aujourdhui="2026-10-28" marque={essai} />);
     expect(pdf.subarray(0, 4).toString()).toBe("%PDF");

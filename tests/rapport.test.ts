@@ -88,7 +88,7 @@ describe("rapport annuel", () => {
   });
 
   it("PDF du rapport, y compris pour une entreprise vide", async () => {
-    const marque = marqueDocuments(undefined, `${process.cwd()}/public/logo-frisk.png`);
+    const marque = marqueDocuments(undefined, `${process.cwd()}/public/logo-frisk-bouclier.png`);
     const d = normaliser(donneesDemo(aujourdhui));
     for (const donnees of [d, { ...d, evenements: [], actions: [], formations: [], visites: [], causeries: [] }]) {
       const rapport = calculerRapport(donnees, 2026, aujourdhui);
