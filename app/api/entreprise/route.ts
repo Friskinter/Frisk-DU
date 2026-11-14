@@ -1,11 +1,11 @@
-import { ficheDepuisResultat, lireRecherche, type ResultatApi } from "@/lib/fiche-officielle";
+import { lireRecherche } from "@/lib/fiche-officielle";
 import { MODE_TEST } from "@/lib/mode-test";
+import { chercherEntreprises } from "@/lib/repertoire-entreprises";
 import { supabaseServeur } from "@/lib/supabase/serveur";
 
 // Recherche de la fiche officielle d'une entreprise (réglages) : par SIRET, SIREN ou nom, dans
 // l'API publique « Recherche d'entreprises » de l'État. Réservée aux utilisateurs connectés.
 
-const API = "https://recherche-entreprises.api.gouv.fr/search";
 const LIMITE_PAR_HEURE = 30;
 const recherches = new Map<string, number[]>();
 const refus = (erreur: string, status: number) => Response.json({ erreur }, { status });
@@ -27,11 +27,7 @@ export async function POST(requete: Request) {
   if (!recherche) return refus("Saisissez un SIRET (14 chiffres), un SIREN (9 chiffres) ou le nom de l'entreprise.", 400);
 
   try {
-    const url = `${API}?${new URLSearchParams({ q: recherche, per_page: "5", etat_administratif: "A" })}`;
-    const reponse = await fetch(url, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(8000) });
-    if (!reponse.ok) throw new Error(String(reponse.status));
-    const { results } = (await reponse.json()) as { results?: ResultatApi[] };
-    return Response.json({ entreprises: (results ?? []).map(ficheDepuisResultat) });
+    return Response.json({ entreprises: await chercherEntreprises(recherche) });
   } catch {
     return refus("Le répertoire des entreprises ne répond pas. Réessayez dans un instant, ou remplissez la fiche à la main.", 502);
   }
