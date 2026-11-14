@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { RechercheFicheOfficielle } from "@/components/fiche-officielle";
 import { IdentiteVisuelle } from "@/components/identite-visuelle";
+import { ImportFiche } from "@/components/import-fiche";
 import {
   Carte,
   Chargement,
@@ -64,6 +65,7 @@ export default function PageReglages() {
 
         <Carte titre="Entreprise">
           <p className="mb-4 text-sm text-ardoise">Ces informations figurent sur la page de garde du document unique.</p>
+          <ImportFiche />
           <RechercheFicheOfficielle />
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block text-sm">
