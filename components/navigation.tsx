@@ -98,7 +98,7 @@ export function Navigation() {
         {identite?.logo ? (
           <Logo identite={identite} grand />
         ) : (
-          <Image src="/logo-frisk.png" alt="" width={36} height={36} className="h-9 w-9 rounded-sm" priority />
+          <Image src="/logo-frisk-bouclier.png" alt="" width={36} height={36} className="h-9 w-9 rounded-sm" priority />
         )}
         <div className="min-w-0">
           {identite?.logo ? (
@@ -211,7 +211,7 @@ export function Navigation() {
         </button>
         {identite?.logo && (
           <p className="hidden items-center gap-1.5 text-[10px] text-pierre/70 lg:mt-3 lg:flex">
-            <Image src="/logo-frisk.png" alt="" width={14} height={14} className="h-3.5 w-3.5 rounded-[2px]" />
+            <Image src="/logo-frisk-bouclier.png" alt="" width={14} height={14} className="h-3.5 w-3.5 rounded-[2px]" />
             Réalisé avec Frisk Plateforme
           </p>
         )}

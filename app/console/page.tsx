@@ -240,7 +240,7 @@ export default function Console() {
       <header className="bg-encre text-pierre">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <Image src="/logo-frisk.png" alt="" width={36} height={36} className="h-9 w-9 rounded-sm" />
+            <Image src="/logo-frisk-bouclier.png" alt="" width={36} height={36} className="h-9 w-9 rounded-sm" />
             <p className="font-serif text-lg tracking-[0.2em] text-marbre">
               FRISK <span className="text-bronze-clair">PLATEFORME</span>
               <span className="ml-3 text-xs tracking-[0.25em] text-gris">CONSOLE</span>

@@ -216,7 +216,7 @@ function Apercu({ entreprise, identite }: { entreprise: string; identite: Identi
         <p className="mt-3 rounded-sm bg-bronze px-3 py-1.5 text-sm text-encre">▦ Tableau de bord</p>
         <p className="px-3 py-1.5 text-sm">▤ Document unique</p>
         <p className="mt-2 flex items-center gap-1.5 text-[10px] text-pierre/70">
-          <Image src="/logo-frisk.png" alt="" width={12} height={12} className="h-3 w-3 rounded-[2px]" />
+          <Image src="/logo-frisk-bouclier.png" alt="" width={12} height={12} className="h-3 w-3 rounded-[2px]" />
           Réalisé avec Frisk Plateforme
         </p>
       </div>
@@ -237,7 +237,7 @@ function Apercu({ entreprise, identite }: { entreprise: string; identite: Identi
 // Logo de l'entreprise sur une pastille blanche (lisible sur le menu noir), sinon celui de Frisk.
 export function Logo({ identite, petit = false, grand = false }: { identite: Identite | undefined; petit?: boolean; grand?: boolean }) {
   if (!identite?.logo) {
-    return <Image src="/logo-frisk.png" alt="" width={36} height={36} className="h-9 w-9 shrink-0 rounded-sm" />;
+    return <Image src="/logo-frisk-bouclier.png" alt="" width={36} height={36} className="h-9 w-9 shrink-0 rounded-sm" />;
   }
   const taille = grand ? "h-10 max-w-32 lg:h-16 lg:max-w-full lg:p-2" : petit ? "h-10 max-w-28" : "h-10 max-w-32";
   return (
